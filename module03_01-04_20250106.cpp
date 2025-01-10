@@ -4,16 +4,16 @@
 
 std::vector<std::string> buildRoute() {
   int stops = 0;
-  std::cout << "Ğ’Ğ²ĞµĞ´Ğ¸Ñ‚Ğµ ĞºĞ¾Ğ»Ğ¸Ñ‡ĞµÑÑ‚Ğ²Ğ¾ Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²Ğ¾Ğº: ";
+  std::cout << "‚¢¥¤¨â¥ ª®«¨ç¥áâ¢® ®áâ ­®¢®ª: ";
   std::cin >> stops;
   std::vector<std::string> route(stops, "");
   
-  std::cout << "Ğ’Ğ²ĞµĞ´Ğ¸Ñ‚Ğµ Ğ½Ğ°Ğ¸Ğ¼ĞµĞ½Ğ¾Ğ²Ğ°Ğ½Ğ¸Ñ Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²Ğ¾Ğº:\n";
+  std::cout << "‚¢¥¤¨â¥ ­ ¨¬¥­®¢ ­¨ï ®áâ ­®¢®ª:\n";
   for(int i = 0; i < stops; ++i) {
-    std::cout << i + 1 << "-Ñ Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºĞ° :";
+    std::cout << i + 1 << "-ï ®áâ ­®¢ª : ";
     std::cin >> route[i];
-    } 
-  std::cout << "ĞœĞ°Ñ€ÑˆÑ€ÑƒÑ‚ ÑÑ„Ğ¾Ñ€Ğ¼Ğ¸Ñ€Ğ¾Ğ²Ğ°Ğ½.\n";
+  } 
+  std::cout << "Œ àèàãâ áä®à¬¨à®¢ ­.\n";
   return route; 
 }
 
@@ -25,24 +25,24 @@ double routeRevenue(const std::vector<std::string>& route, const double price) {
     int passengers = 0;
     --stops;
     
-    std::cout << "ĞŸÑ€Ğ¸Ğ±Ñ‹Ğ²Ğ°ĞµĞ¼ Ğ½Ğ° Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºÑƒ " << stop << ".\n";
-    std::cout << "Ğ’ ÑĞ°Ğ»Ğ¾Ğ½Ğµ Ğ¿Ğ°ÑÑĞ°Ğ¶Ğ¸Ñ€Ğ¾Ğ²: " << currentPassengers << "\n";
+    std::cout << "à¨¡ë¢ ¥¬ ­  ®áâ ­®¢ªã " << stop << ".\n";
+    std::cout << "‚ á «®­¥ ¯ áá ¦¨à®¢: " << currentPassengers << "\n";
 
     if(stops > 0) {
-      std::cout << "Ğ¡ĞºĞ¾Ğ»ÑŒĞºĞ¾ Ğ¿Ğ°ÑÑĞ°Ğ¶Ğ¸Ñ€Ğ¾Ğ² Ğ²Ñ‹ÑˆĞ»Ğ¾ Ğ½Ğ° Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºĞµ? ";
+      std::cout << "‘ª®«ìª® ¯ áá ¦¨à®¢ ¢ëè«® ­  ®áâ ­®¢ª¥? ";
       std::cin >> passengers;
       currentPassengers = currentPassengers > passengers ? currentPassengers - passengers : 0;
-      std::cout << "Ğ¡ĞºĞ¾Ğ»ÑŒĞºĞ¾ Ğ¿Ğ°ÑÑĞ°Ğ¶Ğ¸Ñ€Ğ¾Ğ² Ğ²Ğ¾ÑˆĞ»Ğ¾ Ğ½Ğ° Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºĞµ? ";
+      std::cout << "‘ª®«ìª® ¯ áá ¦¨à®¢ ¢®è«® ­  ®áâ ­®¢ª¥? ";
       std::cin >> passengers;
       currentPassengers += passengers;
       revenue += passengers * price;
 
-      std::cout << "ĞÑ‚Ğ¿Ñ€Ğ°Ğ²Ğ»ÑĞµĞ¼ÑÑ Ñ Ğ¾ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºĞ¸ " << stop << ".\n";
-      std::cout << "Ğ’ ÑĞ°Ğ»Ğ¾Ğ½Ğµ Ğ¿Ğ°ÑÑĞ°Ğ¶Ğ¸Ñ€Ğ¾Ğ²: " << currentPassengers << "\n";
+      std::cout << "â¯à ¢«ï¥¬áï á ®áâ ­®¢ª¨ " << stop << ".\n";
+      std::cout << "‚ á «®­¥ ¯ áá ¦¨à®¢: " << currentPassengers << "\n";
 
-      std::cout << "-------Ğ•Ğ´ĞµĞ¼-------\n";
+      std::cout << "-------…¤¥¬-------\n";
     } else {
-      std::cout << "-----ĞšĞ¾Ğ½ĞµÑ‡Ğ½Ğ°Ñ-----\n";
+      std::cout << "-----Š®­¥ç­ ï-----\n";
     }
   }
   return revenue;
@@ -86,7 +86,7 @@ double bambooHeight(double days, double dayGrowth, double nightFade, double begi
 }
 
 int main() {
-  std::cout << "Ğ—Ğ°Ğ´Ğ°Ğ½Ğ¸Ğµ 1. Ğ Ğ°ÑÑ‡ĞµÑ‚ Ğ¿Ñ€Ğ¸Ğ±Ñ‹Ğ»Ğ¸ Ğ¼Ğ°Ñ€ÑˆÑ€ÑƒÑ‚Ğ°.\n";
+  std::cout << "‡ ¤ ­¨¥ 1.  áç¥â ¯à¨¡ë«¨ ¬ àèàãâ .\n";
   std::vector<std::string> route = buildRoute();
 
   double revenue = routeRevenue(route, 20);
@@ -96,32 +96,32 @@ int main() {
   double repairCar = fuelCost;
   double net = revenue - driverSalary - fuelCost - taxes - repairCar;
 
-  std::cout << "Ğ’Ñ‹Ñ€ÑƒÑ‡ĞºĞ°: " << revenue << " Ñ€ÑƒĞ±.\n";
-  std::cout << "Ğ—Ğ°Ñ€Ğ¿Ğ»Ğ°Ñ‚Ğ° Ğ²Ğ¾Ğ´Ğ¸Ñ‚ĞµĞ»Ñ: " << driverSalary << " Ñ€ÑƒĞ±.\n";
-  std::cout << "Ğ Ğ°ÑÑ…Ğ¾Ğ´Ñ‹ Ğ½Ğ° Ñ‚Ğ¾Ğ¿Ğ»Ğ¸Ğ²Ğ¾: " << fuelCost << " Ñ€ÑƒĞ±.\n";
-  std::cout << "ĞĞ°Ğ»Ğ¾Ğ³Ğ¸: " << taxes << " Ñ€ÑƒĞ±.\n";
-  std::cout << "Ğ Ğ°ÑÑ…Ğ¾Ğ´Ñ‹ Ğ½Ğ° Ñ€ĞµĞ¼Ğ¾Ğ½Ñ‚ Ğ¼Ğ°ÑˆĞ¸Ğ½Ñ‹: " << repairCar << " Ñ€ÑƒĞ±.\n";
-  std::cout << "Ğ˜Ñ‚Ğ¾Ğ³Ğ¾ Ñ‡Ğ¸ÑÑ‚Ğ°Ñ Ğ¿Ñ€Ğ¸Ğ±Ñ‹Ğ»ÑŒ: " << net << " Ñ€ÑƒĞ±.\n";
+  std::cout << "‚ëàãçª : " << revenue << " àã¡.\n";
+  std::cout << "‡ à¯« â  ¢®¤¨â¥«ï: " << driverSalary << " àã¡.\n";
+  std::cout << " áå®¤ë ­  â®¯«¨¢®: " << fuelCost << " àã¡.\n";
+  std::cout << " «®£¨: " << taxes << " àã¡.\n";
+  std::cout << " áå®¤ë ­  à¥¬®­â ¬ è¨­ë: " << repairCar << " àã¡.\n";
+  std::cout << "ˆâ®£® ç¨áâ ï ¯à¨¡ë«ì: " << net << " àã¡.\n";
 
-  std::cout << "\nĞ—Ğ°Ğ´Ğ°Ğ½Ğ¸Ğµ 2. Ğ ĞµĞ°Ğ»Ğ¸Ğ·Ğ°Ñ†Ğ¸Ñ Ñ„ÑƒĞ½ĞºÑ†Ğ¸Ğ¸ Ğ¾Ğ±Ğ¼ĞµĞ½Ğ° Ğ´Ğ°Ğ½Ğ½Ñ‹Ğ¼Ğ¸ (swap())\n";
+  std::cout << "\n‡ ¤ ­¨¥ 2. ¥ «¨§ æ¨ï äã­ªæ¨¨ ®¡¬¥­  ¤ ­­ë¬¨ (swap())\n";
   int a = 43;
   int b = 155;
   std::cout << "a = " << a << ", b = " << b << "\n";
   swap(a, b);
-  std::cout << "ĞŸĞ¾Ğ¼ĞµĞ½ÑĞ»Ğ¸ Ğ¼ĞµÑÑ‚Ğ°Ğ¼Ğ¸:\n";
+  std::cout << "®¬¥­ï«¨ ¬¥áâ ¬¨:\n";
   std::cout << "a = " << a << ", b = " << b << "\n";
 
-  std::cout << "\nĞ—Ğ°Ğ´Ğ°Ğ½Ğ¸Ğµ 3. Ğ’Ñ‹ÑĞ¾Ñ‚Ğ° Ğ±Ğ°Ğ¼Ğ±ÑƒĞºĞ°.\n";
-  std::cout << "Ğ¡ÑƒÑ‚ĞºĞ¸ Ğ½Ğ°Ñ‡Ğ¸Ğ½Ğ°ÑÑ‚ÑÑ Ñ Ğ´Ğ½Ñ Ğ¸ ÑĞºĞ»Ğ°Ğ´Ñ‹Ğ²Ğ°ÑÑ‚ÑÑ\n"
-    << "Ğ¸Ğ· Ğ´Ğ½Ñ (12 Ñ‡) Ğ¸ Ğ½Ğ¾Ñ‡Ğ¸ (12 Ñ‡).\n"
-    << "Ğ¡Ğ»ĞµĞ´Ğ¾Ğ²Ğ°Ñ‚ĞµĞ»ÑŒĞ½Ğ¾ Ğ½Ğ° 2 ÑÑƒÑ‚Ğ¾Ğº Ğ¸ Ğ¿Ğ¾Ğ»Ğ¾Ğ²Ğ¸Ğ½Ğ° Ğ´Ğ½Ñ ÑĞ¾Ğ¾Ñ‚Ğ²ĞµÑ‚ÑÑ‚Ğ²ÑƒĞµÑ‚ 2.25 ÑÑƒÑ‚Ğ¾Ğº.\n";
+  std::cout << "\n‡ ¤ ­¨¥ 3. ‚ëá®â  ¡ ¬¡ãª .\n";
+  std::cout << "‘ãâª¨ ­ ç¨­ îâáï á ¤­ï ¨ áª« ¤ë¢ îâáï\n"
+    << "¨§ ¤­ï (12 ç) ¨ ­®ç¨ (12 ç).\n"
+    << "‘«¥¤®¢ â¥«ì­® ­  2 áãâ®ª ¨ ¯®«®¢¨­  ¤­ï á®®â¢¥âáâ¢ã¥â 2.25 áãâ®ª.\n";
   double height = bambooHeight(2.25, 50, 20, 100);
-  std::cout << "Ğ’Ñ‹ÑĞ¾Ñ‚Ğ° Ğ±Ğ°Ğ¼Ğ±ÑƒĞºĞ° Ñ‡ĞµÑ€ĞµĞ· " << 2.25 << " ÑÑƒÑ‚Ğ¾Ğº : " << height << " ÑĞ¼.\n";
+  std::cout << "‚ëá®â  ¡ ¬¡ãª  ç¥à¥§ " << 2.25 << " áãâ®ª : " << height << " á¬.\n";
 
-  std::cout << "\nĞ—Ğ°Ğ´Ğ°Ğ½Ğ¸Ğµ 4. Ğ ĞµĞ°Ğ»Ğ¸Ğ·Ğ°Ñ†Ğ¸Ñ Ğ¾Ğ±Ğ¼ĞµĞ½Ğ° Ğ´Ğ°Ğ½Ğ½Ñ‹Ğ¼Ğ¸ Ğ±ĞµĞ· Ğ´Ğ¾Ğ¿Ğ¾Ğ»Ğ½Ğ¸Ñ‚ĞµĞ»ÑŒĞ½Ğ¾Ğ¹ Ğ¿Ğ°Ğ¼ÑÑ‚Ğ¸.\n";
+  std::cout << "\n‡ ¤ ­¨¥ 4. ¥ «¨§ æ¨ï ®¡¬¥­  ¤ ­­ë¬¨ ¡¥§ ¤®¯®«­¨â¥«ì­®© ¯ ¬ïâ¨.\n";
   std::cout << "a = " << a << ", b = " << b << "\n";
   swapNumbers(a, b);
-  std::cout << "ĞŸĞ¾Ğ¼ĞµĞ½ÑĞ»Ğ¸ Ğ¼ĞµÑÑ‚Ğ°Ğ¼Ğ¸:\n";
+  std::cout << "®¬¥­ï«¨ ¬¥áâ ¬¨:\n";
   std::cout << "a = " << a << ", b = " << b << "\n";
   return 0;
 }
