@@ -87,12 +87,10 @@ bool getInteger(const std::string& prompt, int& number) {
             break;
         }
 
-        std::cout << "¥ª®àà¥ªâ­®¥ §­ ç¥­¨¥!";
-        std::cout << " ‚¢¥¤¥­®: " << input << "\n";
-        std::cout << "‚¢¥¤¨â¥ ç¨á«®¢®¥ §­ ç¥­¨¥ ¢ ¤¨ ¯ §®­¥:\n";
-        std::cout << "®â -999 999 999 ¯® 999 999 999.\n";
-        std::cout << "‚¢¥¤¨â¥ 'exit' ¤«ï ¢ëå®¤ .\n";
-
+        std::cout << "Incorrect value!\n";
+        std::cout << "Input a number in the range:\n";
+        std::cout << "from -999 999 999 to 999 999 999.\n";
+        std::cout << "Or type 'exit' for exit.\n";
     }
     return true;
 }
@@ -111,11 +109,10 @@ bool getWeekDay(const std::string& prompt, int& number) {
             }
         }
 
-        std::cout << "¥ª®àà¥ªâ­®¥ §­ ç¥­¨¥!";
-        std::cout << " ‚¢¥¤¥­®: " << input << "\n";
-        std::cout << "‚¢¥¤¨â¥ ç¨á«®¢®¥ §­ ç¥­¨¥ ¢ ¤¨ ¯ §®­¥: 1 - 7.\n";
-        std::cout << "‚¢¥¤¨â¥ 'exit' ¤«ï ¢ëå®¤ .\n";
-
+        std::cout << "Incorrect value!\n";
+        std::cout << "Input a number in the range:\n";
+        std::cout << "from 1 to 7.\n";
+        std::cout << "Or type 'exit' for exit.\n";
     }
     return true;
 }
