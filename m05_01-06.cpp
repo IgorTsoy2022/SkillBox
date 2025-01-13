@@ -230,7 +230,8 @@ int main() {
     std::cout << "\nTask 5. Boxes.\n";
     box box1 = {0, 0, 0};
     box box2 = {0, 0, 0};
-    std::cout << "Input the dimensions of\n"; std::cout << "the first box (a b c):\n";
+    std::cout << "Input the dimensions of\n";
+    std::cout << "the first box (a b c):\n";
     std::cin >> box1.a >> box1.b >> box1.c;
     std::cout << "Input the dimensions of\n";
     std::cout << "the second box (a b c):\n";
