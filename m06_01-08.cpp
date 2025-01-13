@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <string>
 
 bool isInteger(const std::string& str, int& number) {
     if (str.empty()) {
@@ -95,7 +95,12 @@ int main() {
 	std::cout << "What time is it?\n";
 	while (getInteger("(Enter an integer number of hours): ", number)) {
 		if (number >= 0 && number < 25) {
-			number = (number == 0) ? 24 : number;
+			if (number > 12) {
+				number -= 12;
+			}
+			else if (number == 0) {
+				number = 12;
+			}
 			for (int i = 0; i < number; ++i) {
 			    std::cout << i + 1 << " cuckoo-cuckoo!\n";
 			}
@@ -187,7 +192,13 @@ int main() {
 	int interest = 0;
 	int desirableSum = 0;
 	int years = 0;
-	
+	if (getInteger("Enter deposit amount: ", deposit)) {
+		if (getInteger("Enter interest rate in annual percentage: ", interest)) {
+			if (getInteger("Enter the desired amount: ", desirableSum)) {
+
+			}
+		}
+	}
 
 	std::cout << "\nTask 7. .\n";
 	

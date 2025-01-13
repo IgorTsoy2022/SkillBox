@@ -2,24 +2,174 @@
 #include <string>
 #include <unordered_map>
 
-std::string weekday(int day) {
-    switch(day) {
-        case 1:
+bool isInteger(const std::string& str, int& number) {
+    if (str.empty()) {
+        return false;
+    }
+
+    auto size = str.size();
+
+    size_t start = (str[0] == '-' || str[0] == '+') ? 1 : 0;
+    size_t leadingZeros = 0;
+
+    for (size_t i = start; i < size; ++i) {
+        if (str[i] != '0') {
+            break;
+        }
+        ++leadingZeros;
+    }
+
+    start += leadingZeros;
+
+    size_t length = size > start + 9 ? start + 9 : size;
+
+    if (!std::isdigit(str[start])) {
+        if (leadingZeros > 0) {
+            number = 0;
+            return true;
+        }
+        return false;
+    }
+
+    ++start;
+
+    for (size_t i = start; i < length; ++i) {
+        if (!std::isdigit(str[i])) {
+            number = std::stoi(str.substr(0, i - 1));
+            return true;
+        }
+    }
+
+    number = std::stoi(str.substr(0, length));
+    return true;
+}
+
+bool getInteger(const std::string& prompt, int& number) {
+    std::string input = "";
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input == "exit") {
+            return false;
+        }
+
+        if (isInteger(input, number)) {
+            break;
+        }
+
+        std::cout << "Incorrect value!\n";
+        std::cout << "Input a number in the range:\n";
+        std::cout << "from -999 999 999 to 999 999 999.\n";
+        std::cout << "Or type 'exit' for exit.\n";
+    }
+    return true;
+}
+
+bool isLeap(int year) {
+    if (year % 4 > 0) {
+        return false;
+    }
+    else {
+        if (year % 100 > 0) {
+            return true;
+        }
+        else {
+            return year % 400 > 0;
+        }
+    }
+}
+
+std::string getMonth(int month) {
+    switch (month) {
+    case 1:
+        return "January";
+    case 2:
+        return "February";
+    case 3:
+        return "March";
+    case 4:
+        return "April";
+    case 5:
+        return "May";
+    case 6:
+        return "June";
+    case 7:
+        return "July";
+    case 8:
+        return "August";
+    case 9:
+        return "September";
+    case 10:
+        return "October";
+    case 11:
+        return "November";
+    case 12:
+        return "December";
+    }
+    return "";
+}
+
+std::string getWeekday(int day) {
+    switch (day) {
+    case 1:
         return "Monday";
-        case 2:
+    case 2:
         return "Tuesday";
-        case 3:
+    case 3:
         return "Wednesday";
-        case 4:
+    case 4:
         return "Thursday";
-        case 5:
+    case 5:
         return "Friday";
-        case 6:
+    case 6:
         return "Saturday";
-        case 7:
+    case 7:
         return "Sunday";
     }
     return "";
+}
+
+bool getDate(const std::string& prompt, int& year, int& month, int& day) {
+    std::string input = "";
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input.size() > 0) {
+            if (input == "exit") {
+                return false;
+            }
+
+            int y = 0, m = 0, d = 0;
+            if (isInteger(input.substr(0, 4), y)
+                && isInteger(input.substr(5, 2), m)
+                && isInteger(input.substr(8, 2), d)) {
+                if (m > 0 && m < 13) {
+                    int maxDay = 32;
+                    if (m == 2) {
+                        maxDay = isLeap(y) ? 30 : 29;
+                    }
+                    else if (m == 4 || m == 6 || m == 9 || m == 11) {
+                        maxDay = 31;
+                    }
+                    if (d > 0 && d < maxDay) {
+                        year = y;
+                        month = m;
+                        day = d;
+                        break;
+                    }
+                    std::cout << "In " << getMonth(m) << " " << y << " there are " << maxDay - 1 << " days.\n";
+                }
+                else {
+                    std::cout << "Month should be in range 1 - 12\n";
+                }
+            }
+            else {
+                std::cout << "Incorrect date!\n";
+            }
+            std::cout << "Enter date in YYYY/MM/DD, where 'YYYY' (year), 'MM' (month), 'DD' (day)\n";
+            std::cout << "are integer numbers, '/' - any character.\n";
+            std::cout << "For exit type 'exit'.\n";
+        }
+    }
+    return true;
 }
 
 bool mayDayIsHoliday(int day, int firstWeekDayNo) {
@@ -35,7 +185,7 @@ bool mayDayIsHoliday(int day, int firstWeekDayNo) {
         --firstWeekDayNo;
         int weeks = (day + firstWeekDayNo) / 7;
         int weekDayNo = day + firstWeekDayNo - weeks * 7;
-        std::cout << " is " << weekday(weekDayNo);
+        std::cout << " is " << getWeekday(weekDayNo);
         return weekDayNo > 5;
     }
 }
@@ -140,29 +290,44 @@ int main() {
     std::cout << "Task 1. Check flight path.\n";
     int altitude = 0;
     int speed = 0;
-    std::cout << "Input flight altitude: ";
-    std::cin >> altitude;
-    std::cout << "Input flight speed: ";
-    std::cin >> speed;
-
-    std::cout << "Your flight altitude is " << altitude << " m.\n";
-    std::cout << "The flight speed is " << speed << " km/h.\n";
-    if (altitude > 8999 && altitude < 9501 && speed > 749 && speed < 851) {
-        std::cout << "All good!\n";
+    while (getInteger("Input flight altitude: ", altitude)) {
+        if (altitude < 0) {
+            std::cout << "A flight altitude cannot be less than 0!\n";
+        } 
+        else {
+            break;
+        }
     }
-    else {
-        if (altitude < 9000) {
-            std::cout << "Climb to a height above 9000 m.\n";
+    if (altitude > 0) {
+        while (getInteger("Input flight speed: ", speed)) {
+            if (speed < 0) {
+                std::cout << "A flight speed cannot be less than 0!\n";
+            }
+            else {
+                break;
+            }
         }
-        else if (altitude > 9500) {
-            std::cout << "Drop to a height below 9500 m.\n";
+    }
+    if (speed > 0) {
+        std::cout << "Your flight altitude is " << altitude << " m.\n";
+        std::cout << "The flight speed is " << speed << " km/h.\n";
+        if (altitude > 8999 && altitude < 9501 && speed > 749 && speed < 851) {
+            std::cout << "All good!\n";
         }
+        else {
+            if (altitude < 9000) {
+                std::cout << "Climb to a height above 9000 m.\n";
+            }
+            else if (altitude > 9500) {
+                std::cout << "Drop to a height below 9500 m.\n";
+            }
 
-        if (speed < 750) {
-            std::cout << "Increase your speed above 750 km/h.\n";
-        }
-        else if (speed > 850) {
-            std::cout << "Reduce your flight speed below 850 km/h.\n";
+            if (speed < 750) {
+                std::cout << "Increase your speed above 750 km/h.\n";
+            }
+            else if (speed > 850) {
+                std::cout << "Reduce your flight speed below 850 km/h.\n";
+            }
         }
     }
 
@@ -170,26 +335,24 @@ int main() {
     int day = 0;
     std::cout << "Input day (number between 1 and 31): ";
     std::cin >> day;
-    if (day < 1 || day > 31) {
-        return 0;
-    }
-
-    std::cout << "May " << day;
-    if (day < 6) {
-        std::cout << " is May Day holiday.\n";
-    }
-    else if (day > 7 && day < 11) {
-        std::cout << " is Victory Day celebration.\n";
-    }
-    else {
-        int weeks = day / 7;
-        int weekdayNo = day - weeks * 7;
-        std::cout << " is " << weekday (weekdayNo) << " - ";
-        if (weekdayNo > 5) {
-            std::cout << "weekend.\n";
+    if (day > 0 && day < 32) {
+        std::cout << "May " << day;
+        if (day < 6) {
+            std::cout << " is May Day holiday.\n";
+        }
+        else if (day > 7 && day < 11) {
+            std::cout << " is Victory Day celebration.\n";
         }
         else {
-            std::cout << "working day.\n";
+            int weeks = day / 7;
+            int weekdayNo = day - weeks * 7;
+            std::cout << " is " << getWeekday(weekdayNo) << " - ";
+            if (weekdayNo > 5) {
+                std::cout << "weekend.\n";
+            }
+            else {
+                std::cout << "working day.\n";
+            }
         }
     }
 
@@ -197,19 +360,22 @@ int main() {
     int firstWeekDayNo = 0;
     std::cout << "Input week day number of May 1 (number between 1 and 7): ";
     std::cin >> firstWeekDayNo;
-    if (firstWeekDayNo < 1 || firstWeekDayNo > 7) {
-        return 0;
-    }
-    std::cout << "May 1 is " << weekday(firstWeekDayNo) << "\n";
-    std::cout << "May " << day;
-    if (mayDayIsHoliday(day, firstWeekDayNo)) {
-        std::cout << " - holiday.\n";
-    }
-    else {
-        std::cout << " - working day.\n";
+    if (firstWeekDayNo > 0 && firstWeekDayNo < 8) {
+        std::cout << "May 1 is " << getWeekday(firstWeekDayNo) << "\n";
+        std::cout << "Input day (number between 1 and 31): ";
+        std::cin >> day;
+        if (day > 0 && day < 32) {
+            std::cout << "May " << day;
+            if (mayDayIsHoliday(day, firstWeekDayNo)) {
+                std::cout << " - holiday.\n";
+            }
+            else {
+                std::cout << " - working day.\n";
+            }
+        }
     }
 
-    std::cout << "Task 4. ATM machine.\n";
+    std::cout << "\nTask 4. ATM machine.\n";
     int cash = 0; 
     std::cout << "Input withdrawal amount:";
     std::cin >> cash;
@@ -244,20 +410,19 @@ int main() {
         std::cout << "You cannot put the box into another one.\n";
     }
 
-    std::cout << "\nTask 6.Majority.\n";
+    std::cout << "\nTask 6. Majority.\n";
     date today = {0, 0, 0};
     date birthday = {0, 0, 0};
-    std::cout << "Input today's date (yyyy mm dd):\n";
-    std::cin >> today.y >> today.m >> today.d;
-    std::cout << "Input birthday's date (yyyy mm dd)\n";
-    std::cin >> birthday.y >> birthday.m >> birthday.d;
-    auto age = getAge
-    (today, birthday);
-    if (age >= 18) {
-        std::cout << "Drinking alcohol is allowed.\n";
-    }
-    else {
-        std::cout << "Drinking alcohol is prohibited.\n";
+    if (getDate("Enter today's date (YYYY/MM/DD):", today.y, today.m, today.d)) {
+        if (getDate("Enter birthday's date (YYYY/MM/DD):", today.y, today.m, today.d)) {
+            auto age = getAge(today, birthday);
+            if (age >= 18) {
+                std::cout << "Drinking alcohol is allowed.\n";
+            }
+            else {
+                std::cout << "Drinking alcohol is prohibited.\n";
+            }
+        }
     }
 
     return 0;
