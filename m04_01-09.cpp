@@ -138,25 +138,25 @@ bool isEven(int a) {
 int main() {
     int a = 0, b = 0;
 
-    std::cout << "‡ ¤ ç  1. Œ¨­¨¬ã¬ ¨§ ¤¢ãå ç¨á¥«.\n";
-    if (getInteger("‚¢¥¤¨â¥ ¯¥à¢®¥ ç¨á«®: ", a)) {
-        if (getInteger("‚¢¥¤¨â¥ ¢â®à®¥ ç¨á«®: ", b)) {
+    std::cout << "Task 1. Minimum of two numbers.\n";
+    if (getInteger("Enter the first number: ", a)) {
+        if (getInteger("Enter the second number: ", b)) {
             bool areEqual = false;
             int minimum = min(a, b, areEqual);
 
             if (areEqual) {
-                std::cout << "—¨á«  à ¢­ë!\n";
+                std::cout << "The numbers are equal!\n";
             }
             else {
-                std::cout << " ¨¬¥­ìè¥¥ ç¨á«®: " <<
+                std::cout << "The smallest number: " <<
                     minimum << "\n";
             }
         }
     }
 
     std::cout << "\n‡ ¤ ç  2. ‘«®¦¥­¨¥ ¤¢ãå ç¨á¥«.\n";
-    if (getInteger("‚¢¥¤¨â¥ ¯¥à¢®¥ ç¨á«®: ", a)) {
-        if (getInteger("‚¢¥¤¨â¥ ¢â®à®¥ ç¨á«®: ", b)) {
+    if (getInteger("Enter the first number: ", a)) {
+        if (getInteger("Enter the second number: ", b)) {
             int sum = 0;
             if (getInteger("‚¢¥¤¨â¥ ¨å áã¬¬ã: ", sum)) {
                 int correctSum = a + b;
@@ -164,7 +164,7 @@ int main() {
                     std::cout << "‚¥à­®!\n";
                 }
                 else {
-                    std::cout << "Žè¨¡ª ! ‚¥à­ë© à¥§ã«ìâ â: " << correctSum << "\n";
+                    std::cout << "Error! The correct result: " << correctSum << "\n";
                 }
             }
         }
