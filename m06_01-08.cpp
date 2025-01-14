@@ -89,7 +89,23 @@ int getFibonacci(int sequenceNo) {
 	 return current;
 }
 
+int gcd_(int a, int b) {
+	if (b == 0) {
+		return a < 0 ? -a : a;
+	}
+	return gcd_(b, a % 2);
+}
+
+int gcd(int a, int b) {
+	if (a > b) {
+		return gcd_(a, b);
+	}
+	return gcd_(b, a);
+}
+
 int main() {
+	std::cout << 30 % 18 << "\n";
+	return 0;
 	std::cout << "Task 1. The Cuckoo.\n";
 	int number = 0;
 	std::cout << "What time is it?\n";
@@ -195,13 +211,37 @@ int main() {
 	if (getInteger("Enter deposit amount: ", deposit)) {
 		if (getInteger("Enter interest rate in annual percentage: ", interest)) {
 			if (getInteger("Enter the desired amount: ", desirableSum)) {
-
+			     if (deposit > 0 && interest > 0 && desirableSum > deposit) {
+                    int balance = deposit;
+                    if (balance * interest / 100 > 0) {
+                        while (balance <= desirableSum) {
+                	        balance += balance * interest / 100;
+                	        ++years;
+                	        std::cout << "b = " << balance << " y = " << years << "\n";
+                        }
+                        std::cout << "The disarable amount one can get in " << years << " years.\n";
+                    }
+                    else {
+                    	std::cout << "Deposit and interest rate are too small to be able to get any revenue.\n";
+                    }
+			    }
 			}
 		}
 	}
 
-	std::cout << "\nTask 7. .\n";
-	
+	std::cout << "\nTask 7. Fraction reduction.\n";
+	int numerator = 0;
+	int denominator = 0;
+	if (getInteger("Enter the numerator: ", numerator)) {
+		if (getInteger("Enter the denominator: ", denominator)) {
+			if (denominator < 0) {
+				denominator = -denominator;
+				numerator = - numerator;
+			}
+			std::cout << numerator << " / " << denominator << "\n";
+			
+		}
+	}
 		
 	std::cout << "\nTask 8. .\n";
 	
