@@ -172,7 +172,7 @@ bool getDate(const std::string& prompt, int& year, int& month, int& day) {
     return true;
 }
 
-bool mayDayIsHoliday(int day, int firstWeekDayNo) {
+bool isHolidayInMay(int day, int firstWeekDayNo) {
     if (day < 6) {
         std::cout << " is May Day";
         return true;
@@ -185,6 +185,9 @@ bool mayDayIsHoliday(int day, int firstWeekDayNo) {
         --firstWeekDayNo;
         int weeks = (day + firstWeekDayNo) / 7;
         int weekDayNo = day + firstWeekDayNo - weeks * 7;
+        if (weekDayNo == 0) {
+        	weekDayNo = 7;
+        }
         std::cout << " is " << getWeekday(weekDayNo);
         return weekDayNo > 5;
     }
@@ -346,6 +349,9 @@ int main() {
         else {
             int weeks = day / 7;
             int weekdayNo = day - weeks * 7;
+            if (weekdayNo == 0) {
+            	weekdayNo = 7;
+            }
             std::cout << " is " << getWeekday(weekdayNo) << " - ";
             if (weekdayNo > 5) {
                 std::cout << "weekend.\n";
@@ -366,8 +372,8 @@ int main() {
         std::cin >> day;
         if (day > 0 && day < 32) {
             std::cout << "May " << day;
-            if (mayDayIsHoliday(day, firstWeekDayNo)) {
-                std::cout << " - holiday.\n";
+            if (isHolidayInMay(day, firstWeekDayNo)) {
+                std::cout << " - weekend.\n";
             }
             else {
                 std::cout << " - working day.\n";
