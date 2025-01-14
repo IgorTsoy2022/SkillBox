@@ -89,23 +89,14 @@ int getFibonacci(int sequenceNo) {
 	 return current;
 }
 
-int gcd_(int a, int b) {
+int gcd(int a, int b) {
 	if (b == 0) {
 		return a < 0 ? -a : a;
 	}
-	return gcd_(b, a % 2);
-}
-
-int gcd(int a, int b) {
-	if (a > b) {
-		return gcd_(a, b);
-	}
-	return gcd_(b, a);
+	return gcd(b, a % b);
 }
 
 int main() {
-	std::cout << 30 % 18 << "\n";
-	return 0;
 	std::cout << "Task 1. The Cuckoo.\n";
 	int number = 0;
 	std::cout << "What time is it?\n";
@@ -234,17 +225,53 @@ int main() {
 	int denominator = 0;
 	if (getInteger("Enter the numerator: ", numerator)) {
 		if (getInteger("Enter the denominator: ", denominator)) {
+			int divisor = gcd(numerator, denominator);
 			if (denominator < 0) {
-				denominator = -denominator;
+				denominator = - denominator;
 				numerator = - numerator;
 			}
-			std::cout << numerator << " / " << denominator << "\n";
+			std::cout << "The result: " << numerator / divisor << " / " << denominator / divisor << "\n";
 			
 		}
 	}
 		
-	std::cout << "\nTask 8. .\n";
-	
-	
+	std::cout << "\nTask 8. Guess the magic number.\n";
+	int left = 0, right = 63;
+	int hiddenNumber = 0, guessNumber = 0;
+	std::string prompt = "Pick a number in the range from " + std::to_string(left) + " to " + std::to_string(right) + ": ";
+	if (getInteger(prompt, hiddenNumber)) {
+		int guessNumber = (right + left) / 2;
+		int counter = 0;
+		char c = '0';
+		int quant = 1, tmp = 0;
+		do {
+			++counter;
+			std::cout << "Is " << guessNumber << " the hidden number? (Y/N):";
+			std::cin >> c;
+			if (c == 'y' || c == 'Y') {
+				break;
+			}
+
+			++counter;
+			std::cout << "Is the hidden number greater than " << guessNumber << "? (Y/N):";
+			std::cin >> c;
+			if (c == 'y' || c == 'Y') {
+				left = guessNumber + 1;
+				quant = 1;
+			}
+			else if (c == 'n' || c == 'N') {
+				right = guessNumber;
+				quant = -1;
+			}
+			else {
+				break;
+			}
+			tmp = (right + left) / 2;
+			guessNumber = guessNumber == tmp ? guessNumber + quant : tmp;
+		} while (guessNumber != hiddenNumber);
+		std::cout << "The number of questioned asked: " << counter << "\n";
+		std::cout << "The hidden number is " << guessNumber << "\n";
+	}
+
 	return 0;
 }
