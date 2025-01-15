@@ -71,7 +71,7 @@ int getFibonacci(int sequenceNo) {
         return 1;
     }
 
-    int maxInt = 2147483647;
+    const int maxInt = 2147483647;
     int previous = 1;
     int current = 1;
     int next = 0;
@@ -145,7 +145,7 @@ int main() {
             while (depo < 0) {
                 std::cout << "The amount of dept is: " << -depo << "\n";
                 if (!getInteger("Enter the repayment: ", repayment)) {
-                     break;
+                    break;
                 }
                 if (repayment > 0) {
                     depo += repayment;
@@ -231,7 +231,6 @@ int main() {
                 numerator = - numerator;
             }
             std::cout << "The result: " << numerator / divisor << " / " << denominator / divisor << "\n";
-
         }
     }
 
