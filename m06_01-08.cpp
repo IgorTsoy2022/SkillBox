@@ -1,6 +1,20 @@
 #include <iostream>
 #include <string>
 
+bool isYes(const std::string& question) {
+    std::string input;
+    while(true) {
+    	std::cout << question;
+    	std::getline(std::cin, input);
+    	if (input == "Y" || input == "y") {
+    	    return true;
+    	}
+    	if (input == "N" || input == "n") {
+    		return false;
+    	}
+    }
+}
+
 bool isInteger(const std::string& str, int& number) {
     if (str.empty()) {
         return false;
@@ -71,7 +85,7 @@ int getFibonacci(int sequenceNo) {
         return 1;
     }
 
-    const int maxInt = 2147483647;
+    int maxInt = 2147483647;
     int previous = 1;
     int current = 1;
     int next = 0;
@@ -145,7 +159,7 @@ int main() {
             while (depo < 0) {
                 std::cout << "The amount of dept is: " << -depo << "\n";
                 if (!getInteger("Enter the repayment: ", repayment)) {
-                    break;
+                     break;
                 }
                 if (repayment > 0) {
                     depo += repayment;
@@ -161,25 +175,68 @@ int main() {
     int category = 6;
     int ticketNo = 0;
     if (getInteger("Enter ticket number: ", ticketNo)) {
-        category /= 2;
-        int digitSum = 0;
-        int digit = 0;
-        for (int i = 0; i < category; ++i) {
-            digit = ticketNo % 10;
-            ticketNo /= 10;
-            digitSum += digit;
-        }
-        for (int i = 0; i < category; ++i) {
-            digit = ticketNo % 10;
-            ticketNo /= 10;
-            digitSum -= digit;
-        }
-        if (digitSum == 0) {
-            std::cout << "The ticket is lucky!\n";
+        if (ticketNo > 99999 && ticketNo < 1000000) {
+            category /= 2;
+            int digitSum = 0;
+            int digit = 0;
+            for (int i = 0; i < category; ++i) {
+                digit = ticketNo % 10;
+                ticketNo /= 10;
+                digitSum += digit;
+            }
+            for (int i = 0; i < category; ++i) {
+                digit = ticketNo % 10;
+                ticketNo /= 10;
+                digitSum -= digit;
+            }
+            if (digitSum == 0) {
+                std::cout << "The ticket is lucky!\n";
+            }
+            else {
+                 std::cout << "The ticket is ordinary.\n";
+            }
         }
         else {
-            std::cout << "The ticket is ordinary.\n";
+            std::cout << "The entered ticket number: " << ticketNo << " is not valid!\n";
         }
+    }
+
+    std::cout << "\nIf the ticket number begins with leading zeros.\n";
+    bool isValid = false;
+    int numberOfDigits = 6;
+    int digit = 0;
+    std::string str;
+    std::cout << "Enter ticket number: ";
+    if (std::getline(std::cin, str)) {
+    	if (str.size() == numberOfDigits) {
+    	    int half = numberOfDigits / 2;
+            int luckySum = 0;
+            for (int i = 0; i < numberOfDigits; ++i) {
+    		    isValid = std::isdigit(str[i]);
+    		    
+    		    if (!isValid) {
+    		    	break;
+    		    }
+    		    digit = std::stoi(str.substr(i, 1));
+    		    if (i < half) {
+    		    	luckySum += digit;
+    		    }
+    		    else {
+    		    	luckySum -= digit;
+    		    }
+            }
+            if (isValid) {
+            	if (luckySum == 0) {
+            	    std::cout << "The ticket is lucky!\n";
+                }
+                else {
+                    std::cout << "The ticket is ordinary.\n";
+            	}
+            }
+    	}
+    	if (!isValid) {
+    		std::cout << "The entered ticket number: " << str << " is not valid!\n";
+    	}
     }
 
     std::cout << "\nTask 5. Fibonacci numbers.\n";
@@ -191,7 +248,7 @@ int main() {
         }
         else {
             std::cout << "Fibonacci number: " << fib << "\n";
-        }
+    	}
     }
 
     std::cout << "\nTask 6. Deposits.\n";
@@ -231,6 +288,7 @@ int main() {
                 numerator = - numerator;
             }
             std::cout << "The result: " << numerator / divisor << " / " << denominator / divisor << "\n";
+
         }
     }
 
@@ -241,30 +299,26 @@ int main() {
     if (getInteger(prompt, hiddenNumber)) {
         int guessNumber = (right + left) / 2;
         int counter = 0;
-        char c = '0';
         int quant = 1, tmp = 0;
+        std::string question;
         do {
             ++counter;
-            std::cout << "Is " << guessNumber << " the hidden number? (Y/N):";
-            std::cin >> c;
-            if (c == 'y' || c == 'Y') {
+            question = "Is " + std::to_string(guessNumber) + " the hidden number? (Y/N): ";
+            if (isYes(question)) {
                 break;
             }
 
             ++counter;
-            std::cout << "Is the hidden number greater than " << guessNumber << "? (Y/N):";
-            std::cin >> c;
-            if (c == 'y' || c == 'Y') {
+            question = "Is the hidden number greater than " + std::to_string(guessNumber) + "? (Y/N): ";
+            if (isYes(question)) {
                 left = guessNumber + 1;
                 quant = 1;
             }
-            else if (c == 'n' || c == 'N') {
+            else {
                 right = guessNumber;
                 quant = -1;
             }
-            else {
-                break;
-            }
+
             tmp = (right + left) / 2;
             guessNumber = guessNumber == tmp ? guessNumber + quant : tmp;
         } while (guessNumber != hiddenNumber);
