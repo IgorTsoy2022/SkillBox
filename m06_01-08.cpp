@@ -191,7 +191,7 @@ int main() {
         }
         else {
             std::cout << "Fibonacci number: " << fib << "\n";
-	}
+        }
     }
 
     std::cout << "\nTask 6. Deposits.\n";
