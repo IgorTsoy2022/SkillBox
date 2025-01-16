@@ -189,27 +189,27 @@ int main() {
         std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     }
 
-	std::cout << "\nTask 4. The frame.\n";
-	int width = 0;
-	int height = 0;
-	std::cout << "Enter the width and the height of the frame: ";
-	std::cin >> width >> height;
-	std::cout << "|";
-	if (width > 0) {
-	    for (int i = 0; i < width - 2; ++i) {
-             std::cout << "-";
-    	}
+    std::cout << "\nTask 4. The frame.\n";
+    int width = 0;
+    int height = 0;
+    std::cout << "Enter the width and the height of the frame: ";
+    std::cin >> width >> height;
+    std::cout << "|";
+    if (width > 0) {
+        for (int i = 0; i < width - 2; ++i) {
+            std::cout << "-";
+        }
         if (width > 1) {
             std::cout << "|\n";
-    	}
-    	else {
+        }
+        else {
             std::cout << "\n";
         }
-	}
+    }
 
-	for (int y = 0; y < height -2; ++y) {
+    for (int y = 0; y < height -2; ++y) {
         std::cout << "|";
-	    if (width > 1) {
+        if (width > 1) {
             for (int x = 0; x < width - 2; ++x) {
                 std::cout << " ";
             }
@@ -220,11 +220,11 @@ int main() {
         }
     }
 
-	if (height > 1) {
-       std::cout << "|";
-       for (int i = 0; i < width - 2; ++i) {
-           std::cout << "-";
-       }
+    if (height > 1) {
+        std::cout << "|";
+        for (int i = 0; i < width - 2; ++i) {
+            std::cout << "-";
+        }
        if (width > 1) {
            std::cout << "|\n";
        }
@@ -233,7 +233,7 @@ int main() {
        }
     }
 
-	std::cout << "\nTask 5. Coordinate axes.\n";
+    std::cout << "\nTask 5. Coordinate axes.\n";
     int maxX = 10;
     int maxY = 5;
 
@@ -266,7 +266,7 @@ int main() {
         std::cout << "|\n";
     }
 	
-	std::cout << "\nTask 6. Important announcements.\n";
+    std::cout << "\nTask 6. Important announcements.\n";
     int header = 0, exclamations = 0;
     while (getInteger("Enter the total length of the header: ", header)) {
         if (header <= 0) {
@@ -307,7 +307,7 @@ int main() {
         std::cout << "\n";
     }
 
-	std::cout << "\nTask 7. Biolabs.\n";
+    std::cout << "\nTask 7. Biolabs.\n";
     int bacteria = 0, antibiotics = 0;
     while (getInteger("Enter the number of bacteria: ", bacteria)) {
         if (bacteria < 0) {
@@ -339,7 +339,7 @@ int main() {
         }
     }
 
-	std::cout << "\nTask 8. The Christmas tree.\n";
+    std::cout << "\nTask 8. The Christmas tree.\n";
     int heightCT = 0, widthCT = 0;
     while (getInteger("Enter the height of the Christmas tree: ", heightCT)) {
         if (heightCT < 0) {
@@ -360,5 +360,5 @@ int main() {
         std::cout << "\n";
     }
 
-	return 0;
+    return 0;
 }
