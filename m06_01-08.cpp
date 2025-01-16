@@ -235,7 +235,7 @@ int main() {
             }
     	}
     	if (!isValid) {
-    		std::cout << "The entered ticket number: " << str << " is not valid!\n";
+            std::cout << "The entered ticket number: " << str << " is not valid!\n";
     	}
     }
 
@@ -288,7 +288,6 @@ int main() {
                 numerator = - numerator;
             }
             std::cout << "The result: " << numerator / divisor << " / " << denominator / divisor << "\n";
-
         }
     }
 
