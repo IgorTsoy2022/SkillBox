@@ -68,41 +68,7 @@ struct coord {
     int y;
 };
 
-int getFibonacci(int sequenceNo) {
-    if (sequenceNo < 1) {
-        return 0;
-    }
-    if (sequenceNo < 3) {
-        return 1;
-    }
-
-    int maxInt = 2147483647;
-    int previous = 1;
-    int current = 1;
-    int next = 0;
-
-    for (int i = 2; i < sequenceNo; ++i) {
-        if (previous >= maxInt - current) {
-            return -1;
-        }
-
-        next  = previous + current;
-        previous = current;
-        current = next;
-    }
-
-    return current;
-}
-
-int gcd(int a, int b) {
-    if (b == 0) {
-        return a < 0 ? -a : a;
-    }
-    return gcd(b, a % b);
-}
-
 int main() {
-/*
     std::cout << "Task 1. Food stocks.\n";
     int buckwheat = 100;
     int monthlyConsumption = 4;
@@ -186,7 +152,7 @@ int main() {
     char c = '0';
     std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     while (true) {
-         std::cout << "[Program]: Enter command (A - left, D - right, W - up, S - down, E - exit):\n";
+        std::cout << "[Program]: Enter command (A - left, D - right, W - up, S - down, E - exit):\n";
         std::cout << "[Operator]: ";
         std::cin >> c;
         if (c == 'E' || c == 'e') {
@@ -223,7 +189,6 @@ int main() {
         std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     }
 
-*/
 	std::cout << "\nTask 4. The frame.\n";
 	int width = 0;
 	int height = 0;
@@ -232,50 +197,168 @@ int main() {
 	std::cout << "|";
 	if (width > 0) {
 	    for (int i = 0; i < width - 2; ++i) {
-                std::cout << "-";
-    	    }
-            if (width > 1) {
-                std::cout << "|\n";
-    	    }
-    	    else {
-                std::cout << "\n";
-            }
+             std::cout << "-";
+    	}
+        if (width > 1) {
+            std::cout << "|\n";
+    	}
+    	else {
+            std::cout << "\n";
+        }
 	}
 
 	for (int y = 0; y < height -2; ++y) {
-            std::cout << "|";
+        std::cout << "|";
 	    if (width > 1) {
-                for (int x = 0; x < width - 2; ++x) {
-                    std::cout << " ";
-                }
-                std::cout << "|\n";
+            for (int x = 0; x < width - 2; ++x) {
+                std::cout << " ";
             }
-            else {
-                std::cout << "\n";
-            }
+            std::cout << "|\n";
         }
+        else {
+            std::cout << "\n";
+        }
+    }
 
 	if (height > 1) {
-            std::cout << "|";
-            for (int i = 0; i < width - 2; ++i) {
-                std::cout << "-";
-            }
-            if (width > 1) {
-                std::cout << "|\n";
-            }
-            else {
-                std::cout << "\n";
-            }
+       std::cout << "|";
+       for (int i = 0; i < width - 2; ++i) {
+           std::cout << "-";
+       }
+       if (width > 1) {
+           std::cout << "|\n";
+       }
+       else {
+           std::cout << "\n";
+       }
+    }
+
+	std::cout << "\nTask 5. Coordinate axes.\n";
+    int maxX = 10;
+    int maxY = 5;
+
+    for (int x = 0; x < maxX - 1; ++x) {
+        std::cout << " ";
+    }
+    std::cout << "^\n";
+
+    for (int y = 0; y < maxY - 2; ++y) {
+        for (int x = 0; x < maxX - 1; ++x) {
+            std::cout << " ";
+        }
+        std::cout << "|\n";
+    }
+
+    for (int x = 0; x < maxX - 1; ++x) {
+        std::cout << "-";
+    }
+    std::cout << "+";
+
+    for (int x = 0; x < maxX - 2; ++x) {
+        std::cout << "-";
+    }
+    std::cout << ">\n";
+
+    for (int y = 0; y < maxY - 1; ++y) {
+        for (int x = 0; x < maxX - 1; ++x) {
+            std::cout << " ";
+        }
+        std::cout << "|\n";
+    }
+	
+	std::cout << "\nTask 6. Important announcements.\n";
+    int header = 0, exclamations = 0;
+    while (getInteger("Enter the total length of the header: ", header)) {
+        if (header <= 0) {
+            std::cout << "The header length must be greater than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+    while (getInteger("Enter the number of exclamation marks: ", exclamations)) {
+        if (exclamations < 0) {
+            std::cout << "The number of exclamation cannot be less than zero.\n";
+        }
+        else if (exclamations > header) {
+            std::cout << "The number of exclamation cannot be greater than the total length of the header.\n";
+        }
+        else {
+            break;
+        }
+    }
+
+    if (header > 0) {
+        int left = (header - exclamations) / 2;
+        int right = header - left - exclamations;
+        if (left < right) {
+            std::swap(left, right);
         }
 
+        for (int i = 0; i < left; ++i) {
+            std::cout << "~";
+        }
+        for (int i = 0; i < exclamations; ++i) {
+            std::cout << "!";
+        }
+        for (int i = 0; i < right; ++i) {
+            std::cout << "~";
+        }
+        std::cout << "\n";
+    }
 
-	std::cout << "\nTask 5. Fibonacci numbers.\n";
-	
-	std::cout << "\nTask 6. Deposits.\n";
+	std::cout << "\nTask 7. Biolabs.\n";
+    int bacteria = 0, antibiotics = 0;
+    while (getInteger("Enter the number of bacteria: ", bacteria)) {
+        if (bacteria < 0) {
+            std::cout << "The number of bacteria must be greater than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+    while (getInteger("Enter the number of antibiotics: ", antibiotics)) {
+        if (antibiotics < 0) {
+            std::cout << "The number of antibiotics must be greater than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+    if (bacteria > 0 && antibiotics > 0) {
+        int hours = 0;
+        int killPerHour = 10;
+        while (bacteria > 0 && killPerHour > 0) {
+            bacteria *= 2;
+            int killed = antibiotics * killPerHour--;
+            killed = bacteria > killed ? killed : bacteria;
+            bacteria -= killed;
 
-	std::cout << "\nTask 7. Fraction reduction.\n";
-		
-	std::cout << "\nTask 8. Guess the magic number.\n";
+            std::cout << "After " << ++hours << " hours killed " << killed << " bacteria.";
+            std::cout << "There are " << bacteria << " bacteria left.\n";
+        }
+    }
+
+	std::cout << "\nTask 8. The Christmas tree.\n";
+    int heightCT = 0, widthCT = 0;
+    while (getInteger("Enter the height of the Christmas tree: ", heightCT)) {
+        if (heightCT < 0) {
+            std::cout << "The height of the Christmas tree cannot be less than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+    widthCT = heightCT - 1;
+    for (int y = 0; y < heightCT; ++y) {
+        for (int x = 0; x < widthCT - y; ++x) {
+            std::cout << " ";
+        }
+        for (int x = 0; x < y * 2 + 1; ++x) {
+            std::cout << "#";
+        }
+        std::cout << "\n";
+    }
 
 	return 0;
 }
