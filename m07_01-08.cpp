@@ -179,67 +179,100 @@ int main() {
         std::cout << "Americano has been cooked: " << americano << " cups\n";
         std::cout << "Latte has been cooked:     " << latte << " cups\n";
     }
-*/
 
     std::cout << "\nTask 3. Red Mars.\n";
     const int Xsize = 15;
     const int Ysize = 20;
     coord currentPosition = { 7, 10 };
     char c = '0';
+    std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     while (true) {
-        std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
+         std::cout << "[Program]: Enter command (A - left, D - right, W - up, S - down, E - exit):\n";
+        std::cout << "[Operator]: ";
+        std::cin >> c;
         if (c == 'E' || c == 'e') {
             break;
         }
         switch (c) {
         case 'A':
         case 'a':
+            if (currentPosition.x >= 1) {
+                --currentPosition.x;
+            }
             break;
         case 'D':
         case 'd':
-            break;
-        case 'W':
-        case 'w':
+            if (currentPosition.x < Xsize) {
+            	++currentPosition.x;
+            }
             break;
         case 'S':
         case 's':
+            if (currentPosition.y >= 1) {
+            	--currentPosition.y;
+            }
+            break;
+        case 'W':
+        case 'w':
+            if (currentPosition.y < Ysize) {
+            	++currentPosition.y;
+            }
             break;
         default:
             std::cout << "[Program]: Wrong command!\n";
         }
-        std::cout << "[Program]: Enter command (A - left, D - right, W - up, S - down, E - exit):\n";
-        std::cout << "[Operator]: ";
-        std::cin >> c;
+        std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     }
 
-//*/
-    return 0;
+*/
 
-	std::cout << "\nTask 4. Lucky ticket.\n";
-	int category = 6;
-	int ticketNo = 0;
-	if (getInteger("Enter ticket number: ", ticketNo)) {
-		category /= 2;
-		int digitSum = 0;
-		int digit = 0;
-		for (int i = 0; i < category; ++i) {
-			digit = ticketNo % 10;
-			ticketNo /= 10;
-			digitSum += digit;
-		}
-		for (int i = 0; i < category; ++i) {
-			digit = ticketNo % 10;
-			ticketNo /= 10;
-			digitSum -= digit;
-		}
-		if (digitSum == 0) {
-			std::cout << "The ticket is lucky!\n";
-		}
-		else {
-			std::cout << "The ticket is ordinary.\n";
-		}
+	std::cout << "\nTask 4. The frame.\n";
+	int width = 0;
+	int height = 0;
+	std::cout << "Enter the width and the height of the frame: ";
+	std::cin >> width >> height;
+	std::cout << "|";
+	if (width > 0) {
+	    for (int i = 0; i < width - 2; ++i) {
+	        std::cout << "-";
+    	}
+    	if (width > 1) {
+	        std::cout << "|\n";
+    	}
+    	else {
+    		std::cout << "\n";
+    	}
+	}
+
+	for (int y = 0; y < height -2; ++y) {
+	    std::cout << "|";
+		if (width > 1) {
+	        for (int x = 0; x < width - 2; ++x) {
+	            std::cout << " ";
+	        }
+	        std::cout << "|\n";
+    	}
+    	else {
+    		std::cout << "\n";
+    	}
 	}
 	
+	if (height > 1) {
+	    std::cout << "|";
+    	for (int i = 0; i < width - 2; ++i) {
+	        std::cout << "-";
+    	}
+    	if (width > 1) {
+	        std::cout << "|\n";
+    	}
+    	else {
+    		std::cout << "\n";
+    	}
+	}
+
+
+return 0;
+
 	std::cout << "\nTask 5. Fibonacci numbers.\n";
 	int sequenceNo = 0;
 	if (getInteger("Enter sequence number: ", sequenceNo)) {
