@@ -68,7 +68,6 @@ struct coord {
     int y;
 };
 
-
 int getFibonacci(int sequenceNo) {
     if (sequenceNo < 1) {
         return 0;
@@ -225,7 +224,6 @@ int main() {
     }
 
 */
-
 	std::cout << "\nTask 4. The frame.\n";
 	int width = 0;
 	int height = 0;
@@ -234,135 +232,50 @@ int main() {
 	std::cout << "|";
 	if (width > 0) {
 	    for (int i = 0; i < width - 2; ++i) {
-	        std::cout << "-";
-    	}
-    	if (width > 1) {
-	        std::cout << "|\n";
-    	}
-    	else {
-    		std::cout << "\n";
-    	}
+                std::cout << "-";
+    	    }
+            if (width > 1) {
+                std::cout << "|\n";
+    	    }
+    	    else {
+                std::cout << "\n";
+            }
 	}
 
 	for (int y = 0; y < height -2; ++y) {
-	    std::cout << "|";
-		if (width > 1) {
-	        for (int x = 0; x < width - 2; ++x) {
-	            std::cout << " ";
-	        }
-	        std::cout << "|\n";
-    	}
-    	else {
-    		std::cout << "\n";
-    	}
-	}
-	
+            std::cout << "|";
+	    if (width > 1) {
+                for (int x = 0; x < width - 2; ++x) {
+                    std::cout << " ";
+                }
+                std::cout << "|\n";
+            }
+            else {
+                std::cout << "\n";
+            }
+        }
+
 	if (height > 1) {
-	    std::cout << "|";
-    	for (int i = 0; i < width - 2; ++i) {
-	        std::cout << "-";
-    	}
-    	if (width > 1) {
-	        std::cout << "|\n";
-    	}
-    	else {
-    		std::cout << "\n";
-    	}
-	}
+            std::cout << "|";
+            for (int i = 0; i < width - 2; ++i) {
+                std::cout << "-";
+            }
+            if (width > 1) {
+                std::cout << "|\n";
+            }
+            else {
+                std::cout << "\n";
+            }
+        }
 
-
-return 0;
 
 	std::cout << "\nTask 5. Fibonacci numbers.\n";
-	int sequenceNo = 0;
-	if (getInteger("Enter sequence number: ", sequenceNo)) {
-	    int fib = getFibonacci(sequenceNo);
-	    if (fib < 0) {
-	        std::cout << "The " << sequenceNo << " Fibonacci number causes an overflow.\n";
-	    }
-	    else {
-	        std::cout << "Fibonacci number: " << fib << "\n";
-	    }
-	}
 	
 	std::cout << "\nTask 6. Deposits.\n";
-	int deposit = 0;
-	int interest = 0;
-	int desirableSum = 0;
-	int years = 0;
-	if (getInteger("Enter deposit amount: ", deposit)) {
-		if (getInteger("Enter interest rate in annual percentage: ", interest)) {
-			if (getInteger("Enter the desired amount: ", desirableSum)) {
-			     if (deposit > 0 && interest > 0 && desirableSum > deposit) {
-                    int balance = deposit;
-                    if (balance * interest / 100 > 0) {
-                        while (balance <= desirableSum) {
-                	        balance += balance * interest / 100;
-                	        ++years;
-                	        std::cout << "b = " << balance << " y = " << years << "\n";
-                        }
-                        std::cout << "The disarable amount one can get in " << years << " years.\n";
-                    }
-                    else {
-                    	std::cout << "Deposit and interest rate are too small to be able to get any revenue.\n";
-                    }
-			    }
-			}
-		}
-	}
 
 	std::cout << "\nTask 7. Fraction reduction.\n";
-	int numerator = 0;
-	int denominator = 0;
-	if (getInteger("Enter the numerator: ", numerator)) {
-		if (getInteger("Enter the denominator: ", denominator)) {
-			int divisor = gcd(numerator, denominator);
-			if (denominator < 0) {
-				denominator = - denominator;
-				numerator = - numerator;
-			}
-			std::cout << "The result: " << numerator / divisor << " / " << denominator / divisor << "\n";
-			
-		}
-	}
 		
 	std::cout << "\nTask 8. Guess the magic number.\n";
-	int left = 0, right = 63;
-	int hiddenNumber = 0, guessNumber = 0;
-	std::string prompt = "Pick a number in the range from " + std::to_string(left) + " to " + std::to_string(right) + ": ";
-	if (getInteger(prompt, hiddenNumber)) {
-		int guessNumber = (right + left) / 2;
-		int counter = 0;
-		char c = '0';
-		int quant = 1, tmp = 0;
-		do {
-			++counter;
-			std::cout << "Is " << guessNumber << " the hidden number? (Y/N):";
-			std::cin >> c;
-			if (c == 'y' || c == 'Y') {
-				break;
-			}
-
-			++counter;
-			std::cout << "Is the hidden number greater than " << guessNumber << "? (Y/N):";
-			std::cin >> c;
-			if (c == 'y' || c == 'Y') {
-				left = guessNumber + 1;
-				quant = 1;
-			}
-			else if (c == 'n' || c == 'N') {
-				right = guessNumber;
-				quant = -1;
-			}
-			else {
-				break;
-			}
-			tmp = (right + left) / 2;
-			guessNumber = guessNumber == tmp ? guessNumber + quant : tmp;
-		} while (guessNumber != hiddenNumber);
-		std::cout << "The number of questioned asked: " << counter << "\n";
-		std::cout << "The hidden number is " << guessNumber << "\n";
-	}
 
 	return 0;
 }
