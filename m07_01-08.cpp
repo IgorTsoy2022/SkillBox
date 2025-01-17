@@ -188,13 +188,33 @@ int main() {
         }
         std::cout << "[Program]: The rover is at position (X, Y): (" << currentPosition.x << ", " << currentPosition.y << ")\n";
     }
+    std::cin.clear();
+    std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n'); // precise amount of ignoring
+//    std::cin.rdbuf()->in_avail();                        // returns the exact number of characters in the cin buffer.
 
     std::cout << "\nTask 4. The frame.\n";
     int width = 0;
     int height = 0;
-    std::cout << "Enter the width and the height of the frame: ";
-    std::cin >> width >> height;
-    std::cout << "|";
+    while (getInteger("Enter the width of the frame: ", width)) {
+        if (width < 0) {
+            std::cout << "The width cannot be less than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+    while (getInteger("Enter the height of the frame: ", height)) {
+        if (height < 0) {
+            std::cout << "The height cannot be less than zero.\n";
+        }
+        else {
+            break;
+        }
+    }
+
+    if (height > 0) {
+        std::cout << "|";
+    }
     if (width > 0) {
         for (int i = 0; i < width - 2; ++i) {
             std::cout << "-";
