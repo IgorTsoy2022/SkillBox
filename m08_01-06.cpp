@@ -15,7 +15,37 @@ bool isNumber(const std::string & str, T & number) {
         return false;
     }
 
-    bool isNegative = false;
+    int maxDigits = 0;
+    int maxExponentaDigits = 0;
+    float maxMantissa = 3.4;
+
+    auto t = typeid(number).name();
+    std::cout << *t << "\n";
+    if (*t == 'i') {
+        std::cout << "integer\n";
+        maxDigits = 10;
+    }
+    else if (*t == 'l') {
+        std::cout << "long\n";
+        maxDigits = 19;
+    }
+    else if (*t == 'f') {
+        std::cout << "float\n";
+        maxExponentaDigits = 2;
+        maxDigits = 38;
+    }
+    else if (*t == 'd') {
+        std::cout << "double\n";
+        maxMantissa = 1.7;
+        maxExponentaDigits = 3;
+        maxDigits = 308;
+    }
+    else {
+        return false;
+    }
+
+
+    bool numberIsNegative = false;
     bool signHasAlreadyBeen = false;
     size_t start = 0;
     for (size_t i = 0; i < size; ++i) {
@@ -24,38 +54,35 @@ bool isNumber(const std::string & str, T & number) {
             ++start;
         }
         else if (c == '+' || c == '-') {
-            ++start;
             if (signHasAlreadyBeen) {
                 if (start > 0) {
-        	    number = 0;
-        	    return true;
-        	}
+        	        number = 0;
+        	        return true;
+        	    }
                 return false;
             }
+            ++start;
             signHasAlreadyBeen = true;
-            isNegative = (c == '-');
+            numberIsNegative = (c == '-');
         }
         else {
             break;
         }
     }
 
-std::cout << "str[" << start <<"]='" << str[start] << "'\n";
-
+    bool hasFractions = false;
     int digits = 0;
     int intDigits = 0;
     int symbols = 0;
     int startExponenta = 0;
-    bool hasFractions = false;
-//    bool exponentaHasSign = false;
     for (size_t i = start; i < size; ++i) {
     	if (!std::isdigit(str[i])) {
     	    if (str[i] == '.') {
     	        if (hasFractions) {
                     break;
-    		}
-    		intDigits = digits;
-    		++symbols;
+    		    }
+    		    intDigits = digits;
+    		    ++symbols;
                 hasFractions = true;
     	    }
     	    else if (str[i] == 'e' || str[i] == 'E') {
@@ -74,48 +101,52 @@ std::cout << "str[" << start <<"]='" << str[start] << "'\n";
     std::cout << "start=" << start << " digits=" << digits << " intDigits=" << intDigits << " symbols=" << symbols << " startExponenta=" << startExponenta << "\n";
     std::cout << str.substr(start, digits + symbols) << "\n";
 
+    bool exponentaIsNegative = false;
+    int exponentaDigits = 0;
+    int exponenta = 0;
     if (startExponenta > 0) {
-        
+        signHasAlreadyBeen = false;
+        for (size_t i = startExponenta; i < size; ++i) {
+            char c = str[i];
+            if (c == '0' || c == ' ') {
+                ++startExponenta;
+            }
+            else if (c == '+' || c == '-') {
+                if (signHasAlreadyBeen) {
+                    break;
+                }
+                ++startExponenta;
+                signHasAlreadyBeen = true;
+                exponentaIsNegative = (c == '-');
+            }
+            else {
+                break;
+            }
+        }
+
+        for (size_t i = startExponenta; i < size && exponentaDigits < maxExponentaDigits; ++i) {
+            if (std::isdigit(str[i])) {
+                ++exponentaDigits;
+            }
+            else {
+                break;
+            }
+        }
+
+        exponenta = std::stoi(str.substr(startExponenta, exponentaDigits));
+        std::cout << str.substr(startExponenta, exponentaDigits) << " v=" << exponenta << "\n";
+        if (exponentaIsNegative) {
+            exponenta = -exponenta;
+        }
+    }
+	
+    if (intDigits > 1) {
+        std::cout << "current digits = " << intDigits - 1 + exponenta << "\n";
+    }
+    else {
+        std::cout << "1 / exponenta = " << 1/exponenta << "\n";
     }
 
-	int mantissaDigits = 0;
-//	int maxMantissa = 0;
-	int maxExponent = 0;
-	auto t = typeid(number).name();
-	if (*t == 'i') {
-	    std::cout << "integer\n";
-	    mantissaDigits = 10;
-	}
-	else if (*t == 'l') {
-	    std::cout << "long\n";
-	    mantissaDigits = 19;
-	}
-	else if (*t == 'x') {
-	    std::cout << "long long\n";
-	    mantissaDigits = 19;
-	}
-	else if (*t == 'f') {
-	    std::cout << "float\n";
-	    mantissaDigits = 7;
-//           maxMantissa = 3.4;
-            maxExponent = 38;
-	}
-	else if (*t == 'd') {
-            std::cout << "double\n";
-            mantissaDigits = 16;
-//	      maxMantissa = 1.7;
-            maxExponent = 308;
-	}
-	else if (*t == 'e') {
-	    std::cout << "long double\n";
-	    mantissaDigits = 19;
-//	      maxMantissa = 1.7;
-	    maxExponent = 308;
-	}
-	else {
-	    return false;
-	}
-	
 
 }
 
@@ -183,22 +214,23 @@ bool getInteger(const std::string& prompt, int& number) {
 
 int main() {
     std::cout << "Task 1. Space simulator.\n";
-    int i = 0.;
-//    long l = .1;
+    int i = 1;
+    long l = 0;
     long long ll = 0;
-    float f = 1234.567;
-    double d = 0 - 8e+0034;
+    float f = 0.005;
+    double d = 0.0000023;
     long double ld = 1.01234567890123456;
 
     std::string str;
 
     std::cout.precision(16);
 
-    std::cout << d << "\n";
+    i = 1 / d;
+    std::cout << i << "\n";
 
-    str = " 0 +0 0234.67e100. 05789123e.+5677";
+    str = " 0 +0.00023467e-1008. 05789123e.+5677";
     std::cout << "str=" << str << "\n";
-    isNumber( str, ll );
+    isNumber( str, d );
 
 
     std::cout << "\nTask 2. Coffee machine.\n";
