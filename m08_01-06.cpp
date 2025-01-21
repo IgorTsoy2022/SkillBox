@@ -48,8 +48,9 @@ bool isNumber(const std::string & str, T & number) {
     bool numberIsNegative = false;
     bool signHasAlreadyBeen = false;
     size_t start = 0;
+    char c = '0';
     for (size_t i = 0; i < size; ++i) {
-        char c = str[i];
+        c = str[i];
         if (c == '0' || c == ' ') {
             ++start;
         }
@@ -71,13 +72,16 @@ bool isNumber(const std::string & str, T & number) {
     }
 
     bool hasFractions = false;
+    bool complete = false;
     int digits = 0;
     int intDigits = 0;
+    int fractionZeros = 0;
     int symbols = 0;
     int startExponenta = 0;
     for (size_t i = start; i < size; ++i) {
-    	if (!std::isdigit(str[i])) {
-    	    if (str[i] == '.') {
+    	c = str[i];
+    	if (!std::isdigit(c)) {
+    	    if (c == '.') {
     	        if (hasFractions) {
                     break;
     		    }
@@ -85,7 +89,7 @@ bool isNumber(const std::string & str, T & number) {
     		    ++symbols;
                 hasFractions = true;
     	    }
-    	    else if (str[i] == 'e' || str[i] == 'E') {
+    	    else if (c == 'e' || c == 'E') {
     	        startExponenta = start + digits + symbols + 1;
                 break;
             }
@@ -95,11 +99,18 @@ bool isNumber(const std::string & str, T & number) {
     	}
     	else {
     	    ++digits;
+    	    if (hasFractions && intDigits < 1 && !complete) {
+    	        if (c != '0') {
+    	            complete = true;
+    	        }
+    	        ++fractionZeros;
+    	    }
     	}
     }
 
     std::cout << "start=" << start << " digits=" << digits << " intDigits=" << intDigits << " symbols=" << symbols << " startExponenta=" << startExponenta << "\n";
-    std::cout << str.substr(start, digits + symbols) << "\n";
+    std::cout << "a. " << str.substr(start, digits + symbols) << "\n";
+    std::cout << "b. " << str.substr(start+intDigits, digits - intDigits + 1) << "\n";
 
     bool exponentaIsNegative = false;
     int exponentaDigits = 0;
@@ -140,11 +151,17 @@ bool isNumber(const std::string & str, T & number) {
         }
     }
 	
-    if (intDigits > 1) {
-        std::cout << "current digits = " << intDigits - 1 + exponenta << "\n";
+    float mantissa = std::stof(str.substr(start, digits + symbols));
+    if (intDigits > 0) {
+    	mantissa /= std::pow(10, intDigits - 1);
+        std::cout << "mantissa = " << mantissa;
+        std::cout << " current exponenta = " << intDigits - 1 + exponenta << "\n";
     }
     else {
-        std::cout << "1 / exponenta = " << 1/exponenta << "\n";
+        mantissa *= std::pow(10, fractionZeros);
+        std::cout << "mantissa = " << mantissa;
+        std::cout << " zeros after period = " << fractionZeros << "\n";
+        std::cout << "exponenta = " << exponenta - fractionZeros << "\n";
     }
 
 
@@ -218,17 +235,16 @@ int main() {
     long l = 0;
     long long ll = 0;
     float f = 0.005;
-    double d = 0.0000023;
+    double d = 0.023e30;
     long double ld = 1.01234567890123456;
 
     std::string str;
 
     std::cout.precision(16);
 
-    i = 1 / d;
-    std::cout << i << "\n";
+    std::cout << d << "\n";
 
-    str = " 0 +0.00023467e-1008. 05789123e.+5677";
+    str = " 0 +0 000.00023467e-1008. 05789123e.+5677";
     std::cout << "str=" << str << "\n";
     isNumber( str, d );
 
