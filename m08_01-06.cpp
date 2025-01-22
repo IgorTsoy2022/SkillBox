@@ -4,7 +4,7 @@
 #include <string>
 #include <typeinfo>
 
-//  1    - integer (4 bytes) 10 digits (            -2 147 483 648 to             +2 147 483 647)
+//  1    - integer (4 bytes) 10 digits (-2 147 483 648 to  +2 147 483 647)
 //  1    - long    (4 bytes) 19 digits (-9 223 372 036 854 775 808 to +9 223 372 036 854 775 807)
 //  1.0  - double  (8 bytes) 16 digits (-1.7E-308      to 1.7E+308)
 //  1.0f - float   (4 bytes)  7 digits (-3.4E-38       to 3.4E+38)
@@ -17,6 +17,7 @@ bool isNumber(const std::string & str, T & number) {
         return false;
     }
 
+    int typeNo = 0;
     int maxDigits = 10;
     int maxExponentaDigits = 1;
     float maxMantissa = 2.1;
@@ -24,24 +25,28 @@ bool isNumber(const std::string & str, T & number) {
     switch (*typeid(number).name()) {
     case 'i':
         std::cout << "integer\n";
+        typeNo = 1;
         maxMantissa = 2.1;
         maxExponentaDigits = 1;
         maxDigits = 10;
         break;
     case 'l':
         std::cout << "long\n";
+        typeNo = 2;
         maxMantissa = 9.2;
         maxExponentaDigits = 2;
         maxDigits = 19;
         break;
     case 'f':
         std::cout << "float\n";
+        typeNo = 3;
         maxMantissa = 3.4;
         maxExponentaDigits = 2;
         maxDigits = 38;
         break;
     case 'd':
         std::cout << "double\n";
+        typeNo = 4;
         maxMantissa = 1.7;
         maxExponentaDigits = 3;
         maxDigits = 308;
@@ -173,30 +178,33 @@ bool isNumber(const std::string & str, T & number) {
     }
 
 
-    int dig = 0;
+    int actualDigits = 0;
+    int actualExponenta = 0;
     if (intDigits > 0) {
+        actualDigits = digits;
+        actualExponenta = intDigits + exponenta;
         std::cout << "str.substr(start, digits + 1) = " << str.substr(start, digits + 1) << "\n";
     }
     else {
-        std::cout << "digits + symbols - fractionZeros - 2 = " << digits + symbols - fractionZeros - 2 << "\n";
-        std::cout << "str.substr(start + fractionZeros + 1, digits + symbols - fractionZeros - 2) = " << str.substr(start + fractionZeros + 1, digits + symbols - fractionZeros - 2) << "\n";
+        actualDigits = digits - fractionZeros;
+        actualExponenta = exponenta - fractionZeros;
+        std::cout << "digits - fractionZeros = " << digits - fractionZeros << "\n";
+        std::cout << "str.substr(start + fractionZeros + 1, digits - fractionZeros) = " << str.substr(start + fractionZeros + 1, digits - fractionZeros) << "\n";
 
     }
 
+    std::cout << "actualDigits = " << actualDigits << "\n";
+    std::cout << "exponenta = " << exponenta << "\n";
+    std::cout << "actualExponenta = " << actualExponenta << "\n";
 
-    float mantissa = std::stof(str.substr(start, digits + symbols));
-    std::cout << "mantissa = " << mantissa << "\n";
-    if (intDigits > 0) {
-    	mantissa /= std::pow(10, intDigits - 1);
-        std::cout << "mantissa = " << mantissa;
-        std::cout << " current exponenta = " << intDigits - 1 + exponenta << "\n";
+    if (actualExponenta > maxDigits) {
+    	return false;
     }
-    else {
-        mantissa *= std::pow(10, fractionZeros);
-        std::cout << "mantissa = " << mantissa;
-        std::cout << " zeros after period = " << fractionZeros << "\n";
-        std::cout << "exponenta = " << exponenta - fractionZeros << "\n";
-    }
+
+std::cout << "str.substr(start, digits + symbols - 1) = " << str.substr(start, digits + symbols - 1) << "\n";
+    float mantissa = std::stof(str.substr(start, digits + symbols - 1));
+    std::cout << "mantissa  * pow(10, exponenta)= " << mantissa * std::pow(10, exponenta) << "\n";
+  
 
 
 }
@@ -282,9 +290,9 @@ int main() {
 //    std::cout << "str=" << str << "\n";
 //    isNumber( str, i );
 
-    std::string str1 = "+0001.000000012345678900001e 0002# .0";
+    std::string str1 = "+00000.000000012901e0009# .0";
     std::cout << "str=" << str1 << "\n";
-    isNumber(str1, i);
+    isNumber(str1, l);
 
     return 0;
 
