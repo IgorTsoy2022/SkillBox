@@ -11,47 +11,42 @@
 //  1.0l - long double (not less than double up to 18-19 digits)
 
 template<typename T>
-bool isNumber(const std::string & str, T & number) {
+bool isNumber(const std::string & str, T & number, int & maxDigits, double & maxMantissa) {
     auto size = str.size();
     if (size == 0) {
         return false;
     }
 
-    int typeNo = 0;
-    int maxDigits = 10;
     int maxExponentaDigits = 1;
-    float maxMantissa = 2.1;
 
     switch (*typeid(number).name()) {
     case 'i':
-        std::cout << "integer\n";
-        typeNo = 1;
+        // std::cout << "integer\n";
         maxMantissa = 2.1;
-        maxExponentaDigits = 1;
         maxDigits = 10;
+        maxExponentaDigits = 1;
         break;
     case 'l':
-        std::cout << "long\n";
-        typeNo = 2;
-        maxMantissa = 9.2;
-        maxExponentaDigits = 2;
-        maxDigits = 19;
+        // std::cout << "long\n";
+        maxMantissa = 2.1; // 9.2;
+        maxDigits = 10; // 19;
+        maxExponentaDigits = 1; // 2;
         break;
     case 'f':
-        std::cout << "float\n";
-        typeNo = 3;
+        // std::cout << "float\n";
         maxMantissa = 3.4;
-        maxExponentaDigits = 2;
         maxDigits = 38;
+        maxExponentaDigits = 2;
         break;
     case 'd':
-        std::cout << "double\n";
-        typeNo = 4;
+        // std::cout << "double\n";
         maxMantissa = 1.7;
-        maxExponentaDigits = 3;
         maxDigits = 308;
+        maxExponentaDigits = 3;
         break;
     default :
+        maxDigits = 0;
+        maxMantissa = 0;
         return false;
     }
 
@@ -66,6 +61,7 @@ bool isNumber(const std::string & str, T & number) {
         }
         else if (c == '+' || c == '-') {
             if (signHasAlreadyBeen) {
+                std::cout << "Incorrect number format!\n";
                 return false;
             }
             ++start;
@@ -87,10 +83,11 @@ bool isNumber(const std::string & str, T & number) {
     for (size_t i = start; i < size; ++i) {
     	c = str[i];
         if (std::isdigit(c)) {
-            if (!hasFractions && digits == maxDigits) {
+            ++digits;
+            if (!hasFractions && digits > maxDigits) {
+                std::cout << "Too big number (digits)!\n";
                 return false;
             }
-            ++digits;
             if (hasFractions && !completeFractionZeros) {
                 if (c == '0') {
                     ++fractionZeros;
@@ -102,8 +99,8 @@ bool isNumber(const std::string & str, T & number) {
         }
         else if (c == '.') {
             if (hasFractions) {
+                std::cout << "Too many decimal separators!\n";
                 return false;
-//                break;
             }
             intDigits = digits;
             ++symbols;
@@ -119,11 +116,17 @@ bool isNumber(const std::string & str, T & number) {
         }
     }
 
-    std::cout << "start = " << start << " digits = " << digits << " symbols = " << symbols << "\n";
+    if (!hasFractions) {
+        intDigits = digits;
+    }
+
+/*
+    std::cout << "\nstart = " << start << " digits = " << digits << " symbols = " << symbols << "\n";
     std::cout << "substr(start, digits + symbols) = " << str.substr(start, digits + symbols) << "\n";
     std::cout << "intDigits      = " << intDigits << "\n";
     std::cout << "startExponenta = " << startExponenta << " e='" << str.substr(startExponenta, size - startExponenta) << "'\n";
-    std::cout << "fractionZeros  = " << fractionZeros << "\n";
+    std::cout << "fractionZeros  = " << fractionZeros << "\n\n";
+*/
 
     bool exponentaIsNegative = false;
     int exponentaDigits = 0;
@@ -148,20 +151,21 @@ bool isNumber(const std::string & str, T & number) {
             }
         }
 
-        std::cout << "00startExponenta=" << startExponenta << " e='" << str.substr(startExponenta, size - startExponenta) << "'\n";
-
         for (size_t i = startExponenta; i < size; ++i) {
             if (std::isdigit(str[i])) {
-                if (exponentaDigits == maxExponentaDigits) {
+                if (exponentaDigits > maxExponentaDigits) {
+                    if (exponentaIsNegative) {
+                        break;
+                    }
+                    std::cout << "Too big the power of the number!\n";
                     return false;
                 }
                 ++exponentaDigits;
-                std::cout << "exponentaDigits=" << exponentaDigits << "\n";
-                std::cout << "str[i]=" << str[i] << " exponentaDigits=" << exponentaDigits << " maxExponentaDigits=" << maxExponentaDigits << "\n";
             }
-//            else if (str[i] == ' ' && exponentaDigits == maxExponentaDigits) {
-//                return false;
-//            } 
+            else if (str[i] == '.') {
+                std::cout << "Incorrect power of number!\n";
+                return false;
+            } 
             else {
                 break;
             }
@@ -169,89 +173,53 @@ bool isNumber(const std::string & str, T & number) {
 
         if (exponentaDigits > 0) {
             exponenta = std::stoi(str.substr(startExponenta, exponentaDigits));
-        }
-
-        std::cout << "'" << str.substr(startExponenta, exponentaDigits) << "' exponenta=" << exponenta << "\n";
-        if (exponentaIsNegative) {
-            exponenta = -exponenta;
+            exponenta = exponentaIsNegative ? -exponenta : exponenta;
         }
     }
 
-
-    int actualDigits = 0;
-    int actualExponenta = 0;
+    int powerNumber = 0;
     if (intDigits > 0) {
-        actualDigits = digits;
-        actualExponenta = intDigits + exponenta;
-        std::cout << "str.substr(start, digits + 1) = " << str.substr(start, digits + 1) << "\n";
+        powerNumber = intDigits + exponenta - 1;
     }
     else {
-        actualDigits = digits - fractionZeros;
-        actualExponenta = exponenta - fractionZeros;
-        std::cout << "digits - fractionZeros = " << digits - fractionZeros << "\n";
-        std::cout << "str.substr(start + fractionZeros + 1, digits - fractionZeros) = " << str.substr(start + fractionZeros + 1, digits - fractionZeros) << "\n";
-
+        powerNumber = exponenta - fractionZeros - 1;
     }
 
-    std::cout << "actualDigits = " << actualDigits << "\n";
+/*
     std::cout << "exponenta = " << exponenta << "\n";
-    std::cout << "actualExponenta = " << actualExponenta << "\n";
+    std::cout << "maxDigits = " << maxDigits << "\n";
+    std::cout << "powerNumber = " << powerNumber << "\n";
+*/
 
-    if (actualExponenta > maxDigits) {
+    if (powerNumber > maxDigits) {
+        std::cout << "Too big number (power)!\n";
     	return false;
     }
 
-std::cout << "str.substr(start, digits + symbols - 1) = " << str.substr(start, digits + symbols - 1) << "\n";
-    float mantissa = std::stof(str.substr(start, digits + symbols - 1));
-    std::cout << "mantissa  * pow(10, exponenta)= " << mantissa * std::pow(10, exponenta) << "\n";
-  
+    if (digits > 0) {
+        double doubleNumber = std::stod(str.substr(start, digits + symbols));
+        if (exponenta != 0) {
+            doubleNumber *= std::pow(10, exponenta);
+        }
+        double mantissa = doubleNumber / std::pow(10, powerNumber);
 
+        //    std::cout << "maxMantissa = " << maxMantissa << " mantissa = " << mantissa << "\n";
 
+        if (powerNumber == maxDigits && mantissa > maxMantissa) {
+            std::cout << "Too big number (mantissa)!\n";
+            return false;
+        }
+
+        number = numberIsNegative ? -doubleNumber : doubleNumber;
+
+        return true;
+    }
+
+    return false;
 }
 
-bool isInteger(const std::string& str, int& number) {
-    if (str.empty()) {
-        return false;
-    }
-
-    auto size = str.size();
-
-    size_t start = (str[0] == '-' || str[0] == '+') ? 1 : 0;
-    size_t leadingZeros = 0;
-
-    for (size_t i = start; i < size; ++i) {
-        if (str[i] != '0') {
-            break;
-        }
-        ++leadingZeros;
-    }
-
-    start += leadingZeros;
-
-    size_t length = size > start + 9 ? start + 9 : size;
-
-    if (!std::isdigit(str[start])) {
-        if (leadingZeros > 0) {
-            number = 0;
-            return true;
-        }
-        return false;
-    }
-
-    ++start;
-
-    for (size_t i = start; i < length; ++i) {
-        if (!std::isdigit(str[i])) {
-            number = std::stoi(str.substr(0, i - 1));
-            return true;
-        }
-    }
-
-    number = std::stoi(str.substr(0, length));
-    return true;
-}
-
-bool getInteger(const std::string& prompt, int& number) {
+template<typename T>
+bool getNumber(const std::string& prompt, T& number) {
     std::string input = "";
     std::cout << prompt;
     while (std::getline(std::cin, input)) {
@@ -259,13 +227,17 @@ bool getInteger(const std::string& prompt, int& number) {
             return false;
         }
 
-        if (isInteger(input, number)) {
+        int maxDigits = 0;
+        double maxMantissa = 0;
+        if (isNumber(input, number, maxDigits, maxMantissa)) {
             break;
         }
 
+        std::string range = "from -" + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
+                    range += " to " + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
         std::cout << "Incorrect value!\n";
         std::cout << "Input a number in the range:\n";
-        std::cout << "from -999 999 999 to 999 999 999.\n";
+        std::cout << range + ".\n";
         std::cout << "Or type 'exit' for exit.\n";
     }
     return true;
@@ -286,13 +258,11 @@ int main() {
 
 //    std::cout << d << "\n";
 
-//    std::string str = "+000000001234567890#";
-//    std::cout << "str=" << str << "\n";
-//    isNumber( str, i );
+    std::string str = "+000000001234567890#";
+    std::cout << "str=" << str << "\n";
+    getNumber("Enter value:", d);
+    std::cout << "d=" << d << "\n";
 
-    std::string str1 = "+00000.000000012901e0009# .0";
-    std::cout << "str=" << str1 << "\n";
-    isNumber(str1, l);
 
     return 0;
 
