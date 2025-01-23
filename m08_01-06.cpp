@@ -57,7 +57,7 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
     for (size_t i = 0; i < size; ++i) {
         c = str[i];
         if (c == '0' || c == ' ') {
-            ++start;
+                ++start;
         }
         else if (c == '+' || c == '-') {
             if (signHasAlreadyBeen) {
@@ -114,6 +114,14 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
         else {
             break;
         }
+    }
+
+    if (digits == 0) {
+        if (start > 0 || symbols > 0) {
+            number = 0;
+            return true;
+        }
+        return false;
     }
 
     if (!hasFractions) {
@@ -196,7 +204,6 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
     	return false;
     }
 
-    if (digits > 0) {
         double doubleNumber = std::stod(str.substr(start, digits + symbols));
         if (exponenta != 0) {
             doubleNumber *= std::pow(10, exponenta);
@@ -213,9 +220,6 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
         number = numberIsNegative ? -doubleNumber : doubleNumber;
 
         return true;
-    }
-
-    return false;
 }
 
 template<typename T>
@@ -244,31 +248,62 @@ bool getNumber(const std::string& prompt, T& number) {
 }
 
 int main() {
+    std::cout.precision(16); 
+/*
     std::cout << "Task 1. Space simulator.\n";
-    int i = 1;
-    long l = 0;
+    float f = 0.0, m = 0.0, t = 0.0;
+    float a = 0.0, distance = 0.0;
 
-    float f = 0.005;
-    double d = 0.023e30;
+    if (getNumber("Enter the force f (kg*m/sec^2): ", f)) {
+        std::cout << "f=" << f << "\n";
+        if (getNumber("Enter the mass m (kg): ", m)) {
+            if (getNumber("Enter the time t (sec): ", t)) {
+            	if (m > 0) {
+            		distance = t * t * f / m / 2;
+            	    std::cout << "The distance is " << distance << " m.\n";
+            	}
+            }
+        }
+    }
 
-    long long ll = 0;
-    long double ld = 1.01234567890123456;
+    std::cout << "\nTask 2. Immolate improved.\n";
+    float health = 0.0;
+    float magicResistance = 0.0;
 
-    std::cout.precision(16);
+    getNumber("Enter the health in range 0.0 - 1.0 : ", health);
+    getNumber("Enter the magic resistance in range 0.0 - 1.0 : ", magicResistance);
+    if (health > 0.0 && health <= 1.0 && magicResistance >= 0.0 && magicResistance <= 1.0) {
+        if (std::abs(magicResistance - 1) < 0.001) {
+        	std::cout << "The ork is immortal.\n";
+        }
+        else {
+            const float forceReduction = 1.0f - magicResistance;
+            float damage = 0;
+            while (health > 0) {
+                do {
+                    if (getNumber("Enter the spell's power (0.0 - 1.0) : ", damage)) {
+                        if (damage > 0 && damage <= 1) {
+                            break;
+                        }
+                    }
+                } while (true);
+                damage *= forceReduction;
+                std::cout << "   Caused damage = " << damage << "\n";
+                health -= damage;
+                std::cout << "   Health = " << health << "\n";
+            }
+        }
+    }
+*/
 
-//    std::cout << d << "\n";
-
-    std::string str = "+000000001234567890#";
-    std::cout << "str=" << str << "\n";
-    getNumber("Enter value:", d);
-    std::cout << "d=" << d << "\n";
-
-
-    return 0;
-
-    std::cout << "\nTask 2. Coffee machine.\n";
-
-    std::cout << "\nTask 3. Red Mars.\n";
+    std::cout << "\nTask 3. The toy story.\n";
+    const int cubeEdge = 5;
+    int cubes = 0;
+    int maxSet = 0;
+    float barX = 0.0;
+    float barY = 0.0;
+    float barZ = 0.0;
+    
 
     std::cout << "\nTask 4. The frame.\n";
 
