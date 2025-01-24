@@ -246,20 +246,27 @@ bool getNumber(const std::string& prompt, T& number) {
 }
 
 int main() {
-    std::cout.precision(16); 
+//    std::cout.precision(16); 
+    std::cout << std::boolalpha;
+
     std::cout << "Task 1. Space simulator.\n";
     float f = 0.0, m = 0.0, t = 0.0;
     float distance = 0.0;
 
-    if (getNumber("Enter the force f (kg*m/sec^2): ", f)) {
-        std::cout << "f=" << f << "\n";
-        if (getNumber("Enter the mass m (kg): ", m)) {
-            if (getNumber("Enter the time t (sec): ", t)) {
-            	if (m > 0) {
-            		distance = t * t * f / m / 2;
-            	    std::cout << "The distance is " << distance << " m.\n";
-            	}
-            }
+    bool allCorrect = getNumber("Enter the force f (kg*m/sec^2): ", f);
+    allCorrect &= getNumber("Enter the mass m (kg): ", m);
+    allCorrect &= getNumber("Enter the time t (sec): ", t);
+
+    if (allCorrect) {
+        if (m < 0) {
+            std::cout << "The mass is negative!\n";
+        }
+        if (t < 0) {
+            std::cout << "The time is negative!\n";
+        }
+        if (m > 0 && t > 0) {
+            distance = t * t * f / m / 2;
+            std::cout << "The distance is " << distance << " m.\n";
         }
     }
 
@@ -267,27 +274,43 @@ int main() {
     float health = 0.0;
     float magicResistance = 0.0;
 
-    getNumber("Enter the health in range 0.0 - 1.0 : ", health);
-    getNumber("Enter the magic resistance in range 0.0 - 1.0 : ", magicResistance);
-    if (health > 0.0 && health <= 1.0 && magicResistance >= 0.0 && magicResistance <= 1.0) {
-        if (std::abs(magicResistance - 1) < 0.001) {
-        	std::cout << "The orc is immortal.\n";
+    allCorrect = getNumber("Enter the health in range 0.0 - 1.0 : ", health);
+    allCorrect &= getNumber("Enter the magic resistance in range 0.0 - 1.0 : ", magicResistance);
+    if (allCorrect) {
+        if (health < 0.0 || health > 1.0) {
+            std::cout << "The health must be in range 0.0 - 1.0!\n";
+            allCorrect = false;
         }
-        else {
-            const float forceReduction = 1.0f - magicResistance;
-            float damage = 0;
-            while (health > 0) {
-                do {
-                    if (getNumber("Enter the spell's power (0.0 - 1.0) : ", damage)) {
-                        if (damage > 0 && damage <= 1) {
-                            break;
+        if (magicResistance < 0.0 || magicResistance > 1.0) {
+            std::cout << "The magic resistance must be in range 0.0 - 1.0!\n";
+            allCorrect = false;
+        }
+        if (allCorrect) {
+            if (std::abs(magicResistance - 1) < 0.001) {
+                std::cout << "The orc has the shield of immortality.\n";
+                if (health < 0.001) {
+                    std::cout << "But he is dead.\n";
+                }
+            }
+            else if (health < 0.001) {
+                std::cout << "The orc is dead.\n";
+            }
+            else {
+                const float forceReduction = 1.0f - magicResistance;
+                float damage = 0;
+                while (health > 0) {
+                    do {
+                        if (getNumber("Enter the spell's power (0.0 - 1.0) : ", damage)) {
+                            if (damage > 0 && damage <= 1) {
+                                break;
+                            }
                         }
-                    }
-                } while (true);
-                damage *= forceReduction;
-                std::cout << "   Caused damage = " << damage << "\n";
-                health -= (health > damage ? damage : health);
-                std::cout << "   Health = " << health << "\n";
+                    } while (true);
+                    damage *= forceReduction;
+                    std::cout << "   Caused damage = " << damage << "\n";
+                    health -= (health > damage ? damage : health);
+                    std::cout << "   Health = " << health << "\n";
+                }
             }
         }
     }
@@ -303,30 +326,53 @@ int main() {
 
     std::cout << "Enter bar sizes (X, Y, Z). Minimum sizes in all dimensions are\n"
               << "not less than " << cubeEdge << " metric units.\n";
-    getNumber("Enter the dimension X: ", barX);
-    getNumber("Enter the dimension Y: ", barY);
-    getNumber("Enter the dimension Z: ", barZ);
-    if (barX >= cubeEdge && barY >= cubeEdge && barZ >= cubeEdge) {
-        cubes = barX / cubeEdge;
-        cubes *= (barY / cubeEdge);
-        cubes *= (barZ / cubeEdge);
-        bigCubeSize = std::cbrt(cubes);
-        maxSet = std::pow(bigCubeSize, 3);
-        std::cout << cubes << " cubes can be made from a "
-                  << barX << "x" << barY << "x" << barZ << " metric units bar.\n";
-        std::cout << "A set of " << maxSet << " cubes can be composed for a "
-                  << bigCubeSize << "x" << bigCubeSize << "x" << bigCubeSize << " cubes big cube.\n";
+    allCorrect = getNumber("Enter the dimension X: ", barX);
+    allCorrect &= getNumber("Enter the dimension Y: ", barY);
+    allCorrect &= getNumber("Enter the dimension Z: ", barZ);
+    if (allCorrect) {
+        if (barX < cubeEdge) {
+            std::cout << "The size X must be greater than " << cubeEdge << " metric units!\n";
+            allCorrect = false;
+        }
+        if (barY < cubeEdge) {
+            std::cout << "The size Y must be greater than " << cubeEdge << " metric units!\n";
+            allCorrect = false;
+        }
+        if (barZ < cubeEdge) {
+            std::cout << "The size Z must be greater than " << cubeEdge << " metric units!\n";
+            allCorrect = false;
+        }
+        if (allCorrect) {
+            int cubeEdges = barX / cubeEdge;
+            cubes = barY / cubeEdge;
+            cubes *= cubeEdges;
+            cubeEdges = barZ / cubeEdge;
+            cubes *= cubeEdges;
+            bigCubeSize = std::cbrt(cubes);
+            maxSet = std::pow(bigCubeSize, 3);
+            std::cout << cubes << " cubes can be made from a "
+                << barX << "x" << barY << "x" << barZ << " metric units bar.\n";
+            std::cout << "A set of " << maxSet << " cubes can be composed for a "
+                << bigCubeSize << "x" << bigCubeSize << "x" << bigCubeSize << " cubes big cube.\n";
+        }
     }
 
     std::cout << "\nTask 4. Progress bar.\n";
     float fileSize = 0.0;
     float transferRate = 0.0;
-    getNumber("Specify the file size to download: ", fileSize);
-    getNumber("Enter the data transfer rate: ", transferRate);
-    if (fileSize > 0) {
-        if (transferRate > 0) {
+    allCorrect = getNumber("Specify the file size to download: ", fileSize);
+    allCorrect &= getNumber("Enter the data transfer rate: ", transferRate);
+    if (allCorrect) {
+        if (fileSize < 0.001) {
+            std::cout << "File size must be greater than zero.\n";
+            allCorrect = false;
+        }
+        if (transferRate < 0.001) {
+            std::cout << "File could not be downloaded.\n";
+            allCorrect = false;
+        }
+        if (allCorrect) {
             int time = 0;
-//            const float accuracy = 0.0001;
             float transfered = 0.0;
             int progress = 0;
             while (progress < 100) {
@@ -338,35 +384,36 @@ int main() {
                 progress = transfered * 100 / fileSize;
                 std::cout << time << " sec. have passed. Downloaded ";
                 std::cout << transfered << " out of " << fileSize << " mb ("
-                          << progress << "%).\n";
+                    << progress << "%).\n";
             }
-        }
-        else {
-            std::cout << "File could not be downloaded.\n";
         }
     }
 
     std::cout << "\nTask 5. Kenyan runner.\n";
     int run = 0;
 
-    getNumber("How many kilometers did you run today?: ", run);
-    if (run > 0) {
-        int time = 0;
-        int timeTotal = 0;
-        for (int i = 0; i < run; ++i) {
-            do {
-                if (getNumber("How many seconds passed in the " + std::to_string(i + 1) + " km ? : ", time)) {
-                    if (time > 0) {
-                        break;
-                    }
-                }
-            } while (true);
-            timeTotal += time;
+    if (getNumber("How many kilometers did you run today?: ", run)) {
+        if (run <= 0) {
+            std::cout << "The distance must be greater than zero!\n";
         }
-        float average = std::round((float) timeTotal / run);
-        int minutes = average / 60;
-        int seconds = average - minutes * 60;
-        std::cout << "Average pace: " << minutes << " minutes " << seconds << " seconds.\n";
+        else {
+            int time = 0;
+            int timeTotal = 0;
+            for (int i = 0; i < run; ++i) {
+                do {
+                    if (getNumber("How many seconds passed in the " + std::to_string(i + 1) + " km ? : ", time)) {
+                        if (time > 0) {
+                            break;
+                        }
+                    }
+                } while (true);
+                timeTotal += time;
+            }
+            float average = std::round((float)timeTotal / run);
+            int minutes = average / 60;
+            int seconds = average - minutes * 60;
+            std::cout << "Average pace: " << minutes << " minutes " << seconds << " seconds.\n";
+        }
     }
 
     std::cout << "\nTask 6. The pendulum.\n";
@@ -374,17 +421,36 @@ int main() {
     float minimum = 0;
     const float attenuation = 8.4;
 
-    getNumber("Enter the amplitude: ", amplitude);
-    getNumber("Enter the amplitude at wich we assume the oscillation has stoped: ", minimum);
-    if (minimum > 0 && amplitude > minimum) {
-    	int oscillations = 0;
-    	float decreaseRate = (100 - attenuation) / 100;
-    	do {
-    	    ++oscillations;
-    	    amplitude *= decreaseRate;
-    	    std::cout << oscillations << ". amplitude = " << amplitude << "\n";
-    	} while (amplitude > minimum);
-        std::cout << "The amplitude will decrease to the minimum (" << minimum << " cm) after " << oscillations << " oscillations.\n";
+    allCorrect = getNumber("Enter the amplitude (cm): ", amplitude);
+    allCorrect &= getNumber("Enter the amplitude at wich we assume the oscillation has stoped (cm): ", minimum);
+    if (allCorrect) {
+        if (amplitude < 0) {
+            std::cout << "The amplitude must be greater than zero!\n";
+            allCorrect = false;
+        }
+        if (minimum < 0) {
+            std::cout << "The minimum of an amplitude must be greater than zero!\n";
+            allCorrect = false;
+        }
+        else if (minimum < 0.001) {
+            std::cout << "Can you measure the oscillation of a pendulum with an error less than " << minimum  << " cm?\n";
+            allCorrect = false;
+        }
+        if (amplitude < minimum) {
+            std::cout << "We assume the oscillation has stoped already!\n";
+            allCorrect = false;
+        }
+
+        if (allCorrect) {
+            int oscillations = 0;
+            float decreaseRate = (100 - attenuation) / 100;
+            do {
+                ++oscillations;
+                amplitude *= decreaseRate;
+                std::cout << oscillations << ". amplitude = " << amplitude << "\n";
+            } while (amplitude > minimum);
+            std::cout << "The amplitude will decrease to the minimum (" << minimum << " cm) after " << oscillations << " oscillations.\n";
+        }
     }
 
     return 0;
