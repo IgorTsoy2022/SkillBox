@@ -57,7 +57,7 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
     for (size_t i = 0; i < size; ++i) {
         c = str[i];
         if (c == '0' || c == ' ') {
-                ++start;
+            ++start;
         }
         else if (c == '+' || c == '-') {
             if (signHasAlreadyBeen) {
