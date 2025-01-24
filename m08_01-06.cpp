@@ -204,22 +204,20 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
     	return false;
     }
 
-        double doubleNumber = std::stod(str.substr(start, digits + symbols));
-        if (exponenta != 0) {
-            doubleNumber *= std::pow(10, exponenta);
-        }
-        double mantissa = doubleNumber / std::pow(10, powerNumber);
+    double doubleNumber = std::stod(str.substr(start, digits + symbols));
+    if (exponenta != 0) {
+        doubleNumber *= std::pow(10, exponenta);
+    }
+    double mantissa = doubleNumber / std::pow(10, powerNumber);
 
-        //    std::cout << "maxMantissa = " << maxMantissa << " mantissa = " << mantissa << "\n";
+    if (powerNumber == maxDigits && mantissa > maxMantissa) {
+        std::cout << "Too big number (mantissa)!\n";
+        return false;
+    }
 
-        if (powerNumber == maxDigits && mantissa > maxMantissa) {
-            std::cout << "Too big number (mantissa)!\n";
-            return false;
-        }
+    number = numberIsNegative ? -doubleNumber : doubleNumber;
 
-        number = numberIsNegative ? -doubleNumber : doubleNumber;
-
-        return true;
+    return true;
 }
 
 template<typename T>
@@ -249,10 +247,9 @@ bool getNumber(const std::string& prompt, T& number) {
 
 int main() {
     std::cout.precision(16); 
-/*
     std::cout << "Task 1. Space simulator.\n";
     float f = 0.0, m = 0.0, t = 0.0;
-    float a = 0.0, distance = 0.0;
+    float distance = 0.0;
 
     if (getNumber("Enter the force f (kg*m/sec^2): ", f)) {
         std::cout << "f=" << f << "\n";
@@ -274,7 +271,7 @@ int main() {
     getNumber("Enter the magic resistance in range 0.0 - 1.0 : ", magicResistance);
     if (health > 0.0 && health <= 1.0 && magicResistance >= 0.0 && magicResistance <= 1.0) {
         if (std::abs(magicResistance - 1) < 0.001) {
-        	std::cout << "The ork is immortal.\n";
+        	std::cout << "The orc is immortal.\n";
         }
         else {
             const float forceReduction = 1.0f - magicResistance;
@@ -289,27 +286,106 @@ int main() {
                 } while (true);
                 damage *= forceReduction;
                 std::cout << "   Caused damage = " << damage << "\n";
-                health -= damage;
+                health -= (health > damage ? damage : health);
                 std::cout << "   Health = " << health << "\n";
             }
         }
     }
-*/
 
     std::cout << "\nTask 3. The toy story.\n";
     const int cubeEdge = 5;
     int cubes = 0;
+    int bigCubeSize = 0;
     int maxSet = 0;
     float barX = 0.0;
     float barY = 0.0;
     float barZ = 0.0;
-    
 
-    std::cout << "\nTask 4. The frame.\n";
+    std::cout << "Enter bar sizes (X, Y, Z). Minimum sizes in all dimensions are\n"
+              << "not less than " << cubeEdge << " metric units.\n";
+    getNumber("Enter the dimension X: ", barX);
+    getNumber("Enter the dimension Y: ", barY);
+    getNumber("Enter the dimension Z: ", barZ);
+    if (barX >= cubeEdge && barY >= cubeEdge && barZ >= cubeEdge) {
+        cubes = barX / cubeEdge;
+        cubes *= (barY / cubeEdge);
+        cubes *= (barZ / cubeEdge);
+        bigCubeSize = std::cbrt(cubes);
+        maxSet = std::pow(bigCubeSize, 3);
+        std::cout << cubes << " cubes can be made from a "
+                  << barX << "x" << barY << "x" << barZ << " metric units bar.\n";
+        std::cout << "A set of " << maxSet << " cubes can be composed for a "
+                  << bigCubeSize << "x" << bigCubeSize << "x" << bigCubeSize << " cubes big cube.\n";
+    }
 
-    std::cout << "\nTask 5. Coordinate axes.\n";
-	
-    std::cout << "\nTask 6. Important announcements.\n";
+    std::cout << "\nTask 4. Progress bar.\n";
+    float fileSize = 0.0;
+    float transferRate = 0.0;
+    getNumber("Specify the file size to download: ", fileSize);
+    getNumber("Enter the data transfer rate: ", transferRate);
+    if (fileSize > 0) {
+        if (transferRate > 0) {
+            int time = 0;
+//            const float accuracy = 0.0001;
+            float transfered = 0.0;
+            int progress = 0;
+            while (progress < 100) {
+                ++time;
+                transfered += transferRate;
+                if (transfered > fileSize) {
+                    transfered = fileSize;
+                }
+                progress = transfered * 100 / fileSize;
+                std::cout << time << " sec. have passed. Downloaded ";
+                std::cout << transfered << " out of " << fileSize << " mb ("
+                          << progress << "%).\n";
+            }
+        }
+        else {
+            std::cout << "File could not be downloaded.\n";
+        }
+    }
+
+    std::cout << "\nTask 5. Kenyan runner.\n";
+    int run = 0;
+
+    getNumber("How many kilometers did you run today?: ", run);
+    if (run > 0) {
+        int time = 0;
+        int timeTotal = 0;
+        for (int i = 0; i < run; ++i) {
+            do {
+                if (getNumber("How many seconds passed in the " + std::to_string(i + 1) + " km ? : ", time)) {
+                    if (time > 0) {
+                        break;
+                    }
+                }
+            } while (true);
+            timeTotal += time;
+        }
+        float average = std::round((float) timeTotal / run);
+        int minutes = average / 60;
+        int seconds = average - minutes * 60;
+        std::cout << "Average pace: " << minutes << " minutes " << seconds << " seconds.\n";
+    }
+
+    std::cout << "\nTask 6. The pendulum.\n";
+    float amplitude = 0;
+    float minimum = 0;
+    const float attenuation = 8.4;
+
+    getNumber("Enter the amplitude: ", amplitude);
+    getNumber("Enter the amplitude at wich we assume the oscillation has stoped: ", minimum);
+    if (minimum > 0 && amplitude > minimum) {
+    	int oscillations = 0;
+    	float decreaseRate = (100 - attenuation) / 100;
+    	do {
+    	    ++oscillations;
+    	    amplitude *= decreaseRate;
+    	    std::cout << oscillations << ". amplitude = " << amplitude << "\n";
+    	} while (amplitude > minimum);
+        std::cout << "The amplitude will decrease to the minimum (" << minimum << " cm) after " << oscillations << " oscillations.\n";
+    }
 
     return 0;
 }
