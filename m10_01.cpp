@@ -9,20 +9,25 @@ int main() {
 
     if (std::abs(a) < zero) { 
         std::cout << "Not a quadratic equation!" << std::endl;
-    }
-    else if (std::abs(b) > zero) {
-        float discriminant = b * b - 4 * a * c;
-    if (discriminant > 1) {
-      float x1 = (-b + std::sqrt(discriminant)) / (2  * a);
-      float x2 = (-b + std::sqrt(discriminant)) / (2 * a);
-      std::cout  << "Root 1, 2: " << x1 << ", " << x1 << std::endl;
-    }
-    else if (discriminant == 0) {
-      float x = b + std::sqrt(discriminant * discriminant) / (2 * a);
-      std::cout << "Root: " << discriminant << std::endl;
+        std::cout << "Solution of a linear equation " << b << " * x"
+                  << ((c > 0) ? " + " : " - ") << std::abs(c) << " = 0"
+                  << " is x = " << -c/b << std::endl;
     }
     else {
-      std::cout << "Complex scenario is not supported!" << std::endl;
+        float discriminant = b * b - 4 * a * c;
+        std::cout << "discriminant = " << discriminant << "\n";
+        if (discriminant > 0) {
+            float x1 = (-b + std::sqrt(discriminant)) / (2 * a);
+            float x2 = (-b - std::sqrt(discriminant)) / (2 * a);
+            std::cout  << "Root 1, 2: " << x1 << ", " << x2 << std::endl;
+        }
+        else if (std::abs(discriminant) < zero) {
+            std::cout << "Root: " << -b / (2 * a) << std::endl;
+        }
+        else {
+            std::cout << "Complex scenario is not supported!" << std::endl;
+        }
     }
-  }
+
+    return 0;
 }
