@@ -24,17 +24,60 @@ std::string encrypt_caesar(const std::string & text, int shift) {
     return out;
 }
 
+bool isDigitAlpha(const char & c) {
+    return ((c >= '0' && c <= '9')
+             || (c >= 'A' && c <= 'Z')
+             || (c >= 'a' && c <= 'z'));
+}
+
+bool isSpecChar(const char & c) {
+    if (c == '!') {
+        //   !    33
+        return true;
+    }
+    if (c >= '#' && c <= '\'') {
+        //   #$%&''  35 - 39
+        return true;
+    }
+    if (c >= '^' && c <= '`') {
+        //   ^_`      94 - 96
+        return true;
+    }
+    if (c >= '{' && c <= '~') {
+        //   {|}~      123 - 126
+        return true;
+    }
+    return false;
+}
+
+std::string symb = "!#$%&'*+-/=?^_`{|}~";
+
 int main () {
     std::cout << std::boolalpha;
-    std::cout << (int) 'a' << " "  << (int) 'A' << "\n";
-    std::cout << (int) 'z' << " "  << (int) 'Z' << "\n";
-
+ 
     std::vector<std::pair<std::string, int>> texts = { { "aBxZ*", 67 },
         { "The quick brown fox jumps over the lazy dog", 3 } };
 
     for (const auto & p : texts) {
         std::cout << encrypt_caesar(p.first, p.second) << "\n";
     }
+
+   
+    std::cout << (int) '0' << " - " << (int) '9' << "\n";
+    std::cout << (int) 'A' << " - "  << (int) 'Z' << "\n";
+    std::cout << (int) 'a' << " - "  << (int) 'z' << "\n";
+    std::cout << "\"-\" = " << (int) '-' << "\".\" = " << (int) '.' << "\n";
+
+    for (const auto & c : symb) {
+        std::cout << c << " = " << (int) c << "\n";
+    }
+
+    char c;
+    do {
+    	std::cin >> c;
+    	std::cout << isDigitAlpha(c) << "\n";
+    } while (c != '\'');
+
 
     return 0;
 }
