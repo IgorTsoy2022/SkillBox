@@ -128,14 +128,6 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
         intDigits = digits;
     }
 
-/*
-    std::cout << "\nstart = " << start << " digits = " << digits << " symbols = " << symbols << "\n";
-    std::cout << "substr(start, digits + symbols) = " << str.substr(start, digits + symbols) << "\n";
-    std::cout << "intDigits      = " << intDigits << "\n";
-    std::cout << "startExponenta = " << startExponenta << " e='" << str.substr(startExponenta, size - startExponenta) << "'\n";
-    std::cout << "fractionZeros  = " << fractionZeros << "\n\n";
-*/
-
     bool exponentaIsNegative = false;
     int exponentaDigits = 0;
     int exponenta = 0;
@@ -192,12 +184,6 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
     else {
         powerNumber = exponenta - fractionZeros - 1;
     }
-
-/*
-    std::cout << "exponenta = " << exponenta << "\n";
-    std::cout << "maxDigits = " << maxDigits << "\n";
-    std::cout << "powerNumber = " << powerNumber << "\n";
-*/
 
     if (powerNumber > maxDigits) {
         std::cout << "Too big number (power)!\n";
@@ -351,9 +337,10 @@ int main() {
             bigCubeSize = std::cbrt(cubes);
             maxSet = std::pow(bigCubeSize, 3);
             std::cout << cubes << " cubes can be made from a "
-                << barX << "x" << barY << "x" << barZ << " metric units bar.\n";
+                      << barX << "x" << barY << "x" << barZ << " metric units bar.\n";
             std::cout << "A set of " << maxSet << " cubes can be composed for a "
-                << bigCubeSize << "x" << bigCubeSize << "x" << bigCubeSize << " cubes big cube.\n";
+                      << bigCubeSize << "x" << bigCubeSize << "x" << bigCubeSize
+                      << " cubes big cube.\n";
         }
     }
 
@@ -401,7 +388,8 @@ int main() {
             int timeTotal = 0;
             for (int i = 0; i < run; ++i) {
                 do {
-                    if (getNumber("How many seconds passed in the " + std::to_string(i + 1) + " km ? : ", time)) {
+                    if (getNumber("How many seconds passed in the " +
+                                  std::to_string(i + 1) + " km ? : ", time)) {
                         if (time > 0) {
                             break;
                         }
@@ -422,7 +410,8 @@ int main() {
     const float attenuation = 8.4;
 
     allCorrect = getNumber("Enter the amplitude (cm): ", amplitude);
-    allCorrect &= getNumber("Enter the amplitude at wich we assume the oscillation has stoped (cm): ", minimum);
+    allCorrect &= getNumber("Enter the amplitude at wich we assume the oscillation has stoped (cm): ",
+                            minimum);
     if (allCorrect) {
         if (amplitude < 0) {
             std::cout << "The amplitude must be greater than zero!\n";
@@ -433,7 +422,8 @@ int main() {
             allCorrect = false;
         }
         else if (minimum < 0.001) {
-            std::cout << "Can you measure the oscillation of a pendulum with an error less than " << minimum  << " cm?\n";
+            std::cout << "Can you measure the oscillation of a pendulum with an error less than "
+                      << minimum  << " cm?\n";
             allCorrect = false;
         }
         if (amplitude < minimum) {
@@ -449,7 +439,8 @@ int main() {
                 amplitude *= decreaseRate;
                 std::cout << oscillations << ". amplitude = " << amplitude << "\n";
             } while (amplitude > minimum);
-            std::cout << "The amplitude will decrease to the minimum (" << minimum << " cm) after " << oscillations << " oscillations.\n";
+            std::cout << "The amplitude will decrease to the minimum (" << minimum << " cm) after "
+                      << oscillations << " oscillations.\n";
         }
     }
 
