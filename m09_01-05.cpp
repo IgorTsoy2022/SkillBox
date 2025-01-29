@@ -93,48 +93,48 @@ bool getTimeMinutes(const std::string& prompt, int& minutes) {
 }
 
 std::vector<std::string> split(const std::string& sentence, const char delimeter = ' ') {
-	std::vector<std::string> result;
-	std::string word = "";
-	for (const char & c : sentence) {
-	    if (c == delimeter) {
-	        if (word.size() > 0) {
-	            result.push_back(word);
-	            word.clear();
-	        }
-	    }
-	    else {
-	        word += c;
-	    }
-	}
-	if (word.size() > 0) {
-	    result.push_back(word);
-	}
-	return result;
+    std::vector<std::string> result;
+    std::string word = "";
+    for (const char & c : sentence) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+                result.push_back(word);
+                word.clear();
+            }
+        }
+        else {
+            word += c;
+        }
+    }
+    if (word.size() > 0) {
+        result.push_back(word);
+    }
+    return result;
 }
 
 int countWords(const std::string & sentence, const char delimeter = ' ') {
-	int result = 0;
-	bool isWord = false;
-	for (const char & c : sentence) {
-	    if (c == delimeter) {
-	        if (isWord) {
-	            ++result;
-	            isWord = false;
-	        }
-	    }
-	    else {
-	        isWord = true;
-	    }
-	}
-	if (isWord) {
-	    ++result;
-	}
-	return result;
+    int result = 0;
+    bool isWord = false;
+    for (const char & c : sentence) {
+        if (c == delimeter) {
+            if (isWord) {
+                ++result;
+                isWord = false;
+            }
+        }
+        else {
+            isWord = true;
+        }
+    }
+    if (isWord) {
+        ++result;
+    }
+    return result;
 }
 
 bool getStringNumber(const std::string & prompt, std::string & number, int digits) {
     if (digits <= 0) {
-    	return false;
+        return false;
     }
     std::cout << prompt;
     while (std::getline(std::cin, number)) {
@@ -593,7 +593,11 @@ int main() {
     }
 
     std::cout << "\nTask 2. Long real number.\n";
-    std::vector<std::string> testStrings = { "0", "0.", ".", ".0", "0123", "00.000", ".15", "165.", "999999999999999999999999999999999.999999999999999999999", "-1.0", "-.35", "1.2.3", "-.", "11e-3", "+25" };
+    std::vector<std::string> testStrings = { 
+	"0", "0.", ".", ".0", "0123", "00.000", ".15",	"165.",
+	"999999999999999999999999999999999.999999999999999999999", "-1.0", "-.35",
+	"1.2.3", "-.", "11e-3", "+25"
+    };
     for (const std::string & text : testStrings) {
         std::cout << text << " " << isLongNumber(text, 300) << "\n";
     }
@@ -616,8 +620,10 @@ int main() {
     std::string conceivedNumber = "";
     std::string attempt = "";
     
-    allCorrect = getStringNumber("First player: Think of a " + std::to_string(digits) + "-digits number and enter\nit: ", conceivedNumber, digits);
-    allCorrect &= getStringNumber("Second player: Enter a " + std::to_string(digits) + "-digits number to attempt\nmatch the conceived number: ", attempt, digits);
+    allCorrect = getStringNumber("First player: Think of a " + std::to_string(digits) +
+	    "-digits number and enter\nit: ", conceivedNumber, digits);
+    allCorrect &= getStringNumber("Second player: Enter a " + std::to_string(digits) +
+	    "-digits number to attempt\nmatch the conceived number: ", attempt, digits);
     if (allCorrect) {
         auto result = bullsAndCows(conceivedNumber, attempt);
         std::cout << "bulls: " << result.first << "\n";
@@ -644,7 +650,7 @@ int main() {
             std::cout << "There is no roman number representing zero.\n";
         }
         else if (arabic > 3999) {
-        	std::cout << "The number must be less than 3999.\n";
+            std::cout << "The number must be less than 3999.\n";
         }
         else {
             auto roman = to_roman(arabic);
