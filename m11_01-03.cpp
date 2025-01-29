@@ -150,26 +150,29 @@ std::vector<std::string> split(const std::string & sentence, const char delimete
 std::string get_address_part(const std::string & address, int pos) {
     bool isWord = false;
     int octette_number = 0;
-    std::string octette = "";
-    for (const char & c : address) {
-        if (c == '.') {
-            if (isWord) {
-                isWord = false;
-            }
+    int start = 0;
+    int count = 0;
+
+    for (int i = 0; i < address.size(); ++i) {
+        if (address[i] == '.') {
+            isWord = false;
             if (octette_number == pos) {
-                return octette;
+                return address.substr(start, count);
             }
-            ++octette_number;        }
+            ++octette_number;
+            start = i + 1;
+	        count = 0;
+        }
         else {
             isWord = true;
             if (octette_number == pos) {
-                octette += c;
+                ++count;
             }
         }
     }
     if (isWord) {
         if (octette_number == pos) {
-            return octette;
+            return address.substr(start, count);
         }
     }
     return "";
@@ -208,8 +211,7 @@ bool isValidIP(const std::string & text) {
     int count = 0;
     int octettes = 0;
 	for (int i = 0; i < size; ++i) {
-	    char c = text[i];
-	    if (c == '.') {
+	    if (text[i] == '.') {
 	        if (count < 1) {
 	            return false;
 	        }
@@ -229,15 +231,17 @@ bool isValidIP(const std::string & text) {
 	    if (!isValidNumber(text.substr(start, count))) {
 	        return false;
         }
+        return octettes == 4;
 	}
-	return octettes == 4;
+    else {
+        return false;
+    }
 }
 
 int main () {
     std::cout << std::boolalpha;
- /*
+ 
     std::cout << "Task 1. The Caesar Cipher.\n";
-
     std::vector<std::pair<std::string, int>> texts = { 
         { "aBxZ*", 67 },
         { "The quick brown fox jumps over the lazy dog", 3 }
@@ -259,7 +263,6 @@ int main () {
     std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
 
     std::cout << "\nTask 2. Checking email-address.\n";
-
     std::vector<std::string> addresses = {
         "simple@example.com",
         "very.common@example.com",
@@ -289,19 +292,27 @@ int main () {
     std::string e_mail = "";
     std::cout << "Enter an e-mail address: ";
     std::cin >> e_mail;
-    std::cout << "e-mail address: " << e_mail << " is " << (is_address(e_mail) ? "" : "not " ) << "correct.\n";
-*/
+    std::cout << "e-mail address: " << e_mail << " is " << (is_address(e_mail) ? "" : "not ") << "correct.\n";
 
     std::cout << "\nTask 3. IP Address Validation.\n";
 
     std::vector<std::string> ips = {
-        "127.0.0.1", "255.255.255.255", "1.2.3.4", ".77.213.101",
+        "127.0.0.1", "255.255.255.255", "1.2.3.4", "55.77.213.101",
         "255.256.257.258", "0.55.33.22.", "10.00.000.0", "23.055.255.033", "65.123..9", "a.b.c.d"
     };
 
     for (const std::string & ip : ips) {
-        std::cout << ip << " " << isValidIP(ip) << "\n";
+        std::cout << ip << " is " << (isValidIP(ip) ? "valid." : "invalid.") << "\n";
     }
+    std::string ip = "";
+    std::cout << "Enter an ip address: ";
+    std::cin >> ip;
+    std::cout << "ip address: " << ip << " is " << (isValidIP(ip) ? "valid." : "invalid.") << "\n";
+    std::cout << "get_address_part(\"" << ip << "\", 0) = \"" << get_address_part(ip, 0) << "\"\n";
+    std::cout << "get_address_part(\"" << ip << "\", 1) = \"" << get_address_part(ip, 1) << "\"\n";
+    std::cout << "get_address_part(\"" << ip << "\", 2) = \"" << get_address_part(ip, 2) << "\"\n";
+    std::cout << "get_address_part(\"" << ip << "\", 3) = \"" << get_address_part(ip, 3) << "\"\n";
+    std::cout << "get_address_part(\"" << ip << "\", 4) = \"" << get_address_part(ip, 4) << "\"\n";
 
     return 0;
 }
