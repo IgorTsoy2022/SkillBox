@@ -128,23 +128,23 @@ bool is_address(std::string text) {
 //std::string symb = "!#$%&'*+-/=?^_`{|}~";
 
 std::vector<std::string> split(const std::string & sentence, const char delimeter = ' ') {
-	std::vector<std::string> result;
-	std::string word = "";
-	for (const char & c : sentence) {
-	    if (c == delimeter) {
-	        if (word.size() > 0) {
-	            result.push_back(word);
-	            word.clear();
-	        }
-	    }
-	    else {
-	        word += c;
+    std::vector<std::string> result;
+    std::string word = "";
+    for (const char & c : sentence) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+	        result.push_back(word);
+	        word.clear();
 	    }
 	}
-	if (word.size() > 0) {
-	    result.push_back(word);
+	else {
+	    word += c;
 	}
-	return result;
+    }
+    if (word.size() > 0) {
+        result.push_back(word);
+    }
+    return result;
 }
 
 std::string get_address_part(const std::string & address, int pos) {
@@ -202,37 +202,37 @@ bool isValidNumber(const std::string & input) {
 }
 
 bool isValidIP(const std::string & text) {
-	auto size = text.size();
-	if (size < 7) {
-	    return false;
-	}
+    auto size = text.size();
+    if (size < 7) {
+        return false;
+    }
 
     int start = 0;
     int count = 0;
     int octettes = 0;
-	for (int i = 0; i < size; ++i) {
-	    if (text[i] == '.') {
-	        if (count < 1) {
-	            return false;
-	        }
-	        if (!isValidNumber(text.substr(start, count))) {
-	            return false;
-	        }
-	        ++octettes;
-	        start = i + 1;
-	        count = 0;
-	    }
-	    else {
-	        ++count;
-	    }
+    for (int i = 0; i < size; ++i) {
+        if (text[i] == '.') {
+            if (count < 1) {
+                return false;
+            }
+            if (!isValidNumber(text.substr(start, count))) {
+                return false;
+            }
+            ++octettes;
+            start = i + 1;
+            count = 0;
+        }
+        else {
+	    ++count;
 	}
-	if (count > 0) {
-	    ++octettes;
-	    if (!isValidNumber(text.substr(start, count))) {
-	        return false;
+    }
+    if (count > 0) {
+        ++octettes;
+        if (!isValidNumber(text.substr(start, count))) {
+            return false;
         }
         return octettes == 4;
-	}
+    }
     else {
         return false;
     }
@@ -295,7 +295,6 @@ int main () {
     std::cout << "e-mail address: " << e_mail << " is " << (is_address(e_mail) ? "" : "not ") << "correct.\n";
 
     std::cout << "\nTask 3. IP Address Validation.\n";
-
     std::vector<std::string> ips = {
         "127.0.0.1", "255.255.255.255", "1.2.3.4", "55.77.213.101",
         "255.256.257.258", "0.55.33.22.", "10.00.000.0", "23.055.255.033", "65.123..9", "a.b.c.d"
