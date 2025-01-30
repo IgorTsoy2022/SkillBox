@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cassert>
 //#include <vector>
 
 template<typename T>
@@ -114,6 +115,10 @@ void mergeSort(T * arr, int left, int right) {
     merge(arr, left, mid, right);
 }
 
+float travelTime(float distance, float speed) {
+    assert (speed > 0);
+    return distance / speed;
+}
 
 int main () {
     std::cout << std::boolalpha;
@@ -138,7 +143,7 @@ int main () {
             std::cout << "There is no apartment with this number.\n";
         }
     }
-*/
+
     std::cin.clear();
     std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
 
@@ -156,10 +161,37 @@ int main () {
     mergeSort(numbers, 0, 14);
     std::cout << "Output:\n";
     print(numbers, 14, 0);
+    std::cout << "\n";
 
     std::cout << "\nTask 3. Using assert.\n";
+    float distance = 0;
+    float speed = 0;
+    std::cout << "Enter distance: ";
+    std::cin >> distance;
+    std::cout << "Enter speed: ";
+    std::cin >> speed;
+ 
+    std::cout << "Travel time is " <<  travelTime(distance, speed) << "\n";
+*/
+    std::cout <<  "\nTask 4. A series of numbers.\n";
+    int numbers_count = 15;
+    int set_numbers = 14;
+    int snumbers[] = {
+    	114, 111, 106, 107, 108,
+    	105, 115, 108, 110, 109,
+    	112, 113, 116, 117, 118
+    };
+    print(snumbers, 0, 14);
+    std::cout << "\n";
 
-    std::cout << "\nTask 4. A series of numbers.\n";
+    int start = snumbers[0];
+    int repeating_number = 0;
+    for (int & num : snumbers) {
+        start = start < num ? start : num;
+    }
+    std::cout << "Given " << numbers_count << " numbers from a set of " << set_numbers << " consecutive numbers.\n";
+    std::cout << "This set starts with the number " << start << ".\n";
+    std::cout << "The repeating number is " << repeating_number << ".\n";
 
     return 0;
 }
