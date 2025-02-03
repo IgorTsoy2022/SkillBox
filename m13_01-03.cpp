@@ -241,6 +241,31 @@ bool getNumber(const std::string& prompt, T& number) {
     return true;
 }
 
+template<typename T>
+bool get_valid_index(const std::vector<T> & arr, size_t & index, const T & excluded) {
+    for (size_t i = index; i < arr.size(); ++i) {
+        if (arr[i] != excluded) {
+            index = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+template<typename T>
+void remove_item(std::vector<T> & arr, const T & item) {
+    auto size = arr.size();
+    size_t index = 0;
+    for (size_t i = 0; i < size; ++i) {
+        if (get_valid_index(arr, index, item)) {
+            arr[i] = arr[index++];
+        }
+        else {
+            arr.pop_back();
+        }
+    }
+}
+
 int main () {
 //    std::cout.precision(16); 
 
@@ -250,13 +275,13 @@ int main () {
     std::cout << std::boolalpha;
     bool allCorrect = false;
 
-    std::cout << "Task 1. Delete elements from vector.\n";
+    std::cout << "Task 1. Delete elements from container.\n";
     int number_of_elements = 0;
     allCorrect = getNumber("Enter the number of elements: ", number_of_elements);
-    if (allCorrect) {
+    if (allCorrect && number_of_elements > 0) {
         std::vector<int> nums(number_of_elements, 0);
-        for (int & elem : nums) {
-            if (!getNumber("Enter an element:", elem)) {
+        for (int & element : nums) {
+            if (!getNumber("Enter an element:", element)) {
                 break;
             }
         }
@@ -264,41 +289,95 @@ int main () {
         print(nums, 0, nums.size() - 1);
         std::cout << "\n";
 
-        int elem_to_del = 0;
-        if (getNumber("Enter the element to be deleted: ", elem_to_del)) {
-            int items_to_delete = 0;
-            int left = 0, right = 1;
-            while (left < number_of_elements) {
-                if (nums[left] == elem_to_del) {
-                    ++items_to_delete;
-                    while (right < number_of_elements) {
-                        if (nums[right] == elem_to_del) {
-                            ++items_to_delete;
-                            ++right;
-                        }
-                        else {
-                            nums[left] = nums[right];
-                            break;
-                        }
-                    }
-                }
-                else {
-                    ++left;
-                }
-            }
+        int element_being_deleted = 0;
+        if (getNumber("Enter the element to be deleted: ", element_being_deleted)) {
 
+            remove_item(nums, element_being_deleted);
 
             std::cout << "Remaining elements:\n";
-            print(nums, 0, nums.size() - 1);
-            std::cout << "\n";
+            if (nums.size() > 0) {
+                print(nums, 0, nums.size() - 1);
+                std::cout << "\n";
+            }
+            else {
+                std::cout << "The container is empty.\n";
+            }
         }
     }
+        
+    std::vector<std::string> words = {
+        "The", "sentence", "has",
+        "unnecessary", "extra",
+        "extra", "words"
+    };
+    for (const auto & word : words) {
+        std::cout << word << " ";
+    }
+    std::cout << "\n";
+    std::cout << "Let's delete the word \"extra\".\n";
+    std::string word = "extra";
+    remove_item(words, word);
+    std::cout << "Result:\n";
+   for (const auto & word : words) {
+        std::cout << word << " ";
+    }
+    std::cout << "\n";
 
     std::cout << "\nTask 2. Purchases.\n";
+    std::vector<float> prices {
+        2.5, 4.25, 3.0, 10.0
+    };
+    std::vector<int> items {
+        1, 1, 0, 3, 6
+    };
+    std::cout << "Prices:\n";
+    for (const auto & p : prices) {
+        std::cout << p << " ";
+    }
+    std::cout << "\n";
+    std::cout << "Items:\n";
+    for (const auto & i : items) {
+        std::cout << i << " ";
+    }
+    std::cout << "\n";
 
+    auto price_count = prices.size();
+    float purchases = 0.0;
+    for (const auto & i : items) {
+        if (i < price_count) {
+            purchases += prices[i];
+        }
+        else {
+            std::cout << "There is no product with index " << i << "\n";
+        }
+    }
+    std::cout << "The total cost of purchases is going to be " << purchases << " credits.\n";
 
-    std::cout << "\nTask 3. Using assert.\n";
-
+    std::cout << "\nTask 3. The storage.\n";
+    const int maxSize = 20;
+    std::vector<int> db(maxSize, 0);
+    std::cout << "Start (for exit type \"exit\"):\n";
+    int num = 0;
+    int index = 0;
+    while (true) {
+        if (!getNumber("Input number:", num)) {
+            break;
+        }
+        if (num == -1) {
+        	for (const int & item : db) {
+        	    std::cout << item << " ";
+        	}
+        	std::cout << "\n";
+        	continue;
+        }
+        if (index < maxSize) {
+            db[index++] = num;
+        }
+        else {
+            db.erase(db.begin());
+            db.push_back(num);
+        }
+    }
 
     return 0;
 }
