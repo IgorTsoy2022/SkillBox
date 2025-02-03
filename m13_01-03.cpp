@@ -364,11 +364,11 @@ int main () {
             break;
         }
         if (num == -1) {
-        	for (const int & item : db) {
-        	    std::cout << item << " ";
-        	}
-        	std::cout << "\n";
-        	continue;
+            for (const int & item : db) {
+                std::cout << item << " ";
+            }
+            std::cout << "\n";
+            continue;
         }
         if (index < maxSize) {
             db[index++] = num;
