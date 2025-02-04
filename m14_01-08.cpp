@@ -4,6 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <map>
+#include <conio.h> 
 #include <windows.h>
 
 template<typename T>
@@ -267,12 +268,6 @@ void remove_item(std::vector<T> & arr, const T & item) {
     }
 }
 
-void goto_xy(unsigned short x, unsigned short y) {
-    HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD position = { x, y };
-    ::SetConsoleCursorPosition(hStdOut, position);
-}
-
 /*
 COORD GetConsoleCursorPosition(HANDLE hConsoleOutput) {
     CONSOLE_SCREEN_BUFFER_INFO cbsi;
@@ -284,8 +279,34 @@ COORD GetConsoleCursorPosition(HANDLE hConsoleOutput) {
         COORD invalid = { 0, 0 };
         return invalid;
     }
+*/
+
+/*
+void clearRow(int row) {
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    COORD coord = { 0, row - 1 };
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hStdOut, &csbi);
+ FillConsoleOutputCharacter(hStdOut, ' ', 80, coord, NULL);
+    SetConsoleCursorPosition(hStdOut, csbi.dwCursorPosition);
 }
 */
+
+void goto_xy(unsigned short x, unsigned short y) {
+    HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position = { x, y };
+    ::SetConsoleCursorPosition(hStdOut, position);
+}
+
+void clear_table(char (&arr)[3][3]) {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+           arr[i][j] = ' ';
+        }
+    }
+}
 
 void draw_table(const char (&arr)[3][3]) {
     std::cout << "   | A | B | C |\n";
@@ -301,16 +322,16 @@ void draw_table(const char (&arr)[3][3]) {
 }
 
 struct tblCoord {
-    unsigned short x = 0;
-    unsigned short y = 0;
+    short x = 0;
+    short y = 0;
 };
 
 bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoord & point) {
     if (input.size() > 5) {
         return false;
     }
-    unsigned short x = 0;
-    unsigned short y = 0;
+    short x = 0;
+    short y = 0;
     for (const char & c : input) {
         if (c == ' ') {
             continue;
@@ -345,7 +366,8 @@ bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoo
     return false;
 }
 
-bool get_point(const std::string & prompt, const char (&tbl)[3][3], tblCoord & point) {
+bool get_point(const std::string & prompt, short y, const char (&tbl)[3][3], tblCoord & point) {
+    short x = prompt.size() + 1;
     std::string input = "";
     std::cout << prompt;
     while (std::getline(std::cin, input)) {
@@ -355,10 +377,10 @@ bool get_point(const std::string & prompt, const char (&tbl)[3][3], tblCoord & p
         if (point_is_correct(input, tbl, point)) {
             return true;
         }
-        gotoxy(prompt.size() + 1, 10);
+        goto_xy(x, y);
         std::string blank(input.size(), ' ');
         std::cout << blank;
-        gotoxy(prompt.size() + 1, 10);
+        goto_xy(x, y);
     }
 
     return true;
@@ -372,7 +394,7 @@ int main () {
 
     std::cout << std::boolalpha;
     bool allCorrect = false;
-
+/*
     std::cout << "Task 1. The banquet table.\n";
     int cutleries[2][6] = {
         { 3, 3, 3, 3, 3, 3 },
@@ -485,11 +507,21 @@ int main () {
     }
     std::cout << "\n";
 
-    std::cout << "\nPress any key to continue...";
+    std::cout << "\nPress any key to go to the next task...";
+    std::cin.ignore();
     std::cin.get();
+*/
 
-    ::system("clear");
+//    ::system("cls");
+
+//    ::system("clrscr");
+
+//    ::system("clear");
+
+//    clrscr();
     std::cout << "Task 2. Tic-tac-toe.\n";
+    std::cout << "Enter the coords of the cell\n";
+    std::cout << "in the format: A1 or 1a.\n";
     char tbl[3][3] = {
         { ' ', ' ', ' ' },
         { ' ', ' ', ' ' },
@@ -497,30 +529,61 @@ int main () {
     } ;
     tblCoord point {};
     bool next_is_X = true;
-    draw_table(tbl);
+    std::string blank(80, ' ');
     std::string prompt = "";
-    for (int i = 0; i < 9; ++i) {
-    	gotoxy(0, 10);
-    	std::string blank(prompt.size() + 5, ' ');
-    	std::cout << blank;
-    	gotoxy(0, 10);
-    	if (next_is_X) {
-    	    prompt = "The X's move:";
-    	}
-    	else {
-    		prompt = "The 0's move:";
-    	}
+
+    while(true) {
+        goto_xy(0, 4);
+        draw_table(tbl);
+        
+        char choice = '0';
+        std::cout << "Enter 'X' if 'X' starts the game: ";
+        std::cin >> choice;
+        next_is_X = (choice != 'X' && choice != 'x') ? false : true;
+
+        for (int i = 0; i < 9; ++i) {
+        	goto_xy(0, 12);
+    	    std::cout << blank;
+        	goto_xy(0, 12);
+
+        	if (next_is_X) {
+    	        prompt = "The X's move:";
+        	}
+        	else {
+        		prompt = "The 0's move:";
+        	}
  
-        if (!get_point(prompt, tbl, point)) {
+            if (!get_point(prompt, 12, tbl, point)) {
+                break;
+            }
+
+            tbl[point.y -1][point.x - 1] = next_is_X ? 'X' : '0';
+
+            goto_xy(0, 4);
+            draw_table(tbl);
+
+            next_is_X = !next_is_X;
+        }
+
+
+
+
+
+
+        std::cout << "Enter 'y' if you want to play again: ";
+        std::cin >> choice;
+        
+        goto_xy(0, 13);
+        std::cout << blank;
+        if (choice != 'y') {
             break;
         }
 
-        tbl[point.y -1][point.x - 1] = next_is_X ? 'X' : '0';
-        gotoxy(0, 2);
-        draw_table(tbl);
-
-        next_is_X = !next_is_X;
+        clear_table(tbl);
     }
+    
+    goto_xy(0, 13);
+    std::cout << "Good bye!\n";
     
     
 
