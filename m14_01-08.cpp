@@ -300,21 +300,21 @@ void goto_xy(unsigned short x, unsigned short y) {
     ::SetConsoleCursorPosition(hStdOut, position);
 }
 
-void clear_table(char (&arr)[3][3]) {
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-           arr[i][j] = ' ';
+void clear_table(char (&tbl)[3][3]) {
+    for (short i = 0; i < 3; ++i) {
+        for (short j = 0; j < 3; ++j) {
+           tbl[i][j] = ' ';
         }
     }
 }
 
-void draw_table(const char (&arr)[3][3]) {
+void draw_table(const char (&tbl)[3][3]) {
     std::cout << "   | A | B | C |\n";
-    for (int i {}; i < 3; ++i) {
+    for (short i {}; i < 3; ++i) {
         std::cout << "---+---+---+---+\n";
         std::cout << " " << i + 1 << " ";
-        for (int j {}; j < 3; ++j) {
-            std::cout << "| " << arr[i][j] << " ";
+        for (short j {}; j < 3; ++j) {
+            std::cout << "| " << tbl[i][j] << " ";
         }
         std::cout << "|\n";
     }
@@ -386,7 +386,79 @@ bool get_point(const std::string & prompt, short y, const char (&tbl)[3][3], tbl
     return true;
 }
 
+short check_table(const char(&tbl)[3][3]) {
+    // status = 1 : X - winner
+    // status = 2 : 0 - winner
+    // status = 3 : draw
 
+    short status = 0;
+    short horizontals[4] = { 0, 0, 0, 0 };
+    short verticals[4] = { 0, 0, 0, 0 };
+    short diagonals[3] = { 0, 0, 0 };
+
+    for (short i = 0; i < 3; ++i) {
+        for (short j = 0; j < 3; ++j) {
+            if (tbl[i][j] == 'X') {
+                ++horizontals[i];
+                ++verticals[j];
+                if (i == j) {
+                    ++diagonals[0];
+                    if (i == 1) {
+                        ++diagonals[1];
+                    }
+                }
+                else if (i == 0 && j == 2 ||
+                         i == 2 && j == 0) {
+                    ++diagonals[1];
+                }
+            }
+            else if (tbl[i][j] == '0') {
+                --horizontals[i];
+                --verticals[j];
+                if (i == j) {
+                    --diagonals[0];
+                    if (i == 1) {
+                        --diagonals[1];
+                    }
+                }
+                else if (i == 0 && j == 2 ||
+                         i == 2 && j == 0) {
+                    --diagonals[1];
+                }
+            }
+            else {
+                ++horizontals[i];
+            }
+        }
+        if (horizontals[i] == 3) {
+            return 1;
+        }
+        else if (horizontals[i] == -3) {
+            return 2;
+        }
+    }
+
+    for (short i = 0; i < 3; ++i) {
+        if (verticals[i] == 3) {
+            return 1;
+        }
+        if (verticals[i] == -3) {
+            return 2;
+        }
+        if (i < 2) {
+            if (diagonals[i] == 3) {
+                return 1;
+            }
+            if (diagonals[i] == -3) {
+                return 2;
+            }
+        }
+    }
+
+
+
+    return 0;
+}
 
 int main () {
 //    std::cin.clear();
@@ -526,7 +598,7 @@ int main () {
         { ' ', ' ', ' ' },
         { ' ', ' ', ' ' },
         { ' ', ' ', ' ' }
-    } ;
+    };
     tblCoord point {};
     bool next_is_X = true;
     std::string blank(80, ' ');
@@ -537,11 +609,12 @@ int main () {
         draw_table(tbl);
         
         char choice = '0';
-        std::cout << "Enter 'X' if 'X' starts the game: ";
+        short status = 0;
+        std::cout << "Press 'X' if 'X' starts the game: ";
         std::cin >> choice;
         next_is_X = (choice != 'X' && choice != 'x') ? false : true;
 
-        for (int i = 0; i < 9; ++i) {
+        for (short i = 0; i < 9; ++i) {
         	goto_xy(0, 12);
     	    std::cout << blank;
         	goto_xy(0, 12);
@@ -554,26 +627,43 @@ int main () {
         	}
  
             if (!get_point(prompt, 12, tbl, point)) {
+                status = -1;
                 break;
             }
 
-            tbl[point.y -1][point.x - 1] = next_is_X ? 'X' : '0';
+            tbl[point.y - 1][point.x - 1] = next_is_X ? 'X' : '0';
 
             goto_xy(0, 4);
             draw_table(tbl);
 
+            status = check_table(tbl);
+            if (status > 0) {
+                break;
+            }
+
             next_is_X = !next_is_X;
         }
 
+        switch (status) {
+        case -1:
+            std::cout << "The game is interrupted.\n";
+            break;
+        case 1:
+            std::cout << "The crosses won!\n";
+            break;
+        case 2:
+            std::cout << "The noughts won!\n";
+            break;
+        case 0:
+            std::cout << "We have a draw.\n";
+        }
 
-
-
-
-
-        std::cout << "Enter 'y' if you want to play again: ";
+        std::cout << "Press 'y' if you want to play again: ";
         std::cin >> choice;
         
         goto_xy(0, 13);
+        std::cout << blank,
+        goto_xy(0, 14);
         std::cout << blank;
         if (choice != 'y') {
             break;
@@ -581,17 +671,13 @@ int main () {
 
         clear_table(tbl);
     }
-    
-    goto_xy(0, 13);
-    std::cout << "Good bye!\n";
-    
-    
 
-    
+    goto_xy(0, 14);
+    std::cout << "Good bye!\n";
 
 return 0;
 
- //   cursor(0, 0);
+
 
     std::cout << "\nTask 3. The storage.\n";
  
