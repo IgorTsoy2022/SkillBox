@@ -326,6 +326,11 @@ struct tblCoord {
     short y = 0;
 };
 
+void draw_cell(const tblCoord & point, short row, const char c) {
+    goto_xy((point.x - 1) * 4 + 6, (point.y - 1) * 2 + 3 + row);
+    std::cout << c;
+}
+
 bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoord & point) {
     if (input.size() > 5) {
         return false;
@@ -366,7 +371,7 @@ bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoo
     return false;
 }
 
-bool get_point(const std::string & prompt, short y, const char (&tbl)[3][3], tblCoord & point) {
+bool get_point(const std::string & prompt, short row, const char (&tbl)[3][3], tblCoord & point) {
     short x = prompt.size() + 1;
     std::string input = "";
     std::cout << prompt;
@@ -377,10 +382,10 @@ bool get_point(const std::string & prompt, short y, const char (&tbl)[3][3], tbl
         if (point_is_correct(input, tbl, point)) {
             return true;
         }
-        goto_xy(x, y);
+        goto_xy(x, row);
         std::string blank(input.size(), ' ');
         std::cout << blank;
-        goto_xy(x, y);
+        goto_xy(x, row);
     }
 
     return true;
@@ -392,9 +397,10 @@ short check_table(const char(&tbl)[3][3]) {
     // status = 3 : draw
 
     short status = 0;
-    short horizontals[4] = { 0, 0, 0, 0 };
-    short verticals[4] = { 0, 0, 0, 0 };
-    short diagonals[3] = { 0, 0, 0 };
+    short horizontals[3] = { 0, 0, 0 };
+    short verticals[3] = { 0, 0, 0 };
+    short diagonals[2] = { 0, 0 };
+    short moves_count = 0;
 
     for (short i = 0; i < 3; ++i) {
         for (short j = 0; j < 3; ++j) {
@@ -427,7 +433,7 @@ short check_table(const char(&tbl)[3][3]) {
                 }
             }
             else {
-                ++horizontals[i];
+                ++moves_count;
             }
         }
         if (horizontals[i] == 3) {
@@ -455,7 +461,22 @@ short check_table(const char(&tbl)[3][3]) {
         }
     }
 
-
+    if (moves_count == 1) {
+        for (short i = 0; i < 3; ++i) {
+            if (horizontals[i] < -1 || horizontals[i] > 1) {
+                return 0;
+            }
+            if (verticals[i] < -1 || verticals[i] > 1) {
+                return 0;
+            }
+            if (i < 2) {
+               if (diagonals[i] < -1 || diagonals[i] > 1) {
+                    return 0;
+                }
+            }
+        }
+        return 3;
+    }
 
     return 0;
 }
@@ -631,10 +652,12 @@ int main () {
                 break;
             }
 
-            tbl[point.y - 1][point.x - 1] = next_is_X ? 'X' : '0';
+            choice = next_is_X ? 'X' : '0';
+            tbl[point.y - 1][point.x - 1] = choice;
 
-            goto_xy(0, 4);
-            draw_table(tbl);
+//            goto_xy(0, 4);
+//            draw_table(tbl);
+            draw_cell(point, 3, choice);
 
             status = check_table(tbl);
             if (status > 0) {
@@ -644,6 +667,7 @@ int main () {
             next_is_X = !next_is_X;
         }
 
+        goto_xy(0, 12);
         switch (status) {
         case -1:
             std::cout << "The game is interrupted.\n";
@@ -654,7 +678,7 @@ int main () {
         case 2:
             std::cout << "The noughts won!\n";
             break;
-        case 0:
+        case 3:
             std::cout << "We have a draw.\n";
         }
 
@@ -672,7 +696,7 @@ int main () {
         clear_table(tbl);
     }
 
-    goto_xy(0, 14);
+    goto_xy(0, 13);
     std::cout << "Good bye!\n";
 
 return 0;
