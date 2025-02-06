@@ -294,7 +294,7 @@ void clearRow(int row) {
 }
 */
 
-void goto_xy(unsigned short x, unsigned short y) {
+void goto_xy(int x, int y) {
     HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
     COORD position = { x, y };
     ::SetConsoleCursorPosition(hStdOut, position);
@@ -308,7 +308,8 @@ void clear_table(char (&tbl)[3][3]) {
     }
 }
 
-void draw_table(const char (&tbl)[3][3]) {
+void draw_table(const char (&tbl)[3][3], SHORT row) {
+    goto_xy(0, row);
     std::cout << "   | A | B | C |\n";
     for (short i {}; i < 3; ++i) {
         std::cout << "---+---+---+---+\n";
@@ -322,12 +323,12 @@ void draw_table(const char (&tbl)[3][3]) {
 }
 
 struct tblCoord {
-    short x = 0;
-    short y = 0;
+    SHORT x = 0;
+    SHORT y = 0;
 };
 
-void draw_cell(const tblCoord & point, short row, const char c) {
-    goto_xy((point.x - 1) * 4 + 6, (point.y - 1) * 2 + 3 + row);
+void draw_cell(const tblCoord & point, SHORT row, const char c) {
+    goto_xy((point.x - 1) * 4 + 5, (point.y - 1) * 2 + row);
     std::cout << c;
 }
 
@@ -335,8 +336,8 @@ bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoo
     if (input.size() > 5) {
         return false;
     }
-    short x = 0;
-    short y = 0;
+    SHORT x = 0;
+    SHORT y = 0;
     for (const char & c : input) {
         if (c == ' ') {
             continue;
@@ -371,8 +372,7 @@ bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoo
     return false;
 }
 
-bool get_point(const std::string & prompt, short row, const char (&tbl)[3][3], tblCoord & point) {
-    short x = prompt.size() + 1;
+bool get_point(const std::string & prompt, SHORT row, const char (&tbl)[3][3], tblCoord & point) {
     std::string input = "";
     std::cout << prompt;
     while (std::getline(std::cin, input)) {
@@ -382,25 +382,109 @@ bool get_point(const std::string & prompt, short row, const char (&tbl)[3][3], t
         if (point_is_correct(input, tbl, point)) {
             return true;
         }
-        goto_xy(x, row);
+        goto_xy(prompt.size(), row);
         std::string blank(input.size(), ' ');
         std::cout << blank;
-        goto_xy(x, row);
+        goto_xy(prompt.size(), row);
     }
 
     return true;
 }
 
-short check_table(const char(&tbl)[3][3]) {
+
+void clear_status(SHORT(&horizontals)[3], SHORT(&verticals)[3],
+    SHORT(&diagonals)[3]) {
+    for (short i = 0; i < 3; ++i) {
+        horizontals[i] = 0;
+        verticals[i] = 0;
+        diagonals[i] = 0;
+    }
+}
+
+SHORT update_status(tblCoord& point, bool current_move_is_X,
+    SHORT(&horizontals)[3], SHORT(&verticals)[3], SHORT(&diagonals)[3]) {
+    horizontals[point.y - 1] += current_move_is_X ? 1 : -1;
+    verticals[point.x - 1] += current_move_is_X ? 1 : -1;
+
+    if (point.x == point.y) {
+        diagonals[0] += current_move_is_X ? 1 : -1;
+        if (point.x == 2) {
+            diagonals[1] += current_move_is_X ? 1 : -1;
+        }
+    } 
+    else if (point.x == 3 && point.y == 1 ||
+        point.x == 1 && point.y == 3) {
+        diagonals[1] += current_move_is_X ? 1 : -1;
+    }
+
+    ++diagonals[2];
+
+    for (short i = 0; i < 3; ++i) {
+        if (horizontals[i] == 3 || verticals[i] == 3) {
+            return 1;
+        }
+        if (horizontals[i] == -3 || verticals[i] == -3) {
+            return 2;
+        }
+        if (i < 2) {
+            if (diagonals[i] == 3) {
+                return 1;
+            }
+            if (diagonals[i] == -3) {
+                return 2;
+            }
+        }
+    }
+
+    if (diagonals[2] > 7) {
+        for (short i = 0; i < 3; ++i) {
+            if (horizontals[i] < -1 || verticals[i] < -1) {
+                return current_move_is_X ? 5 : 6;
+            }
+            if (horizontals[i] > 1 || verticals[i] > 1) {
+                return current_move_is_X ? 6 : 4;
+            }
+            if (i < 2) {
+                if (diagonals[i] < -1) {
+                    return current_move_is_X ? 5 : 6;
+                }
+                if (diagonals[i] > 1) {
+                    return current_move_is_X ? 6 : 4;
+                }
+            }
+/*
+            if (horizontals[i] < -1 && current_move_is_X ||
+                horizontals[i] > 1 && !current_move_is_X) {
+                return 0;
+            }
+            if (verticals[i] < -1 && current_move_is_X ||
+                verticals[i] > 1 && !current_move_is_X) {
+                return 0;
+            }
+            if (i < 2) {
+                if (diagonals[i] < -1 && current_move_is_X ||
+                    diagonals[i] > 1 && !current_move_is_X) {
+                    return 0;
+                }
+            }
+*/
+        }
+        return 3;
+    }
+
+    return 0;
+}
+
+short check_table(const char(&tbl)[3][3], bool next_move_is_X) {
     // status = 1 : X - winner
     // status = 2 : 0 - winner
     // status = 3 : draw
 
-    short status = 0;
-    short horizontals[3] = { 0, 0, 0 };
-    short verticals[3] = { 0, 0, 0 };
-    short diagonals[2] = { 0, 0 };
-    short moves_count = 0;
+    SHORT status = 0;
+    SHORT horizontals[3] = { 0, 0, 0 };
+    SHORT verticals[3] = { 0, 0, 0 };
+    SHORT diagonals[2] = { 0, 0 };
+    SHORT moves_count = 0;
 
     for (short i = 0; i < 3; ++i) {
         for (short j = 0; j < 3; ++j) {
@@ -463,22 +547,146 @@ short check_table(const char(&tbl)[3][3]) {
 
     if (moves_count == 1) {
         for (short i = 0; i < 3; ++i) {
-            if (horizontals[i] < -1 || horizontals[i] > 1) {
+            if (horizontals[i] < -1 && !next_move_is_X ||
+                horizontals[i] > 1 && next_move_is_X) {
                 return 0;
             }
-            if (verticals[i] < -1 || verticals[i] > 1) {
+            if (verticals[i] < -1 && !next_move_is_X ||
+                verticals[i] > 1 && next_move_is_X) {
                 return 0;
             }
             if (i < 2) {
-               if (diagonals[i] < -1 || diagonals[i] > 1) {
-                    return 0;
-                }
+               if (diagonals[i] < -1 && !next_move_is_X ||
+                   diagonals[i] > 1 && next_move_is_X) {
+                   return 0;
+               }
             }
         }
         return 3;
     }
 
     return 0;
+}
+
+void tic_tac_toe() {
+    ::system("cls");
+
+//    ::system("clrscr");
+
+//    ::system("clear");
+
+//    clrscr();
+
+    goto_xy(0, 0);
+    std::cout << "Let's play the game \"Tic-tac-toe\".\n";
+    std::cout << "Enter the coords of the cell in the\n";
+    std::cout << "format: A1 or 1a or type \"exit\" for exit.\n";
+    char tbl[3][3] = {
+        { ' ', ' ', ' ' },
+        { ' ', ' ', ' ' },
+        { ' ', ' ', ' ' }
+    };
+
+    SHORT horizontals[3] = { 0, 0, 0 };
+    SHORT verticals[3] = { 0, 0, 0 };
+    SHORT diagonals[3] = { 0, 0, 0 };
+    SHORT moves_count = 0;
+
+    tblCoord point{};
+    bool current_move_is_X = true;
+    std::string blank(80, ' ');
+    std::string prompt = "";
+
+    while (true) {
+        draw_table(tbl, 4);
+
+        char choice = '0';
+        short status = 0;
+        std::cout << "Press 'X' if 'X' starts the game: ";
+        std::cin >> choice;
+        current_move_is_X = (choice != 'X' && choice != 'x') ? false : true;
+
+        for (short i = 0; i < 9; ++i) {
+            goto_xy(0, 12);
+            std::cout << blank;
+            goto_xy(0, 12);
+
+            if (current_move_is_X) {
+                prompt = "The X's move:";
+            }
+            else {
+                prompt = "The 0's move:";
+            }
+
+            if (!get_point(prompt, 12, tbl, point)) {
+                status = -1;
+                break;
+            }
+
+            choice = current_move_is_X ? 'X' : '0';
+            tbl[point.y - 1][point.x - 1] = choice;
+            status = update_status(point, current_move_is_X,
+                horizontals, verticals, diagonals);
+
+            // draw_table(tbl, 4);
+            draw_cell(point, 6, choice);
+
+            current_move_is_X = !current_move_is_X;
+
+            // status = check_table(tbl, current_move_is_X);
+            if (status > 0) {
+                break;
+            }
+        }
+
+        goto_xy(0, 12);
+        switch (status) {
+        case -1:
+            std::cout << "The game is interrupted.\n";
+            break;
+        case 1:
+            std::cout << "The crosses won!\n";
+            break;
+        case 2:
+            std::cout << "The noughts won!\n";
+            break;
+        case 3:
+            std::cout << "We have a draw.\n";
+            break;
+        case 4:
+            std::cout << "Next move is X, so the crosses win!\n";
+            break;
+        case 5:
+            std::cout << "Next move is 0, so the noughts win!\n";
+            break;
+        case 6:
+            if (current_move_is_X) {
+                std::cout << "Next move is X, so we have a draw!\n";
+            }
+            else {
+                std::cout << "Next move is 0, so we have a draw!\n";
+            }
+            break;
+        }
+
+        std::cout << "Press 'y' if you want to play again: ";
+        std::cin >> choice;
+
+        goto_xy(0, 13);
+        std::cout << blank,
+            goto_xy(0, 14);
+        std::cout << blank;
+        if (choice != 'y') {
+            break;
+        }
+
+        clear_table(tbl);
+        clear_status(horizontals, verticals, diagonals);
+    }
+
+    goto_xy(0, 13);
+    std::cout << "Good bye!\n";
+
 }
 
 int main () {
@@ -600,110 +808,17 @@ int main () {
     }
     std::cout << "\n";
 
-    std::cout << "\nPress any key to go to the next task...";
+    std::cout << "\nTask 2. Tic-tac-toe.\n";
+    std::cout << "Press any key to start...";
     std::cin.ignore();
     std::cin.get();
-*/
 
-//    ::system("cls");
+    tic_tac_toe();
 
-//    ::system("clrscr");
+//*/
 
-//    ::system("clear");
+    std::cout << "\nTask 3. Matrix.\n";
 
-//    clrscr();
-    std::cout << "Task 2. Tic-tac-toe.\n";
-    std::cout << "Enter the coords of the cell\n";
-    std::cout << "in the format: A1 or 1a.\n";
-    char tbl[3][3] = {
-        { ' ', ' ', ' ' },
-        { ' ', ' ', ' ' },
-        { ' ', ' ', ' ' }
-    };
-    tblCoord point {};
-    bool next_is_X = true;
-    std::string blank(80, ' ');
-    std::string prompt = "";
-
-    while(true) {
-        goto_xy(0, 4);
-        draw_table(tbl);
-        
-        char choice = '0';
-        short status = 0;
-        std::cout << "Press 'X' if 'X' starts the game: ";
-        std::cin >> choice;
-        next_is_X = (choice != 'X' && choice != 'x') ? false : true;
-
-        for (short i = 0; i < 9; ++i) {
-        	goto_xy(0, 12);
-    	    std::cout << blank;
-        	goto_xy(0, 12);
-
-        	if (next_is_X) {
-    	        prompt = "The X's move:";
-        	}
-        	else {
-        		prompt = "The 0's move:";
-        	}
- 
-            if (!get_point(prompt, 12, tbl, point)) {
-                status = -1;
-                break;
-            }
-
-            choice = next_is_X ? 'X' : '0';
-            tbl[point.y - 1][point.x - 1] = choice;
-
-//            goto_xy(0, 4);
-//            draw_table(tbl);
-            draw_cell(point, 3, choice);
-
-            status = check_table(tbl);
-            if (status > 0) {
-                break;
-            }
-
-            next_is_X = !next_is_X;
-        }
-
-        goto_xy(0, 12);
-        switch (status) {
-        case -1:
-            std::cout << "The game is interrupted.\n";
-            break;
-        case 1:
-            std::cout << "The crosses won!\n";
-            break;
-        case 2:
-            std::cout << "The noughts won!\n";
-            break;
-        case 3:
-            std::cout << "We have a draw.\n";
-        }
-
-        std::cout << "Press 'y' if you want to play again: ";
-        std::cin >> choice;
-        
-        goto_xy(0, 13);
-        std::cout << blank,
-        goto_xy(0, 14);
-        std::cout << blank;
-        if (choice != 'y') {
-            break;
-        }
-
-        clear_table(tbl);
-    }
-
-    goto_xy(0, 13);
-    std::cout << "Good bye!\n";
-
-return 0;
-
-
-
-    std::cout << "\nTask 3. The storage.\n";
  
     std::cout << "\nTask 4. The storage.\n";
 
