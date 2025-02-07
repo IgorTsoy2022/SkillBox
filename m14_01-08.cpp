@@ -1,4 +1,5 @@
 #include <iostream>
+#include <array>
 #include <cmath>
 #include <string>
 #include <cassert>
@@ -9,6 +10,21 @@
 
 template<typename T>
 void print(const std::vector<T> & arr, size_t from, size_t to) {
+    std::cout << "[";
+    if (from > to) {
+        for (size_t i = from; i > to; --i) {
+            std::cout << arr[i] << ", ";
+        }
+    } else {
+        for (size_t i = from; i < to; ++i) {
+            std::cout << arr[i] << ", ";
+        }
+    }
+    std::cout << arr[to] << "]";
+}
+
+template<typename T, std::size_t N>
+void print(const std::array<T, N> & arr, size_t from, size_t to) {
     std::cout << "[";
     if (from > to) {
         for (size_t i = from; i > to; --i) {
@@ -243,6 +259,70 @@ bool getNumber(const std::string& prompt, T& number) {
     return true;
 }
 
+template<typename T, std::size_t N>
+bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums, const char delimeter = ' ') {
+    bool result = true;
+    int maxDigits = 0;
+    double maxMantissa = 0;
+    size_t index = 0;
+    T number;
+    std::string word = "";
+    for (const char & c : sentence) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+                if (!isNumber(word, number, maxDigits, maxMantissa)) {
+                    result = false;
+                    break;
+                }
+	            word.clear();
+	            nums[index++] = number;
+	            if (index == N) {
+	                return true;
+	            }
+	        }
+    	}
+    	else {
+	        word += c;
+    	}
+    }
+
+    if (result && word.size() > 0) {
+        if (!isNumber(word, number, maxDigits, maxMantissa)) {
+            result = false;
+        }
+        else {
+            nums[index] = number;
+        }
+    }
+
+    if (!result) {
+        std::string range = "from -" + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
+        range += " to " + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
+        std::cout << "Incorrect value!\n";
+        std::cout << "Input a number in the range:\n";
+        std::cout << range + ".\n";
+        std::cout << "Or type 'exit' for exit.\n";
+    }
+
+    return result;
+}
+
+template<typename T, std::size_t N>
+bool getRowNumbers(const std::string & prompt, std::array<T, N> & arr) {
+    std::string input = "";
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input == "exit") {
+            return false;
+        }
+        if (splitIntoNumbers(input, arr)) {
+            break;
+        }
+    }
+    return true;
+}
+
+
 template<typename T>
 bool get_valid_index(const std::vector<T> & arr, size_t & index, const T & excluded) {
     for (size_t i = index; i < arr.size(); ++i) {
@@ -294,7 +374,7 @@ void clearRow(int row) {
 }
 */
 
-void goto_xy(int x, int y) {
+void goto_xy(SHORT x, SHORT y) {
     HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
     COORD position = { x, y };
     ::SetConsoleCursorPosition(hStdOut, position);
@@ -452,22 +532,6 @@ SHORT update_status(tblCoord& point, bool current_move_is_X,
                     return current_move_is_X ? 6 : 4;
                 }
             }
-/*
-            if (horizontals[i] < -1 && current_move_is_X ||
-                horizontals[i] > 1 && !current_move_is_X) {
-                return 0;
-            }
-            if (verticals[i] < -1 && current_move_is_X ||
-                verticals[i] > 1 && !current_move_is_X) {
-                return 0;
-            }
-            if (i < 2) {
-                if (diagonals[i] < -1 && current_move_is_X ||
-                    diagonals[i] > 1 && !current_move_is_X) {
-                    return 0;
-                }
-            }
-*/
         }
         return 3;
     }
@@ -590,7 +654,6 @@ void tic_tac_toe() {
     SHORT horizontals[3] = { 0, 0, 0 };
     SHORT verticals[3] = { 0, 0, 0 };
     SHORT diagonals[3] = { 0, 0, 0 };
-    SHORT moves_count = 0;
 
     tblCoord point{};
     bool current_move_is_X = true;
@@ -686,7 +749,27 @@ void tic_tac_toe() {
 
     goto_xy(0, 13);
     std::cout << "Good bye!\n";
+}
 
+template<typename T, std::size_t rows, std::size_t cols>
+void print(const std::array<std::array<T, cols>, rows> & arr) {
+    for (const auto & arow : arr) {
+        for (size_t i = 0; i < cols - 1; ++i) {
+            std::cout << arow[i] << " ";
+        }
+        std::cout <<  arow[cols - 1] << "\n";
+    }
+    std::cout << "\n";
+}
+
+template<typename T>
+void print(const std::vector<std::vector<T>> & arr) {
+    for (const auto & arow : arr) {
+        for (size_t i = 0; i < arow.size() - 1; ++i) {
+            std::cout << arow[i] << " ";
+        }
+        std::cout << arow[arow.size() - 1] << "\n";
+    }
 }
 
 int main () {
@@ -818,8 +901,23 @@ int main () {
 //*/
 
     std::cout << "\nTask 3. Matrix.\n";
+    std::array<std::array<int, 4>, 5> m1 = { {
+        { 1, 2, 3, 4 },
+        { 11, 12, 13, 14 },
+        { 21, 22, 23, 24 },
+        { 31, 32, 33, 34 },
+        { 41, 42, 43, 44 }
+    } };
 
- 
+    print(m1);
+    
+    std::array<int, 5> a1;
+    
+    getRowNumbers("input row  numbers: ", a1);
+    print(a1, 0, 4);
+
+return 0;
+
     std::cout << "\nTask 4. The storage.\n";
 
     std::cout << "\nTask 5. The storage.\n";
