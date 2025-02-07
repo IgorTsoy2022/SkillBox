@@ -274,15 +274,15 @@ bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums, con
                     result = false;
                     break;
                 }
-	            word.clear();
-	            nums[index++] = number;
-	            if (index == N) {
-	                return true;
-	            }
-	        }
+                word.clear();
+                nums[index++] = number;
+                if (index == N) {
+                    return true;
+                }
+            }
     	}
     	else {
-	        word += c;
+            word += c;
     	}
     }
 
@@ -321,7 +321,6 @@ bool getRowNumbers(const std::string & prompt, std::array<T, N> & arr) {
     }
     return true;
 }
-
 
 template<typename T>
 bool get_valid_index(const std::vector<T> & arr, size_t & index, const T & excluded) {
@@ -470,7 +469,6 @@ bool get_point(const std::string & prompt, SHORT row, const char (&tbl)[3][3], t
 
     return true;
 }
-
 
 void clear_status(SHORT(&horizontals)[3], SHORT(&verticals)[3],
     SHORT(&diagonals)[3]) {
