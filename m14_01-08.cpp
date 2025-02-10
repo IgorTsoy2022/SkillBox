@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <array>
 #include <cmath>
@@ -6,7 +7,24 @@
 #include <vector>
 #include <map>
 #include <conio.h> 
+#include <thread>
 #include <windows.h>
+
+template<typename T, std::size_t N>
+void print(const std::array<T, N>& arr, size_t from, size_t to) {
+    std::cout << "[";
+    if (from > to) {
+        for (size_t i = from; i > to; --i) {
+            std::cout << arr[i] << ", ";
+        }
+    }
+    else {
+        for (size_t i = from; i < to; ++i) {
+            std::cout << arr[i] << ", ";
+        }
+    }
+    std::cout << arr[to] << "]\n";
+}
 
 template<typename T>
 void print(const std::vector<T> & arr, size_t from, size_t to) {
@@ -20,26 +38,32 @@ void print(const std::vector<T> & arr, size_t from, size_t to) {
             std::cout << arr[i] << ", ";
         }
     }
-    std::cout << arr[to] << "]";
+    std::cout << arr[to] << "]\n";
 }
 
-template<typename T, std::size_t N>
-void print(const std::array<T, N> & arr, size_t from, size_t to) {
-    std::cout << "[";
-    if (from > to) {
-        for (size_t i = from; i > to; --i) {
-            std::cout << arr[i] << ", ";
+template<typename T, std::size_t rows, std::size_t cols>
+void print(const std::array<std::array<T, cols>, rows>& arr) {
+    for (const auto& arrow : arr) {
+        for (size_t i = 0; i < cols - 1; ++i) {
+            std::cout << arrow[i] << " ";
         }
-    } else {
-        for (size_t i = from; i < to; ++i) {
-            std::cout << arr[i] << ", ";
-        }
+        std::cout << arrow[cols - 1] << "\n";
     }
-    std::cout << arr[to] << "]";
 }
 
 template<typename T>
-bool isNumber(const std::string & str, T & number, int & maxDigits, double & maxMantissa) {
+void print(const std::vector<std::vector<T>>& arr) {
+    for (const auto& arrow : arr) {
+        for (size_t i = 0; i < arrow.size() - 1; ++i) {
+            std::cout << arrow[i] << " ";
+        }
+        std::cout << arrow[arrow.size() - 1] << "\n";
+    }
+}
+
+template<typename T>
+bool isNumber(const std::string & str, T & number, int & maxDigits,
+              double & maxMantissa) {
     auto size = str.size();
     if (size == 0) {
         return false;
@@ -235,7 +259,7 @@ bool isNumber(const std::string & str, T & number, int & maxDigits, double & max
 }
 
 template<typename T>
-bool getNumber(const std::string& prompt, T& number) {
+bool getNumber(const std::string & prompt, T & number) {
     std::string input = "";
     std::cout << prompt;
     while (std::getline(std::cin, input)) {
@@ -249,8 +273,10 @@ bool getNumber(const std::string& prompt, T& number) {
             break;
         }
 
-        std::string range = "from -" + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
-                    range += " to " + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
+        std::string range = "from -" + std::to_string(maxMantissa) + "*10^"
+                          + std::to_string(maxDigits) + " to "
+						  + std::to_string(maxMantissa) + "*10^"
+						  + std::to_string(maxDigits);
         std::cout << "Incorrect value!\n";
         std::cout << "Input a number in the range:\n";
         std::cout << range + ".\n";
@@ -260,7 +286,8 @@ bool getNumber(const std::string& prompt, T& number) {
 }
 
 template<typename T, std::size_t N>
-bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums, const char delimeter = ' ') {
+bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums,
+                      const char delimeter = ' ') {
     bool result = true;
     int maxDigits = 0;
     double maxMantissa = 0;
@@ -287,21 +314,28 @@ bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums, con
     }
 
     if (result && word.size() > 0) {
-        if (!isNumber(word, number, maxDigits, maxMantissa)) {
-            result = false;
+        if (isNumber(word, number, maxDigits, maxMantissa)) {
+            nums[index] = number;
         }
         else {
-            nums[index] = number;
+            result = false;
         }
     }
 
     if (!result) {
-        std::string range = "from -" + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
-        range += " to " + std::to_string(maxMantissa) + "*10^" + std::to_string(maxDigits);
+        std::string range = "from -"
+                          + std::to_string(maxMantissa) + "*10^"
+   	                      + std::to_string(maxDigits) + " to "
+						  + std::to_string(maxMantissa) + "*10^"
+						  + std::to_string(maxDigits);
         std::cout << "Incorrect value!\n";
         std::cout << "Input a number in the range:\n";
         std::cout << range + ".\n";
-        std::cout << "Or type 'exit' for exit.\n";
+    }
+
+    if (index < N - 1) {
+        std::cout << "The container is not fully initialized!\n";
+        return false;
     }
 
     return result;
@@ -323,7 +357,8 @@ bool getRowNumbers(const std::string & prompt, std::array<T, N> & arr) {
 }
 
 template<typename T>
-bool get_valid_index(const std::vector<T> & arr, size_t & index, const T & excluded) {
+bool get_valid_index(const std::vector<T> & arr, size_t & index,
+                     const T & excluded) {
     for (size_t i = index; i < arr.size(); ++i) {
         if (arr[i] != excluded) {
             index = i;
@@ -407,13 +442,14 @@ struct tblCoord {
 };
 
 void draw_cell(const tblCoord & point, SHORT row, const char c) {
-    goto_xy((point.x - 1) * 4 + 5, (point.y - 1) * 2 + row);
+    goto_xy(point.x * 4 + 1, point.y * 2 + row);
     std::cout << c;
 }
 
-bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoord & point) {
+short point_is_correct(const std::string & input, const char (&tbl)[3][3],
+                      tblCoord & point) {
     if (input.size() > 5) {
-        return false;
+        return -1;
     }
     SHORT x = 0;
     SHORT y = 0;
@@ -436,38 +472,58 @@ bool point_is_correct(const std::string & input, const char (&tbl)[3][3], tblCoo
             }
             continue;
         }
-        return false;
+        return -1;
     }
 
     if (x > 0 && y > 0) {
         if (tbl[y - 1][x - 1]  != ' ') {
-            return false;
+            return 0;
         }
         point.x = x;
         point.y = y;
-        return true;
+        return 1;
     }
 
-    return false;
+    return 2;
 }
 
-bool get_point(const std::string & prompt, SHORT row, const char (&tbl)[3][3], tblCoord & point) {
+bool get_point(const std::string & prompt, SHORT row, const char (&tbl)[3][3],
+               tblCoord & point) {
     std::string input = "";
     std::cout << prompt;
     while (std::getline(std::cin, input)) {
         if (input == "exit") {
             return false;
         }
-        if (point_is_correct(input, tbl, point)) {
+
+        std::string blank80(80, ' ');
+        switch (point_is_correct(input, tbl, point)) {
+        case -1:
+            goto_xy(0, row + 1);
+            std::cout << blank80;
+            goto_xy(0, row + 1);
+            std::cout << "Incorrect input!\n";
+            break;
+        case 0:
+            goto_xy(0, row + 1);
+            std::cout << blank80;
+            goto_xy(0, row + 1);
+            std::cout << "The cell has already been occupied!\n";
+            break;
+        case 1:
+            goto_xy(0, row +1);
+            std::cout << blank80;
+            goto_xy(0, row + 1);
             return true;
+        case 2:
+            break;
         }
+ 
         goto_xy(prompt.size(), row);
         std::string blank(input.size(), ' ');
         std::cout << blank;
         goto_xy(prompt.size(), row);
     }
-
-    return true;
 }
 
 void clear_status(SHORT(&horizontals)[3], SHORT(&verticals)[3],
@@ -654,18 +710,20 @@ void tic_tac_toe() {
     SHORT diagonals[3] = { 0, 0, 0 };
 
     tblCoord point{};
-    bool current_move_is_X = true;
     std::string blank(80, ' ');
     std::string prompt = "";
+    char choice = '0';
+    std::cout << "Press 'X' if 'X' starts the game: ";
+    std::cin >> choice;
+    bool  current_move_is_X = (choice != 'X' && choice != 'x') ? false : true;
+    std::cin.ignore();
+    goto_xy(0, 4);
+    std::cout << blank;
 
     while (true) {
         draw_table(tbl, 4);
 
-        char choice = '0';
         short status = 0;
-        std::cout << "Press 'X' if 'X' starts the game: ";
-        std::cin >> choice;
-        current_move_is_X = (choice != 'X' && choice != 'x') ? false : true;
 
         for (short i = 0; i < 9; ++i) {
             goto_xy(0, 12);
@@ -690,7 +748,7 @@ void tic_tac_toe() {
                 horizontals, verticals, diagonals);
 
             // draw_table(tbl, 4);
-            draw_cell(point, 6, choice);
+            draw_cell(point, 4, choice);
 
             current_move_is_X = !current_move_is_X;
 
@@ -735,7 +793,7 @@ void tic_tac_toe() {
 
         goto_xy(0, 13);
         std::cout << blank,
-            goto_xy(0, 14);
+        goto_xy(0, 14);
         std::cout << blank;
         if (choice != 'y') {
             break;
@@ -746,37 +804,368 @@ void tic_tac_toe() {
     }
 
     goto_xy(0, 13);
+    std::cout << "Game over!\n";
+}
+
+template<typename T, size_t ROWS, size_t COLS>
+bool equal_matrix(const std::array<std::array<T, COLS>, ROWS>& m1,
+                  const std::array<std::array<T, COLS>, ROWS>& m2) {
+    for (size_t i = 0; i < ROWS; ++i) {
+        for (size_t j = 0; j < COLS; ++j) {
+            if (m1[i][j] != m2[i][j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+template<typename T, size_t N>
+void to_diagonal_matrix(std::array<std::array<T, N>, N>& m) {
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < N; ++j) {
+            if (i != j) {
+                m[i][j] = 0;
+            }
+        }
+    }
+}
+
+template<typename T, size_t ROWS, size_t COLS>
+std::array<T, ROWS> matrix_x_vector(const std::array<std::array<T, COLS>, ROWS>& a,
+    const std::array<T, COLS>& v/*, std::array<T, ROWS>& axv*/) {
+    std::array<T, ROWS> axv{};
+    size_t index = 0;
+    for (const auto& arrow : a) {
+        T accum = {};
+        for (size_t i = 0; i < COLS; ++i) {
+            accum += arrow[i] * v[i];
+        }
+        axv[index++] = accum;
+    }
+    return axv;
+}
+
+
+
+
+template<size_t Rows, size_t Cols>
+void clear_cells(std::array<std::array<bool, Cols>, Rows>& pimples) {
+    for (auto& arrows : pimples) {
+        for (auto& cell : arrows) {
+            cell = true;
+        }
+    }
+}
+
+template<size_t Rows>
+void draw_field(std::array<std::array<bool, 12>, Rows>& pimples, SHORT row) {
+    short index = 1;
+    goto_xy(0, row);
+    std::cout << "    | A | B | C | D | E | F | G | H | I | J | K | L |\n";
+    for (auto& arrows : pimples) {
+        std::cout << "----+---+---+---+---+---+---+---+---+---+---+---+---+\n";
+        std::cout << (index < 10 ? "  " : " ") << index++ << " ";
+        for (auto& cell : arrows) {
+            std::cout << "| " << (cell ? "O" : "X") << " ";
+        }
+        std::cout << "|\n";
+    }
+    std::cout << "----+---+---+---+---+---+---+---+---+---+---+---+---+\n";
+}
+
+bool check_coords(const std::string& input, tblCoord& left, tblCoord& right) {
+    auto size = input.size();
+    if (size < 4 && size > 12) {
+        return false;
+    }
+
+    SHORT x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    short index = 0;
+    while (index < size) {
+        char c = input[index++];
+        if (c == ' ') {
+            continue;
+        }
+
+        if (c >= 'A' && c < 'M' ||
+            c >= 'a' && c < 'm') {
+            SHORT x = c - (c > 'L' ? 'a' : 'A') + 1;
+            if (x1 == 0) {
+                x1 = x;
+            }
+            else if (x2 == 0) {
+                x2 = x;
+            }
+            else {
+                return false;
+            }
+            continue;
+        }
+
+        if (c >= '0' && c <= '9') {
+            SHORT y = c - '0';
+            if (index < size) {
+                c = input[index];
+                if (c >= '0' && c <= '9') {
+                    y = y * 10 + c - '0';
+                    ++index;
+                }
+            }
+            if (y > 12) {
+	            return false;
+            }
+            if (y1 == 0) {
+                y1 = y;
+            }
+            else if (y2 == 0) {
+                y2 = y;
+            }
+            else {
+                return false;
+            }
+            continue;
+        }
+
+        return false;
+    }
+
+    if (x1 > 0 && y1 > 0 &&
+        x2 > 0 && y2 > 0) {
+        if (x1 > x2) {
+            left.x = x2;
+            left.y = y2;
+            right.x = x1;
+            right.y = y1;
+        }
+        else {
+            left.x = x1;
+            left.y = y1;
+            right.x = x2;
+            right.y = y2;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool get_coords(const std::string & prompt, SHORT row, tblCoord & left,
+tblCoord & right) {
+    std::string blank80(80, ' ');
+    std::string input = "";
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input == "exit") {
+            return false;
+        }
+        if (check_coords(input, left, right)) {
+            return true;
+        }
+        else {
+            goto_xy(0, row + 1);
+            std::cout << blank80;
+            goto_xy(0, row + 1);
+            std::cout << "Incorrect input!\n";
+        }
+        goto_xy(prompt.size(), row);
+        std::string blank(input.size(), ' ');
+        std::cout << blank;
+        goto_xy(prompt.size(), row);
+    }
+
+    return true;
+}
+
+
+template<size_t Rows, size_t Cols>
+void draw_region(std::array<std::array<bool, Cols>, Rows>& pimples,
+    const tblCoord& left, const tblCoord& right, SHORT row) {
+    SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
+    if (left.x < right.x) {
+        minX = left.x;
+        maxX = right.x;
+    }
+    else {
+        minX = right.x;
+        maxX = left.x;
+    }
+    if (left.y < right.y) {
+        minY = left.y;
+        maxY = right.y;
+    }
+    else {
+        minY = right.y;
+        maxY = left.y;
+    }
+    SHORT startX = minX * 4 + 1;
+
+    for (SHORT i = minY; i < maxY + 1; ++i) {
+        goto_xy(startX, i * 2 + row);
+        for (SHORT j = minX; j < maxX + 1; ++j) {
+            std::cout << " " << (pimples[i - 1][j - 1] ? "O" : "X") << " |";
+        }
+    }
+}
+
+template<size_t Rows, size_t Cols>
+void burst_region(std::array<std::array<bool, Cols>, Rows> & pimples,
+                  const tblCoord& left, const tblCoord& right,
+                  short & burst_count, SHORT row) {
+    SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
+    if (left.x < right.x) {
+        minX = left.x;
+        maxX = right.x;
+    } 
+    else {
+        minX = right.x;
+        maxX = left.x;
+    }
+    if (left.y < right.y) {
+        minY = left.y;
+        maxY = right.y;
+    }
+    else {
+        minY = right.y;
+        maxY = left.y;
+    }
+    SHORT startX = minX * 4 + 1;
+
+    std::chrono::milliseconds duration(100);
+    for (SHORT i = minY; i < maxY + 1; ++i) {
+        SHORT currentX = startX;
+        SHORT currentY = i * 2 + row;
+        goto_xy(startX, currentY);
+        for (SHORT j = minX; j < maxX + 1; ++j) {
+            currentX += 4;
+            if (pimples[i - 1][j - 1]) {
+                std::cout << "Pop!";
+                pimples[i - 1][j - 1] = false;
+                ++burst_count;
+                std::this_thread::sleep_for(duration);
+            }
+            else {
+                goto_xy(currentX, currentY);
+            }
+        }
+    }
+}
+
+void pimples() {
+    ::system("cls");
+
+    const short Rows = 12, Cols = 12;
+    const short Cells = Rows * Cols;
+    std::array<std::array<bool, Cols>, Rows> pimples{};
+    tblCoord left{}, right{};
+
+    goto_xy(0, 0);
+    std::cout << "Let's play the game \"Pimple\".\n";
+    std::cout << "Enter the coordinates of one corner (in any order:\n";
+    std::cout << "A1, 1A), then the coordinates of the second corner of\n";
+    std::cout << "the rectangle. Adjacent numerical coordinates should\n";
+    std::cout << "be separated by a space (A1 12L, C10 1E). Letter and\n";
+    std::cout << "alternating numerical coordinates can be entered\n";
+    std::cout << "without spaces between them (A1L12, 10CE1). The\n";
+    std::cout << "pimples inside the rectangle selected by the\n";
+    std::cout << "corners will burst.\n";
+
+    std::string blank80(80, ' ');
+    while (true) {
+        short burst_count = 0;
+        clear_cells(pimples);
+        draw_field(pimples, 9);
+
+        while (burst_count < Cells) {
+            if (!get_coords("Enter rectangle's corners coords:", 35, left, right)) {
+                break;
+            }
+            burst_region(pimples, left, right, burst_count, 9);
+            draw_region(pimples, left, right, 9);
+            goto_xy(0, 35);
+            std::cout << blank80;
+            goto_xy(0, 35);
+            if (burst_count == Cells) {
+                std::cout << "All pimples have been burst.\n";
+            }
+        }
+
+        char choice = 'N';
+        std::cout << "Press 'y' if you want to play again: ";
+        std::cin >> choice;
+
+        goto_xy(0, 36);
+        std::cout << blank80 << "\n";
+        std::cout << blank80;
+        if (choice != 'y') {
+            break;
+        }
+        std::cin.ignore();
+    }
+
+    goto_xy(0, 36);
     std::cout << "Good bye!\n";
 }
 
-template<typename T, std::size_t rows, std::size_t cols>
-void print(const std::array<std::array<T, cols>, rows> & arr) {
-    for (const auto & arow : arr) {
-        for (size_t i = 0; i < cols - 1; ++i) {
-            std::cout << arow[i] << " ";
+template<typename T>
+std::vector<std::vector<T>> snake_passage(size_t rows, size_t cols) {
+    std::vector<std::vector<T>> arr (rows, std::vector<T> (cols, T {}));
+    int direction = 1;
+    T number = 0;
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            int index = (cols - 1) * (1 - direction) / 2 + j * direction;
+            arr[i][index] = number++;
         }
-        std::cout <<  arow[cols - 1] << "\n";
+        direction = -direction;
     }
-    std::cout << "\n";
+    return arr;
 }
 
-template<typename T>
-void print(const std::vector<std::vector<T>> & arr) {
-    for (const auto & arow : arr) {
-        for (size_t i = 0; i < arow.size() - 1; ++i) {
-            std::cout << arow[i] << " ";
+
+std::vector<std::vector<std::vector<bool>>> make_cube(const std::vector<std::vector<int>> & plane, int max_height) {
+    auto rows = plane.size();
+    auto cols = plane[0].size();
+     std::vector<std::vector<std::vector<bool>>> cube (rows, std::vector<std::vector<bool>>(cols, std::vector<bool>(max_height, false)));
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            auto height = plane[i][j];
+            if (height > 0) {
+                height = height > max_height ? max_height : height;
+                for (int k = 0; k < height; ++k) {
+                    cube[i][j][k] = true;
+                }
+            }
         }
-        std::cout << arow[arow.size() - 1] << "\n";
     }
+    return cube;
+}
+
+void print_level(const std::vector<std::vector<std::vector<bool>>> & cube, int level) {
+    auto rows = cube.size();
+    auto cols = cube[0].size();
+    auto levels = cube[0][0].size();
+    if (level < 0 || level >= levels) {
+    	std::cout << "Incorrect level.\n";
+    }
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            std::cout << (cube[i][j][level] ? 1 : 0) << " ";
+        }
+        std::cout << "\n";
+    }
+
 }
 
 int main () {
 //    std::cin.clear();
 //    std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
+    using namespace std::chrono_literals;
 
     std::cout << std::boolalpha;
     bool allCorrect = false;
-/*
+///*
     std::cout << "Task 1. The banquet table.\n";
     int cutleries[2][6] = {
         { 3, 3, 3, 3, 3, 3 },
@@ -896,35 +1285,127 @@ int main () {
 
     tic_tac_toe();
 
+    std::cout << "\nTask 3. Matrix.\n";
+    const int rows = 4, cols = 4;
+
+    std::array<std::array<int, cols>, rows> m1 = { {
+        { 1, 2, 3, 4 },
+        { 5, 6, 7, 8 },
+        { 1, 2, 3, 4 },
+        { 5, 6, 7, 8 }
+    } };
+    std::cout << "Matix m1:\n";
+    print(m1);
+
+    std::cin.ignore();
+    std::array<std::array<int, cols>, rows> m2;
+    std::cout << "Enter " << rows << " lines of " << cols << " numbers each:\n";
+    for (int i = 0; i < rows; ++i) {
+        while (true) {
+            if (getRowNumbers("Enter at least " + std::to_string(cols) +
+                " numbers to initialize line " +
+                std::to_string(i + 1) + ": ", m2[i])) {
+                break;
+            }
+        }
+    }
+    std::cout << "Matix m2:\n";
+    print(m2);
+
+    if (equal_matrix(m1, m2)) {
+        std::cout << "Converting matrix m2 to diagonal matrix.\n";
+        to_diagonal_matrix(m2);
+        std::cout << "Diagonal matrix:\n";
+        print(m2);
+    }
+    else {
+        std::cout << "The matrices aren't equal.\n";
+    }
+
+    std::cout << "\nTask 4. Multiplying a matrix by a vector.\n";
+    const int Nrows = 5, Mcols = 4;
+
+    std::array<std::array<float, Mcols>, Nrows> a = { {
+        { 1, 2, 3, 4 },
+        { 5, 6, 7, 8 },
+        { 1, 2, 3, 4 },
+        { 5, 6, 7, 8 },
+        { 1, 2, 3, 4 }
+    } };
+    std::cout << "Given matix a:\n";
+    print(a);
+
+    std::array<float, Mcols> v = { 1, 2, 3, 4 };
+    std::cout << "and vector v:\n";
+    print(v, 0, Mcols - 1);
+
+    auto axv = matrix_x_vector(a, v);
+    std::cout << "Result of a x v:\n";
+    print(axv, 0, Nrows - 1);
+
+    std::cout << "Enter " << Nrows << " lines of " << Mcols << " numbers each for matrix a:\n";
+    for (int i = 0; i < Nrows; ++i) {
+        while (true) {
+            if (getRowNumbers("Enter at least " + std::to_string(Mcols) +
+                " numbers to initialize line " +
+                std::to_string(i + 1) + ": ", a[i])) {
+                break;
+            }
+        }
+    }
+    std::cout << "Matix a:\n";
+    print(a);
+    std::cout << "Enter " << Mcols << " numbers for vector v:\n";
+    while (true) {
+        if (getRowNumbers("Enter at least " + std::to_string(Mcols) +
+            " numbers to initialize vector v: ", v)) {
+            break;
+        }
+    }
+    print(v, 0, Mcols - 1);
+
+    axv = matrix_x_vector(a, v);
+    std::cout << "Result of a x v:\n";
+    print(axv, 0, Nrows - 1);
+
+    std::cout << "\nTask 5. Pimple.\n";
+    std::cout << "Press any key to start...";
+    std::cin.ignore();
+    std::cin.get();
+    pimples();
+
+    std::cout << "\nTask 6. Snake passage.\n";
+    std::array<std::array<int, 5>, 5> nums {};
+    int direction = 1;
+    int number = 0;
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            int index = 4 * (1 - direction) / 2 + j * direction;
+            nums[i][index] = number++;
+        }
+        direction = -direction;
+    }
+    print(nums);
+
+    auto snake = snake_passage<int>(6, 8);
+    print(snake);
 //*/
 
-    std::cout << "\nTask 3. Matrix.\n";
-    std::array<std::array<int, 4>, 5> m1 = { {
-        { 1, 2, 3, 4 },
-        { 11, 12, 13, 14 },
-        { 21, 22, 23, 24 },
-        { 31, 32, 33, 34 },
-        { 41, 42, 43, 44 }
-    } };
-
-    print(m1);
+    std::cout << "\nTask 7. Almost Minecraft.\n";
+    int rows_count = 6, cols_count = 5, levels_count = 10;
+    std::vector<std::vector<int>> mheights = { 
+        { 5, 5, 5, 5, 5 },
+        { 4, 4, 4, 4, 4 },
+        { 3, 3, 2, 3, 3 },
+        { 2, 1, 1, 1, 2 },
+        { 1, 1, 1, 1, 1 },
+        { 1, 0, 0, 0, 1 }
+    };
     
-    std::array<int, 5> a1;
-    
-    getRowNumbers("input row  numbers: ", a1);
-    print(a1, 0, 4);
+    auto cube = make_cube(mheights, levels_count);
+    print_level(cube, 0);
 
-return 0;
-
-    std::cout << "\nTask 4. The storage.\n";
-
-    std::cout << "\nTask 5. The storage.\n";
-
-    std::cout << "\nTask 6. The storage.\n";
-
-    std::cout << "\nTask 7. The storage.\n";
-
-    std::cout << "\nTask 8. The storage.\n";
+    std::cout << "\nTask 8. Sea battle.\n";
 
     return 0;
 }
