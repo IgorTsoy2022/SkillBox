@@ -1192,7 +1192,9 @@ void place_ship_at_sea(std::vector<std::vector<short>>& sea,
     }
 }
 
-short set_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short rest_decks) {
+short set_move(std::vector<std::vector<short>>& sea, 
+               tblCoord& coord, short& total_decks,
+               short rest_decks = 4) {
     auto row = coord.y - 1;
     auto col = coord.x - 1;
     auto & cell = sea[row][col];
@@ -1202,18 +1204,20 @@ short set_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short rest
     }
     else if (cell == 1) {
         cell = 4;
+        --total_decks;
     }
-    else if (rest_decks < 1) {
+    else if (rest_decks < 2) {
         auto left = col;
         while (left > 0) {
-            if (sea[row][left] != 3) {
+            if (sea[row][left - 1] != 3) {
                 break;
             }
             --left;
         }
+
         auto right = col;
-        while (right < SEAXY) {
-            if (sea[row][right] !=3) {
+        while (right < SEAXY - 1) {
+            if (sea[row][right + 1] != 3) {
                 break;
             }
             ++right;
@@ -1223,29 +1227,34 @@ short set_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short rest
             for (auto i = left; i < right + 1; ++i) {
                 sea[row][i] = 4;
             }
+            --total_decks;
         }
         else {
             auto top = row;
             while (top > 0) {
-                if (sea[top][col] != 3) {
+                if (sea[top - 1][col] != 3) {
                     break;
                 }
                 --top;
             }
+
             auto bottom = row;
-            while (bottom < SEAXY) {
-                if (sea[bottom][col] != 3) {
+            while (bottom < SEAXY - 1) {
+                if (sea[bottom + 1][col] != 3) {
                     break;
                 }
                 ++bottom;
             }
+
             for (auto i = top; i < bottom + 1; ++i) {
                 sea[i][col] = 4;
             }
+            --total_decks;
         }
     }
     else {
         cell = 3;
+        --total_decks;
     }
 
     return cell;
@@ -1275,8 +1284,8 @@ char get_symbol(short num, bool hidden = false) {
 }
 
 void draw_sea(const tblCoord& sea_pos, 
-                    std::vector<std::vector<short>>& sea,
-                    const bool hidden = false) {
+              std::vector<std::vector<short>>& sea,
+              const bool hidden = false) {
     short index = 1;
     SHORT row = 1;
     goto_xy(sea_pos.x, sea_pos.y);
@@ -1297,9 +1306,9 @@ void draw_sea(const tblCoord& sea_pos,
 }
 
 void draw_sea(const tblCoord& sea_pos, 
-                    std::vector<std::vector<short>>& sea,
-                    tblCoord& from, tblCoord& to,
-                    const bool hidden = false) {
+              std::vector<std::vector<short>>& sea,
+              tblCoord& from, tblCoord& to,
+              const bool hidden = false) {
     SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
     if (from.x < to.x) {
         minX = from.x;
@@ -1328,11 +1337,13 @@ void draw_sea(const tblCoord& sea_pos,
 }
 
 void draw_sea_cell(const tblCoord& sea_pos,
-    tblCoord& point, const std::string& str) {
-    goto_xy(point.x * CELLX + 1 + sea_pos.x, point.y * CELLY + sea_pos.y);
+                   tblCoord& point, const std::string& str) {
+    goto_xy(point.x * CELLX + 1 + sea_pos.x,
+            point.y * CELLY + sea_pos.y);
     switch (str.length()) {
     case 0:
-        goto_xy(point.x * CELLX + CELLX + sea_pos.x, point.y * CELLY + sea_pos.y);
+        goto_xy(point.x * CELLX + CELLX + sea_pos.x,
+                point.y * CELLY + sea_pos.y);
         std::cout << "|";
         break;
     case 1:
@@ -1538,7 +1549,8 @@ short check_placement(std::vector<std::vector<short>>& sea,
 
     // [0] - 21, [1] - 22, [2] - 23
     // [3] - 31, [4] - 32, [5] - 41
-short check_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short& shipID) {
+short check_move(std::vector<std::vector<short>>& sea,
+                 tblCoord& coord, short& shipID) {
     auto cell = sea[coord.y - 1][coord.x - 1];
     if (cell > 20 && cell < 24) {
         shipID = cell - 21;
@@ -1548,6 +1560,9 @@ short check_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short& s
     }
     else if (cell > 40) {
         shipID = 5;
+    }
+    else {
+        shipID = -1;
     }
     return cell;
 }
@@ -1580,7 +1595,8 @@ bool place_ships(const tblCoord& sea_pos,
         }
         else {
             short decks = 0;
-            result = check_placement(sea, coord1, coord2, result, decks);
+            result = check_placement(sea, coord1, coord2,
+                                     result, decks);
             if (result == 1) {
                 err = "Space is occupied by another ship!";
             }
@@ -1612,7 +1628,8 @@ bool place_ships(const tblCoord& sea_pos,
             }
             else if (result == 0) {
                 --total_ships;
-                place_ship_at_sea(sea, coord1, coord2, decks, ships[decks - 1]--);
+                place_ship_at_sea(sea, coord1, coord2,
+                                  decks, ships[decks - 1]--);
 
                 if (decks == 1) {
                     draw_sea_cell(sea_pos, coord1, " S ");
@@ -1653,7 +1670,8 @@ bool place_ships(const tblCoord& sea_pos,
 }
 
 bool shoot_ship(const tblCoord& sea_pos, 
-                std::vector<std::vector<short>>& sea, std::vector<short>& fleet) {
+                std::vector<std::vector<short>>& sea,
+                std::vector<short>& fleet, short & total_decks) {
     tblCoord coord{};
     std::string input = "";
     std::string blank90(90, ' ');
@@ -1663,7 +1681,7 @@ bool shoot_ship(const tblCoord& sea_pos,
 
     goto_xy(prompt_col, prompt_row);
     std::cout << prompt;
-    while (std::getline(std::cin, input)) {
+    while (std::getline(std::cin, input) && total_decks > 0) {
         if (input == "exit") {
             return false;
         }
@@ -1679,12 +1697,27 @@ bool shoot_ship(const tblCoord& sea_pos,
         else {
             short shipID = 0;
             result = check_move(sea, coord, shipID);
-            if (result == 3 || result == 4 || result == 5) {
+
+            if (result > 2 && result < 6) {
                 err = "This point has already been shot at.";
             }
             else {
-                set_move(sea, coord, fleet[shipID]--);
+                if (shipID >= 0) {
+                    result = set_move(sea, coord, total_decks, fleet[shipID]--);
+                }
+                else {
+                    result = set_move(sea, coord, total_decks);
+                }
                 draw_sea(sea_pos, sea, false);
+
+                if (total_decks < 1) {
+                    goto_xy(prompt_col, prompt_row);
+                    std::cout << std::string(45, ' ');
+                    goto_xy(prompt_col, prompt_row);
+                    std::cout << "Enemy fleet completely sunk!";
+                    break;
+                }
+
                 goto_xy(0, prompt_row + 1);
                 std::cout << blank90;
                 goto_xy(prompt_col + prompt.length(), prompt_row);
@@ -1693,10 +1726,10 @@ bool shoot_ship(const tblCoord& sea_pos,
                 continue;
             }
         
-            goto_xy(prompt_col + prompt.length(), prompt_row);
-            std::cout << std::string(input.length(), ' ');
-            goto_xy(prompt_col + prompt.length(), prompt_row);
-            continue;
+//            goto_xy(prompt_col + prompt.length(), prompt_row);
+//            std::cout << std::string(input.length(), ' ');
+//            goto_xy(prompt_col + prompt.length(), prompt_row);
+//            continue;
         }
 
         goto_xy(prompt_col, prompt_row + 1);
@@ -1789,8 +1822,8 @@ void sea_battle() {
         }
 */
 
-    short total_ships1 = 10;
-    short total_ships2 = 10;
+    short total_decks1 = 20;
+    short total_decks2 = 20;
     // [0] - 21, [1] - 22, [2] - 23
     // [3] - 31, [4] - 32, [5] - 41
     std::vector<short> fleet1 = {
@@ -1798,8 +1831,9 @@ void sea_battle() {
     };
     std::vector<short> fleet2 = fleet1;
 
-    shoot_ship(sea1_pos, sea1, fleet1);
-    print(fleet1, 0, 5);
+    shoot_ship(sea1_pos, sea1, fleet1, total_decks1);
+
+
 /*
         goto_xy(0, prompt2_row + 1);
         std::cout << "Press 'y' if you want to play again: ";
