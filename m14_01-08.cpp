@@ -1,13 +1,10 @@
-#include <chrono>
-#include <iostream>
 #include <array>
+#include <chrono>
 #include <cmath>
+#include <iostream>
 #include <string>
-#include <cassert>
-#include <vector>
-#include <map>
-#include <conio.h> 
 #include <thread>
+#include <vector>
 #include <windows.h>
 
 template<typename T, std::size_t N>
@@ -41,13 +38,13 @@ void print(const std::vector<T> & arr, size_t from, size_t to) {
     std::cout << arr[to] << "]\n";
 }
 
-template<typename T, std::size_t rows, std::size_t cols>
-void print(const std::array<std::array<T, cols>, rows>& arr) {
+template<typename T, std::size_t ROWS, std::size_t COLS>
+void print(const std::array<std::array<T, COLS>, ROWS>& arr) {
     for (const auto& arrow : arr) {
-        for (size_t i = 0; i < cols - 1; ++i) {
+        for (size_t i = 0; i < COLS - 1; ++i) {
             std::cout << arrow[i] << " ";
         }
-        std::cout << arrow[cols - 1] << "\n";
+        std::cout << arrow[COLS - 1] << "\n";
     }
 }
 
@@ -357,6 +354,78 @@ bool getRowNumbers(const std::string & prompt, std::array<T, N> & arr) {
 }
 
 template<typename T>
+bool splitIntoNumbers(const std::string& sentence, std::vector<T>& nums,
+    const char delimeter = ' ') {
+    bool result = true;
+    auto size = nums.size();
+    int maxDigits = 0;
+    double maxMantissa = 0;
+    size_t index = 0;
+    T number;
+    std::string word = "";
+    for (const char& c : sentence) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+                if (!isNumber(word, number, maxDigits, maxMantissa)) {
+                    result = false;
+                    break;
+                }
+                word.clear();
+                nums[index++] = number;
+                if (index == size) {
+                    return true;
+                }
+            }
+        }
+        else {
+            word += c;
+        }
+    }
+
+    if (result && word.size() > 0) {
+        if (isNumber(word, number, maxDigits, maxMantissa)) {
+            nums[index] = number;
+        }
+        else {
+            result = false;
+        }
+    }
+
+    if (!result) {
+        std::string range = "from -"
+            + std::to_string(maxMantissa) + "*10^"
+            + std::to_string(maxDigits) + " to "
+            + std::to_string(maxMantissa) + "*10^"
+            + std::to_string(maxDigits);
+        std::cout << "Incorrect value!\n";
+        std::cout << "Input a number in the range:\n";
+        std::cout << range + ".\n";
+    }
+
+    if (index < size - 1) {
+        std::cout << "The container is not fully initialized!\n";
+        return false;
+    }
+
+    return result;
+}
+
+template<typename T>
+bool getRowNumbers(const std::string& prompt, std::vector<T>& arr) {
+    std::string input = "";
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input == "exit") {
+            return false;
+        }
+        if (splitIntoNumbers(input, arr)) {
+            break;
+        }
+    }
+    return true;
+}
+
+template<typename T>
 bool get_valid_index(const std::vector<T> & arr, size_t & index,
                      const T & excluded) {
     for (size_t i = index; i < arr.size(); ++i) {
@@ -413,6 +482,10 @@ void goto_xy(SHORT x, SHORT y) {
     COORD position = { x, y };
     ::SetConsoleCursorPosition(hStdOut, position);
 }
+
+//----------------------------------------------------//
+//    Tic-tac-toe
+//----------------------------------------------------//
 
 void clear_table(char (&tbl)[3][3]) {
     for (short i = 0; i < 3; ++i) {
@@ -593,107 +666,11 @@ SHORT update_status(tblCoord& point, bool current_move_is_X,
     return 0;
 }
 
-short check_table(const char(&tbl)[3][3], bool next_move_is_X) {
-    // status = 1 : X - winner
-    // status = 2 : 0 - winner
-    // status = 3 : draw
-
-    SHORT status = 0;
-    SHORT horizontals[3] = { 0, 0, 0 };
-    SHORT verticals[3] = { 0, 0, 0 };
-    SHORT diagonals[2] = { 0, 0 };
-    SHORT moves_count = 0;
-
-    for (short i = 0; i < 3; ++i) {
-        for (short j = 0; j < 3; ++j) {
-            if (tbl[i][j] == 'X') {
-                ++horizontals[i];
-                ++verticals[j];
-                if (i == j) {
-                    ++diagonals[0];
-                    if (i == 1) {
-                        ++diagonals[1];
-                    }
-                }
-                else if (i == 0 && j == 2 ||
-                         i == 2 && j == 0) {
-                    ++diagonals[1];
-                }
-            }
-            else if (tbl[i][j] == '0') {
-                --horizontals[i];
-                --verticals[j];
-                if (i == j) {
-                    --diagonals[0];
-                    if (i == 1) {
-                        --diagonals[1];
-                    }
-                }
-                else if (i == 0 && j == 2 ||
-                         i == 2 && j == 0) {
-                    --diagonals[1];
-                }
-            }
-            else {
-                ++moves_count;
-            }
-        }
-        if (horizontals[i] == 3) {
-            return 1;
-        }
-        else if (horizontals[i] == -3) {
-            return 2;
-        }
-    }
-
-    for (short i = 0; i < 3; ++i) {
-        if (verticals[i] == 3) {
-            return 1;
-        }
-        if (verticals[i] == -3) {
-            return 2;
-        }
-        if (i < 2) {
-            if (diagonals[i] == 3) {
-                return 1;
-            }
-            if (diagonals[i] == -3) {
-                return 2;
-            }
-        }
-    }
-
-    if (moves_count == 1) {
-        for (short i = 0; i < 3; ++i) {
-            if (horizontals[i] < -1 && !next_move_is_X ||
-                horizontals[i] > 1 && next_move_is_X) {
-                return 0;
-            }
-            if (verticals[i] < -1 && !next_move_is_X ||
-                verticals[i] > 1 && next_move_is_X) {
-                return 0;
-            }
-            if (i < 2) {
-               if (diagonals[i] < -1 && !next_move_is_X ||
-                   diagonals[i] > 1 && next_move_is_X) {
-                   return 0;
-               }
-            }
-        }
-        return 3;
-    }
-
-    return 0;
-}
-
 void tic_tac_toe() {
     ::system("cls");
 
 //    ::system("clrscr");
-
 //    ::system("clear");
-
-//    clrscr();
 
     goto_xy(0, 0);
     std::cout << "Let's play the game \"Tic-tac-toe\".\n";
@@ -715,10 +692,12 @@ void tic_tac_toe() {
     char choice = '0';
     std::cout << "Press 'X' if 'X' starts the game: ";
     std::cin >> choice;
-    bool  current_move_is_X = (choice != 'X' && choice != 'x') ? false : true;
-    std::cin.ignore();
+    bool current_move_is_X = (choice != 'X' && choice != 'x') ? false : true;
+
     goto_xy(0, 4);
     std::cout << blank;
+
+    std::cin.ignore();
 
     while (true) {
         draw_table(tbl, 4);
@@ -752,7 +731,6 @@ void tic_tac_toe() {
 
             current_move_is_X = !current_move_is_X;
 
-            // status = check_table(tbl, current_move_is_X);
             if (status > 0) {
                 break;
             }
@@ -807,6 +785,10 @@ void tic_tac_toe() {
     std::cout << "Game over!\n";
 }
 
+//----------------------------------------------------//
+//    Matrix
+//----------------------------------------------------//
+
 template<typename T, size_t ROWS, size_t COLS>
 bool equal_matrix(const std::array<std::array<T, COLS>, ROWS>& m1,
                   const std::array<std::array<T, COLS>, ROWS>& m2) {
@@ -846,11 +828,12 @@ std::array<T, ROWS> matrix_x_vector(const std::array<std::array<T, COLS>, ROWS>&
     return axv;
 }
 
+//----------------------------------------------------//
+//    Pimples
+//----------------------------------------------------//
 
-
-
-template<size_t Rows, size_t Cols>
-void clear_cells(std::array<std::array<bool, Cols>, Rows>& pimples) {
+template<size_t ROWS, size_t COLS>
+void clear_cells(std::array<std::array<bool, COLS>, ROWS>& pimples) {
     for (auto& arrows : pimples) {
         for (auto& cell : arrows) {
             cell = true;
@@ -858,8 +841,8 @@ void clear_cells(std::array<std::array<bool, Cols>, Rows>& pimples) {
     }
 }
 
-template<size_t Rows>
-void draw_field(std::array<std::array<bool, 12>, Rows>& pimples, SHORT row) {
+template<size_t ROWS>
+void draw_field(std::array<std::array<bool, 12>, ROWS>& pimples, SHORT row) {
     short index = 1;
     goto_xy(0, row);
     std::cout << "    | A | B | C | D | E | F | G | H | I | J | K | L |\n";
@@ -876,7 +859,7 @@ void draw_field(std::array<std::array<bool, 12>, Rows>& pimples, SHORT row) {
 
 bool check_coords(const std::string& input, tblCoord& left, tblCoord& right) {
     auto size = input.size();
-    if (size < 4 && size > 12) {
+    if (size < 4 || size > 12) {
         return false;
     }
 
@@ -913,7 +896,7 @@ bool check_coords(const std::string& input, tblCoord& left, tblCoord& right) {
                 }
             }
             if (y > 12) {
-	            return false;
+                return false;
             }
             if (y1 == 0) {
                 y1 = y;
@@ -977,9 +960,8 @@ tblCoord & right) {
     return true;
 }
 
-
-template<size_t Rows, size_t Cols>
-void draw_region(std::array<std::array<bool, Cols>, Rows>& pimples,
+template<size_t ROWS, size_t COLS>
+void draw_region(std::array<std::array<bool, COLS>, ROWS>& pimples,
     const tblCoord& left, const tblCoord& right, SHORT row) {
     SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
     if (left.x < right.x) {
@@ -1008,8 +990,8 @@ void draw_region(std::array<std::array<bool, Cols>, Rows>& pimples,
     }
 }
 
-template<size_t Rows, size_t Cols>
-void burst_region(std::array<std::array<bool, Cols>, Rows> & pimples,
+template<size_t ROWS, size_t COLS>
+void burst_region(std::array<std::array<bool, COLS>, ROWS> & pimples,
                   const tblCoord& left, const tblCoord& right,
                   short & burst_count, SHORT row) {
     SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
@@ -1107,6 +1089,743 @@ void pimples() {
     std::cout << "Good bye!\n";
 }
 
+//----------------------------------------------------//
+//    Sea battle
+//----------------------------------------------------//
+
+const short CELLX = 4;
+const short CELLY = 1;
+const short SEAXY = 10;
+
+void clear_sea(std::vector<std::vector<short>>& sea) {
+    for (short i = 0; i < SEAXY; ++i) {
+        for (short j = 0; j < SEAXY; ++j) {
+            sea[i][j] = 0;
+        }
+    }
+}
+
+void place_ship_at_sea(std::vector<std::vector<short>>& sea,
+                       tblCoord& coord1, tblCoord& coord2,
+                       short decks, short shipNo) {
+    SHORT col1 = coord1.x - 1;
+    SHORT row1 = coord1.y - 1;
+
+    SHORT left = col1 > 0 ? col1 - 1 : col1;
+    SHORT right = col1 < SEAXY - 1 ? col1 + 1 : col1;
+    SHORT top = row1 > 0 ? row1 - 1 : row1;
+    SHORT bottom = row1 < SEAXY - 1 ? row1 + 1 : row1;
+
+    if (decks == 1) {
+        for (auto i = top; i < bottom + 1; ++i) {
+            for (auto j = left; j < right + 1; ++j) {
+                sea[i][j] = (i == row1 && j == col1) ? 1 : 2;
+            }
+        }
+        return;
+    }
+
+    SHORT col2 = coord2.x - 1;
+    SHORT row2 = coord2.y - 1;
+    if (col1 == col2) {
+        // Vertical ship
+        SHORT minY = row1, maxY = row2;
+        if (row1 > row2) {
+            minY = row2;
+            maxY = row1;
+        }
+
+        for (auto i = minY; i < maxY + 1; ++i) {
+            sea[i][col1] = decks * 10 + shipNo;
+        }
+
+        top = minY > 0 ? minY - 1 : minY;
+        bottom = maxY < SEAXY - 1 ? maxY + 1 : maxY;
+        for (auto i = top; i < bottom + 1; ++i) {
+            if (left < col1) {
+                sea[i][left] = 2;
+            }
+            if (right > col1) {
+                sea[i][right] = 2;
+            }
+        }
+        if (top < minY) {
+            sea[top][col1] = 2;
+        }
+        if (bottom > maxY) {
+            sea[bottom][col1] = 2;
+        }
+
+        return;
+    }
+
+    if (row1 == row2) {
+        // Horizontal ship
+        SHORT minX = col1, maxX = col2;
+        if (col1 > col2) {
+            minX = col2;
+            maxX = col1;
+        }
+
+        for (auto j = minX; j < maxX + 1; ++j) {
+            sea[row1][j] = decks * 10 + shipNo;
+        }
+
+        left = minX > 0 ? minX - 1 : minX;
+        right = maxX < SEAXY - 1 ? maxX + 1 : maxX;
+        for (auto j = left; j < right + 1; ++j) {
+            if (top < row1) {
+                sea[top][j] = 2;
+            }
+            if (bottom > row1) {
+                sea[bottom][j] = 2;
+            }
+        }
+        if (left < minX) {
+            sea[row1][left] = 2;
+        }
+        if (right > maxX) {
+            sea[row1][right] = 2;
+        }
+
+        return;
+    }
+}
+
+short set_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short rest_decks) {
+    auto row = coord.y - 1;
+    auto col = coord.x - 1;
+    auto & cell = sea[row][col];
+
+    if (cell == 0 || cell == 2) {
+        cell = 5;
+    }
+    else if (cell == 1) {
+        cell = 4;
+    }
+    else if (rest_decks < 1) {
+        auto left = col;
+        while (left > 0) {
+            if (sea[row][left] != 3) {
+                break;
+            }
+            --left;
+        }
+        auto right = col;
+        while (right < SEAXY) {
+            if (sea[row][right] !=3) {
+                break;
+            }
+            ++right;
+        }
+
+        if (left != right) {
+            for (auto i = left; i < right + 1; ++i) {
+                sea[row][i] = 4;
+            }
+        }
+        else {
+            auto top = row;
+            while (top > 0) {
+                if (sea[top][col] != 3) {
+                    break;
+                }
+                --top;
+            }
+            auto bottom = row;
+            while (bottom < SEAXY) {
+                if (sea[bottom][col] != 3) {
+                    break;
+                }
+                ++bottom;
+            }
+            for (auto i = top; i < bottom + 1; ++i) {
+                sea[i][col] = 4;
+            }
+        }
+    }
+    else {
+        cell = 3;
+    }
+
+    return cell;
+}
+
+char get_symbol(short num, bool hidden = false) {
+    switch (num) {
+    case 0:
+        return ' ';
+    case 1:
+        return hidden ? ' ' : 'S';
+    case 2:
+        return hidden ? ' ' : '.';
+    case 3:
+        return '!';
+    case 4:
+        return 'X';
+    case 5:
+        return '*';
+    }
+
+    if (num > 9) {
+        return hidden ? ' ' : 'S';
+    }
+
+    return ' ';
+}
+
+void draw_sea(const tblCoord& sea_pos, 
+                    std::vector<std::vector<short>>& sea,
+                    const bool hidden = false) {
+    short index = 1;
+    SHORT row = 1;
+    goto_xy(sea_pos.x, sea_pos.y);
+
+    std::cout << "    | A | B | C | D | E | F | G | H | I | J |";
+    for (const auto& arrow : sea) {
+        goto_xy(sea_pos.x, sea_pos.y + row++);
+//        std::cout << "----+---+---+---+---+---+---+---+---+---+---+";
+//        goto_xy(sea_pos.x, sea_pos.y + row++);
+        std::cout << (index < 10 ? "  " : " ") << index++ << " |";
+        for (const auto & cell : arrow) {
+            std::cout << " " << get_symbol(cell, hidden) << " |";
+        }
+    }
+    goto_xy(sea_pos.x, sea_pos.y + row);
+//    std::cout << "----+---+---+---+---+---+---+---+---+---+---+" << "\n";
+
+}
+
+void draw_sea(const tblCoord& sea_pos, 
+                    std::vector<std::vector<short>>& sea,
+                    tblCoord& from, tblCoord& to,
+                    const bool hidden = false) {
+    SHORT minX = 0, maxX = 0, minY = 0, maxY = 0;
+    if (from.x < to.x) {
+        minX = from.x;
+        maxX = to.x;
+    }
+    else {
+        minX = to.x;
+        maxX = from.x;
+    }
+    if (from.y < to.y) {
+        minY = from.y;
+        maxY = to.y;
+    }
+    else {
+        minY = to.y;
+        maxY = from.y;
+    }
+    SHORT startX = minX * CELLX + 1 + sea_pos.x;
+
+    for (SHORT i = minY; i < maxY + 1; ++i) {
+        goto_xy(startX, i * CELLY + sea_pos.y);
+        for (SHORT j = minX; j < maxX + 1; ++j) {
+            std::cout << " " << get_symbol(sea[i - 1][j - 1], hidden) << " |";
+        }
+    }
+}
+
+void draw_sea_cell(const tblCoord& sea_pos,
+    tblCoord& point, const std::string& str) {
+    goto_xy(point.x * CELLX + 1 + sea_pos.x, point.y * CELLY + sea_pos.y);
+    switch (str.length()) {
+    case 0:
+        goto_xy(point.x * CELLX + CELLX + sea_pos.x, point.y * CELLY + sea_pos.y);
+        std::cout << "|";
+        break;
+    case 1:
+        std::cout << " " << str << " |";
+        break;
+    case 2:
+        std::cout << " " << str << "|";
+        break;
+    case 3:
+        std::cout << str << "|";
+        break;
+    case 4:
+        std::cout << str;
+        break;
+    default:
+        std::cout << str.substr(0, 4);
+        break;
+    }
+}
+
+short check_point(const std::string& input, tblCoord& point) {
+    auto size = input.size();
+    if (size < 2 || size > 10) {
+        return -1;
+    }
+
+    SHORT x = 0, y = 0, x_tmp = 0, y_tmp = 0;
+    short index = 0;
+    char c = '0';
+    while (index < size) {
+        c = input[index++];
+        if (c == ' ') {
+            continue;
+        }
+        if (c >= 'A' && c < 'K' ||
+            c >= 'a' && c < 'k') {
+            x_tmp = c - (c > 'K' ? 'a' : 'A') + 1;
+            if (x == 0) {
+                x = x_tmp;
+            }
+            else {
+                return -1;
+            }
+            continue;
+        }
+        if (c >= '0' && c <= '9') {
+            y_tmp = c - '0';
+            if (index < size) {
+                c = input[index];
+                if (c >= '0' && c <= '9') {
+                    y_tmp = y_tmp * 10 + c - '0';
+                    ++index;
+                }
+                if (y_tmp > 10) {
+                    return -1;
+                }
+            }
+            if (y == 0) {
+                y = y_tmp;
+            }
+            else {
+                return -1;
+            }
+            continue;
+        }
+        return -1;
+    }
+
+    if (x > 0 && y > 0) {
+        point.x = x;
+        point.y = y;
+        return 1;
+    }
+
+    return 0;
+}
+
+short check_points(const std::string & input,
+                   tblCoord& point1, tblCoord& point2) {
+    auto size = input.size();
+    if (size < 2 || size > 10) {
+        return -1;
+    }
+
+    SHORT x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    SHORT x_tmp = 0, y_tmp = 0;
+    short index = 0;
+    char c = '0';
+    while (index < size) {
+        c = input[index++];
+        if (c == ' ') {
+            continue;
+        }
+        if (c >= 'A' && c < 'K' ||
+            c >= 'a' && c < 'k') {
+            x_tmp = c - (c > 'K' ? 'a' : 'A') + 1;
+            if (x1 == 0) {
+                x1 = x_tmp;
+            }
+            else if (x2 == 0) {
+                x2 = x_tmp;
+            }
+            else {
+                return -1;
+            }
+            continue;
+        }
+        if (c >= '0' && c <= '9') {
+            y_tmp = c - '0';
+            if (index < size) {
+                c = input[index];
+                if (c >= '0' && c <= '9') {
+                    y_tmp = y_tmp * 10 + c - '0';
+                    ++index;
+                }
+                if (y_tmp > 10) {
+                    return -1;
+                }
+            }
+            if (y1 == 0) {
+                y1 = y_tmp;
+            }
+            else if (y2 == 0) {
+                y2 = y_tmp;
+            }
+            else {
+                return -1;
+            }
+            continue;
+        }
+        return -1;
+    }
+
+    if (x1 > 0 && y1 > 0) {
+        point1.x = x1;
+        point1.y = y1;
+        short coords_count = 1;
+        if (x2 > 0 && y2 > 0) {
+            point2.x = x2;
+            point2.y = y2;
+            ++coords_count;
+        }
+        return coords_count;
+    }
+
+    return 0;
+}
+
+short check_placement(std::vector<std::vector<short>>& sea,
+                      tblCoord& coord1, tblCoord& coord2,
+                      short coords_count, short& decks) {
+    SHORT col1 = coord1.x - 1;
+    SHORT row1 = coord1.y - 1;
+    if (coord1.x == coord2.x &&
+        coord1.y == coord2.y) {
+        coords_count = 1;
+    }
+    if (coords_count == 1) {
+        decks = 1;
+        auto cell = sea[row1][col1];
+        return cell > 9 ? 1 : cell;
+    }
+
+    SHORT col2 = coord2.x - 1;
+    SHORT row2 = coord2.y - 1;
+    if (col1 == col2) {
+        // Vertical ship
+        SHORT minY = row1, maxY = row2;
+        if (row1 > row2) {
+            minY = row2;
+            maxY = row1;
+        }
+        decks = maxY - minY + 1;
+        for (SHORT i = minY; i < maxY + 1; ++i) {
+            auto cell = sea[i][col1];
+            if (cell == 1 || cell == 2 || cell > 9) {
+                return cell > 9 ? 1 : cell;
+            }
+        }
+        return 0;
+    }
+
+    if (row1 == row2) {
+        // Horizontal ship
+        SHORT minX = col1, maxX = col2;
+        if (col1 > col2) {
+            minX = col2;
+            maxX = col1;
+        }
+        decks = maxX - minX + 1;
+        for (SHORT j = minX; j < maxX + 1; ++j) {
+            auto cell = sea[row1][j];
+            if (cell == 1 || cell == 2 || cell > 9) {
+                return cell > 9 ? 1 : cell;
+            }
+        }
+        return 0;
+    }
+
+    // Diagonal ship
+    return 6;
+}
+
+    // [0] - 21, [1] - 22, [2] - 23
+    // [3] - 31, [4] - 32, [5] - 41
+short check_move(std::vector<std::vector<short>>& sea, tblCoord& coord, short& shipID) {
+    auto cell = sea[coord.y - 1][coord.x - 1];
+    if (cell > 20 && cell < 24) {
+        shipID = cell - 21;
+    }
+    else if (cell > 30 && cell < 33) {
+        shipID = cell - 28;
+    }
+    else if (cell > 40) {
+        shipID = 5;
+    }
+    return cell;
+}
+
+bool place_ships(const tblCoord& sea_pos, 
+                 std::vector<std::vector<short>> & sea) {
+    short total_ships = 10;
+    tblCoord coord1{}, coord2{};
+    std::vector<short> ships = { 4, 3, 2, 1 };
+    std::string input = "";
+    std::string blank90(90, ' ');
+    std::string prompt = "Enter the coordinates of the ships: ";
+    SHORT prompt_col = sea_pos.x;
+    SHORT prompt_row = sea_pos.y + 11 * CELLY;
+
+    goto_xy(prompt_col, prompt_row);
+    std::cout << prompt;
+    while (std::getline(std::cin, input) && total_ships > 0) {
+        if (input == "exit") {
+            return false;
+        }
+
+        std::string err = "";
+        auto result = check_points(input, coord1, coord2);
+        if (result == -1) {
+            err = "Incorrect input. Try again.";
+        }
+        else if (result == 0) {
+            err = "Nothing to do.";
+        }
+        else {
+            short decks = 0;
+            result = check_placement(sea, coord1, coord2, result, decks);
+            if (result == 1) {
+                err = "Space is occupied by another ship!";
+            }
+            else if (result == 2) {
+                err = "Ships are too close together!";
+            }
+            else if (result == 6) {
+            	err = "Diagonal placement is not allowed!";
+            }
+            else if (decks > 4) {
+                err = "Too many decs on the ship!";
+            }
+            else if (ships[decks - 1] < 1) {
+                switch (decks) {
+                case 1:
+                    err = "Four single-deck";
+                    break;
+                case 2:
+                    err = "Three double-deck";
+                    break;
+                case 3:
+                    err = "Two triple-deck";
+                    break;
+                case 4:
+                    err = "One four-deck";
+                    break;
+                }
+                err += " ships have already been commissioned!";
+            }
+            else if (result == 0) {
+                --total_ships;
+                place_ship_at_sea(sea, coord1, coord2, decks, ships[decks - 1]--);
+
+                if (decks == 1) {
+                    draw_sea_cell(sea_pos, coord1, " S ");
+                }
+                else {
+                    draw_sea(sea_pos, sea, coord1, coord2, false);
+                }
+
+                goto_xy(0, prompt_row + 1);
+                std::cout << blank90;
+
+                if (total_ships < 1) {
+                    goto_xy(prompt_col, prompt_row);
+                    std::cout << std::string(45, ' ');
+                    goto_xy(prompt_col, prompt_row);
+                    std::cout << "The fleet is fully staffed!";
+                    break;
+                }
+
+                goto_xy(prompt_col + prompt.length(), prompt_row);
+                std::cout << std::string(input.length(), ' ');
+                goto_xy(prompt_col + prompt.length(), prompt_row);
+                continue;
+            }
+        }
+
+        goto_xy(prompt_col, prompt_row + 1);
+        std::cout << blank90;
+        goto_xy(prompt_col, prompt_row + 1);
+        std::cout << err;
+
+        goto_xy(prompt_col + prompt.length(), prompt_row);
+        std::cout << std::string(input.length(), ' ');
+        goto_xy(prompt_col + prompt.length(), prompt_row);
+    }
+
+    return true;
+}
+
+bool shoot_ship(const tblCoord& sea_pos, 
+                std::vector<std::vector<short>>& sea, std::vector<short>& fleet) {
+    tblCoord coord{};
+    std::string input = "";
+    std::string blank90(90, ' ');
+    std::string prompt = "Enter the target coordinates: ";
+    SHORT prompt_col = sea_pos.x;
+    SHORT prompt_row = sea_pos.y + 11 * CELLY;
+
+    goto_xy(prompt_col, prompt_row);
+    std::cout << prompt;
+    while (std::getline(std::cin, input)) {
+        if (input == "exit") {
+            return false;
+        }
+
+        std::string err = "";
+        auto result = check_point(input, coord);
+        if (result == -1) {
+            err = "Incorrect input. Try again.";
+        }
+        else if (result == 0) {
+            err = "Nothing to do.";
+        }
+        else {
+            short shipID = 0;
+            result = check_move(sea, coord, shipID);
+            if (result == 3 || result == 4 || result == 5) {
+                err = "This point has already been shot at.";
+            }
+            else {
+                set_move(sea, coord, fleet[shipID]--);
+                draw_sea(sea_pos, sea, false);
+                goto_xy(0, prompt_row + 1);
+                std::cout << blank90;
+                goto_xy(prompt_col + prompt.length(), prompt_row);
+                std::cout << std::string(input.length(), ' ');
+                goto_xy(prompt_col + prompt.length(), prompt_row);
+                continue;
+            }
+        
+            goto_xy(prompt_col + prompt.length(), prompt_row);
+            std::cout << std::string(input.length(), ' ');
+            goto_xy(prompt_col + prompt.length(), prompt_row);
+            continue;
+        }
+
+        goto_xy(prompt_col, prompt_row + 1);
+        std::cout << blank90;
+        goto_xy(prompt_col, prompt_row + 1);
+        std::cout << err;
+
+        goto_xy(prompt_col + prompt.length(), prompt_row);
+        std::cout << std::string(input.length(), ' ');
+        goto_xy(prompt_col + prompt.length(), prompt_row);
+    }
+
+    return true;
+}
+
+
+
+
+void sea_battle() {
+    ::system("cls");
+
+    goto_xy(0, 0);
+/*
+    std::cout << "Let's play the game \"Sea battle\".\n";
+    std::cout << "Each of the 2 players has 4 single-deck, 3 double-deck, 2 triple-deck and 1 four-deck ships.\n";
+    std::cout << "Ships can only be positioned vertically or horizontally, diagonal placement is not allowed.\n";
+    std::cout << "Each player takes turns placing their ships by indicating the coordinates of the bow and\n";
+    std::cout << "stern of the ship (single-deck ships can be indicated by the coordinates of a point). The\n";
+    std::cout << "coordinates can be in any order (A8a10, 10Aa8). Adjacent numerical coordinates\n;
+    std::cout << "should be separated by a space (aa10 8, a10 8a).\n";
+//*/
+
+    std::vector<std::vector<short>> sea1(SEAXY, std::vector<short>(SEAXY, 0));
+    std::vector<std::vector<short>> sea2(SEAXY, std::vector<short>(SEAXY, 0)); 
+
+    tblCoord sea1_pos{ 1, 1 };
+    tblCoord sea2_pos{ 0, 13 };
+    
+//    tblCoord sea1_pos{ 0, 9 };
+    tblCoord sea2_enemy_pos{ 11 * CELLX + 2, 9 };
+//    tblCoord sea2_pos{ 0, 9 + 11 * CELLY + 2 };
+    tblCoord sea1_enemy_pos{ 11 * CELLX + 2, 9 + 11 * CELLY + 2 };
+
+
+    
+    std::string blank90(90, ' ');
+
+    while (true) {
+
+        char choice = 'N';
+        auto prompt1_row = sea1_pos.y + 11 * CELLY;
+        auto prompt2_row = sea2_pos.y + 11 * CELLY;
+
+        draw_sea(sea1_pos, sea1, false);
+        if (!place_ships(sea1_pos, sea1)) {
+            goto_xy(0, prompt1_row);
+            std::cout << blank90 << "\n";
+            goto_xy(0, prompt1_row);
+            std::cout << "Press 'y' if you want to play again: ";
+            std::cin >> choice;
+            std::cin.ignore();
+
+            goto_xy(0, prompt1_row);
+            std::cout << blank90 << "\n";
+            if (choice != 'y') {
+                goto_xy(0, prompt1_row);
+                break;
+            }
+
+            clear_sea(sea1);
+            continue;
+        }
+
+      
+
+/*
+        draw_sea(sea2_pos, sea2, false);
+        if (place_ships(sea2_pos, sea2)) {
+            goto_xy(0, prompt2_row);
+            std::cout << "Press any key then \"Enter\" to start the game.";
+            std::cin.get();
+            std::cin.ignore();
+
+            goto_xy(0, prompt2_row);
+            std::cout << blank90 << "\n";
+
+            //draw_sea_field(sea2_enemy_pos, sea2, true);
+            //draw_sea_field(sea1_enemy_pos, sea1, true);
+
+        }
+*/
+
+    short total_ships1 = 10;
+    short total_ships2 = 10;
+    // [0] - 21, [1] - 22, [2] - 23
+    // [3] - 31, [4] - 32, [5] - 41
+    std::vector<short> fleet1 = {
+        2, 2, 2, 3, 3, 4
+    };
+    std::vector<short> fleet2 = fleet1;
+
+    shoot_ship(sea1_pos, sea1, fleet1);
+    print(fleet1, 0, 5);
+/*
+        goto_xy(0, prompt2_row + 1);
+        std::cout << "Press 'y' if you want to play again: ";
+        std::cin >> choice;
+        std::cin.ignore();
+
+        goto_xy(0, prompt2_row + 1);
+        std::cout << blank90 << "\n";
+        if (choice != 'y') {
+            goto_xy(0, prompt2_row + 1);
+            break;
+        }
+*/
+
+//        clear_sea(sea1);
+//        clear_sea(sea2);
+    }
+
+    std::cout << "Good bye!\n";
+}
+
+
+
+
+
+
 template<typename T>
 std::vector<std::vector<T>> snake_passage(size_t rows, size_t cols) {
     std::vector<std::vector<T>> arr (rows, std::vector<T> (cols, T {}));
@@ -1122,11 +1841,12 @@ std::vector<std::vector<T>> snake_passage(size_t rows, size_t cols) {
     return arr;
 }
 
-
-std::vector<std::vector<std::vector<bool>>> make_cube(const std::vector<std::vector<int>> & plane, int max_height) {
+std::vector<std::vector<std::vector<bool>>> 
+make_cube(const std::vector<std::vector<int>> & plane, int max_height) {
     auto rows = plane.size();
     auto cols = plane[0].size();
-     std::vector<std::vector<std::vector<bool>>> cube (rows, std::vector<std::vector<bool>>(cols, std::vector<bool>(max_height, false)));
+    std::vector<std::vector<std::vector<bool>>> 
+    cube (rows, std::vector<std::vector<bool>>(cols, std::vector<bool>(max_height, false)));
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
@@ -1158,14 +1878,21 @@ void print_level(const std::vector<std::vector<std::vector<bool>>> & cube, int l
 
 }
 
+
+
 int main () {
+	
+//	int a = 8;
+//	int & b = a;
+//	b = 9;
+//	std::cout << a;
+
 //    std::cin.clear();
 //    std::cin.ignore(std::cin.rdbuf()->in_avail(), '\n');
-    using namespace std::chrono_literals;
 
     std::cout << std::boolalpha;
     bool allCorrect = false;
-///*
+/*
     std::cout << "Task 1. The banquet table.\n";
     int cutleries[2][6] = {
         { 3, 3, 3, 3, 3, 3 },
@@ -1279,7 +2006,7 @@ int main () {
     std::cout << "\n";
 
     std::cout << "\nTask 2. Tic-tac-toe.\n";
-    std::cout << "Press any key to start...";
+    std::cout << "Press a key and \"Enter\" to start...";
     std::cin.ignore();
     std::cin.get();
 
@@ -1298,6 +2025,7 @@ int main () {
     print(m1);
 
     std::cin.ignore();
+
     std::array<std::array<int, cols>, rows> m2;
     std::cout << "Enter " << rows << " lines of " << cols << " numbers each:\n";
     for (int i = 0; i < rows; ++i) {
@@ -1367,11 +2095,13 @@ int main () {
     axv = matrix_x_vector(a, v);
     std::cout << "Result of a x v:\n";
     print(axv, 0, Nrows - 1);
+//
 
     std::cout << "\nTask 5. Pimple.\n";
-    std::cout << "Press any key to start...";
+    std::cout << "Press a key and \"Enter\" to start...";
     std::cin.ignore();
     std::cin.get();
+
     pimples();
 
     std::cout << "\nTask 6. Snake passage.\n";
@@ -1389,23 +2119,60 @@ int main () {
 
     auto snake = snake_passage<int>(6, 8);
     print(snake);
-//*/
 
     std::cout << "\nTask 7. Almost Minecraft.\n";
     int rows_count = 6, cols_count = 5, levels_count = 10;
-    std::vector<std::vector<int>> mheights = { 
-        { 5, 5, 5, 5, 5 },
-        { 4, 4, 4, 4, 4 },
-        { 3, 3, 2, 3, 3 },
-        { 2, 1, 1, 1, 2 },
-        { 1, 1, 1, 1, 1 },
-        { 1, 0, 0, 0, 1 }
-    };
-    
+    std::vector<std::vector<int>> 
+    mheights(rows_count, std::vector<int>(cols_count, 0));
+
+//    std::cin.ignore();
+
+    std::cout << "Given a matrix of " << rows_count << " rows and "
+              << cols_count << " columns.\n";
+    std::cout << "Enter the heights of the points into this matrix:\n";
+    for (int i = 0; i < rows_count; ++i) {
+        while (true) {
+            if (getRowNumbers("Enter " + std::to_string(cols_count) +
+                " numbers to initialize line " +
+                std::to_string(i + 1) + ": ", mheights[i])) {
+                break;
+            }
+        }
+    }
+
+    std::cout << "The matrix initialized:\n";
+    print(mheights);
+
     auto cube = make_cube(mheights, levels_count);
-    print_level(cube, 0);
+
+    int level = 0;
+    char choice = '0';
+    while (true) {
+        while (!getNumber("Enter the slice height (0 - 9) you want to output:", level)) {
+            if (level >= 0 && level < 10) {
+                break;
+            }
+        }
+
+        print_level(cube, level);
+
+        std::cout << "Press 'y' if you want to output another slice: ";
+        std::cin >> choice;
+
+        if (choice != 'y') {
+            break;
+        }
+        std::cin.ignore();
+    }
+//*/
 
     std::cout << "\nTask 8. Sea battle.\n";
+    std::cout << "Press a key and \"Enter\" to start...";
+    std::cin.ignore();
+    std::cin.get();
+
+
+    sea_battle();
 
     return 0;
 }
