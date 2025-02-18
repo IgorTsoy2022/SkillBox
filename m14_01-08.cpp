@@ -1669,21 +1669,22 @@ bool place_ships(const tblCoord& sea_pos,
     return true;
 }
 
-bool shoot_ship(const tblCoord& sea_pos, 
+short shoot(const tblCoord& sea_pos, const std::string & prompt, 
                 std::vector<std::vector<short>>& sea,
                 std::vector<short>& fleet, short & total_decks) {
     tblCoord coord{};
     std::string input = "";
     std::string blank90(90, ' ');
-    std::string prompt = "Enter the target coordinates: ";
     SHORT prompt_col = sea_pos.x;
     SHORT prompt_row = sea_pos.y + 11 * CELLY;
 
     goto_xy(prompt_col, prompt_row);
+    std::cout << blank90;
+    goto_xy(prompt_col, prompt_row);
     std::cout << prompt;
-    while (std::getline(std::cin, input) && total_decks > 0) {
+    while (std::getline(std::cin, input)) {
         if (input == "exit") {
-            return false;
+            return -1;
         }
 
         std::string err = "";
@@ -1714,8 +1715,12 @@ bool shoot_ship(const tblCoord& sea_pos,
                     goto_xy(prompt_col, prompt_row);
                     std::cout << std::string(45, ' ');
                     goto_xy(prompt_col, prompt_row);
-                    std::cout << "Enemy fleet completely sunk!";
-                    break;
+                    std::cout << "Enemy fleet completely sunk! ";
+                    return 1;
+                }
+                
+                if(result == 5) {
+                    return 0;
                 }
 
                 goto_xy(0, prompt_row + 1);
@@ -1725,11 +1730,6 @@ bool shoot_ship(const tblCoord& sea_pos,
                 goto_xy(prompt_col + prompt.length(), prompt_row);
                 continue;
             }
-        
-//            goto_xy(prompt_col + prompt.length(), prompt_row);
-//            std::cout << std::string(input.length(), ' ');
-//            goto_xy(prompt_col + prompt.length(), prompt_row);
-//            continue;
         }
 
         goto_xy(prompt_col, prompt_row + 1);
@@ -1741,8 +1741,6 @@ bool shoot_ship(const tblCoord& sea_pos,
         std::cout << std::string(input.length(), ' ');
         goto_xy(prompt_col + prompt.length(), prompt_row);
     }
-
-    return true;
 }
 
 
@@ -1803,8 +1801,10 @@ void sea_battle() {
             continue;
         }
 
-      
-
+        draw_sea(sea1_pos, sea2, false);
+        if (place_ships(sea1_pos, sea2)) {
+        
+        }
 /*
         draw_sea(sea2_pos, sea2, false);
         if (place_ships(sea2_pos, sea2)) {
@@ -1816,8 +1816,8 @@ void sea_battle() {
             goto_xy(0, prompt2_row);
             std::cout << blank90 << "\n";
 
-            //draw_sea_field(sea2_enemy_pos, sea2, true);
-            //draw_sea_field(sea1_enemy_pos, sea1, true);
+            //draw_sea(sea2_enemy_pos, sea2, true);
+            //draw_sea(sea1_enemy_pos, sea1, true);
 
         }
 */
@@ -1831,25 +1831,50 @@ void sea_battle() {
     };
     std::vector<short> fleet2 = fleet1;
 
-    shoot_ship(sea1_pos, sea1, fleet1, total_decks1);
+    bool player1 = true;
+    short result = 0;
+    while (true) {
+        if (player1) {
+            result = shoot(sea1_pos, "Player 1's move: ", sea2, fleet2, total_decks2);
+        }
+        else {
+            result = shoot(sea1_pos, "Player 2's move: ", sea1, fleet1, total_decks1);
+        }
+        
+        if (result == -1) {
+            break;
+        }
+        if (result == 1) {
+            if (player1) {
+                std::cout << "Player 1 won.";
+            }
+            else {
+                std::cout << "Player 2 won.";
+            }
+            break;
+        }
+        if (result == 0) {
+            player1 = !player1;
+        }
+    
+    }
 
 
-/*
-        goto_xy(0, prompt2_row + 1);
+
+        goto_xy(0, prompt1_row + 1);
         std::cout << "Press 'y' if you want to play again: ";
         std::cin >> choice;
         std::cin.ignore();
 
-        goto_xy(0, prompt2_row + 1);
+        goto_xy(0, prompt1_row + 1);
         std::cout << blank90 << "\n";
         if (choice != 'y') {
             goto_xy(0, prompt2_row + 1);
             break;
         }
-*/
 
-//        clear_sea(sea1);
-//        clear_sea(sea2);
+        clear_sea(sea1);
+        clear_sea(sea2);
     }
 
     std::cout << "Good bye!\n";
