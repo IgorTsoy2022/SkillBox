@@ -1,7 +1,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
-//#include <string>
+#include <string>
 #include <vector>
 
 template<typename T, std::size_t N>
@@ -526,12 +526,37 @@ std::pair<size_t, size_t> summands(const std::vector<T> & arr, T sum) {
 // Task 3. Find ascending number.
 ////////////////////////////////////////////////
 
-
 ////////////////////////////////////////////////
 // Task 4. Modulo sorting.
 ////////////////////////////////////////////////
 
+template<typename T>
+void modulo_sort(std::vector<T>& arr) {
+    auto size = arr.size();
+    if (size < 2) {
+        return;
+    }
 
+    size_t first = 0;
+    for (const auto& value : arr) {
+        if (value >= 0 || first == size - 1) {
+            break;
+        }
+        ++first;
+    }
+
+    if (first < 1) {
+        return;
+    }
+
+    for (size_t i = 0; i < first; ++i) {
+
+        for (size_t j = first; j < size; ++j) {
+            if (-arr[i] > arr[j])
+        }
+    }
+
+}
 
 int main () {
 /*
@@ -620,24 +645,65 @@ int main () {
     std::cout << "\nTask 4. Modulo sorting.\n";
     std::cout << "Given an array of numbers sorted in ascending order\n";
     std::cout << "Need to sort by module.\n";
+/*
     std::vector<int> arr3 = {
         -100, -50, -5, 1, 10, 15
     };
+*/
+    std::vector<int> arr3 = {
+    -100, -50, -5, -4, -3, -1
+    };
+/*
+    std::vector<int> arr3 = {
+    1, 2, 3, 4, 5, 6
+    };
+*/
     auto size = arr3.size();
 
     if (size > 0) {
+        std::cout << "Source array:\n";
+        print(arr3, 0, size - 1);
+
         size_t first = 0;
         for (const auto & value : arr3) {
-            if (value >= 0) {
+            if (value >= 0 || first == size - 1) {
                 break;
             }
             ++first;
         }
 
-        std::cout << "Source array:\n";
-        print(arr3, 0, size - 1);
-    
-    
+        for (size_t i = first; i > 0; --i) {
+            if ((arr3[i - 1] < 0 ? -arr3[i - 1] : arr3[i - 1]) > arr3[i]) {
+                std::swap(arr3[i - 1], arr3[i]);
+            }
+        }
+
+
+        std::swap(arr3[0], arr3[first]);
+
+        for (size_t i = first; i < size - 1; ++i) {
+            if ((arr3[i] < 0 ? -arr3[i] : arr3[i]) > arr3[i + 1]) {
+                std::swap(arr3[i], arr3[i + 1]);
+            }
+            else {
+                std::cout << "break1\n";
+                break;
+            }
+        }
+        std::cout << first << "!!\n";
+
+        for (size_t i = 1; i < first + 1; ++i) {
+            if ((arr3[i] < 0 ? -arr3[i] : arr3[i]) > arr3[i + 1]) {
+                std::swap(arr3[i], arr3[i + 1]);
+            }
+            else {
+                std::cout << "break2\n";
+                break;
+            }
+        }
+
+
+
         std::cout << "Array sorted by module:\n";
         print(arr3, 0, size - 1);
 
