@@ -1,12 +1,8 @@
-#include <algorithm>
 #include <array>
-#include <chrono>
 #include <cmath>
 #include <iostream>
-#include <string>
-#include <thread>
+//#include <string>
 #include <vector>
-#include <windows.h>
 
 template<typename T, std::size_t N>
 void print(const std::array<T, N>& arr, size_t from, size_t to) {
@@ -538,7 +534,7 @@ std::pair<size_t, size_t> summands(const std::vector<T> & arr, T sum) {
 
 
 int main () {
-    /*
+/*
     std::cout << "Task 1. Maximum sum of consecutive numbers (maximum subarray problem).\n";
     std::vector<int> arr = { -2, 1, -3, 1, -1, 2, 1, 3, 5, 4 };
     std::cout << "Given an array:\n";
@@ -572,13 +568,13 @@ int main () {
         }
         break;
     }
-    */
 
     std::cout << "\nTask 3. Find ascending number.\n";
     std::cout << "Numbers are entered from the keyboard. If the entered number is -1 the\n";
     std::cout << "fifth ascending number of the entered numbers must be displayed on the screen\n";
     std::cout << "If the entered number is -2, the program terminates.\n";
-    std::vector<int> arr2;
+    std::vector<int> arr2(5, 0);
+    int inits = 0;
     int num2 = 0;
     while (true) {
         if (getNumber("Enter a number or \"-2\" for exit: ", num2)) {
@@ -586,15 +582,65 @@ int main () {
                 break;
             }
             if (num2 == -1) {
-                std::sort(arr2.begin(), arr2.end());
+                if (inits > 4) {
+                    std::cout << "The 5th ascending number is " << arr2[4] << ".\n";
+                }
+                else {
+                	std::cout << "The entered numbers are less than 5.\n";
+                }
+                continue;
             }
-            continue;
-        }
-        break;
-    }
 
+            if (inits < 5) {
+                arr2[inits] = num2;
+            }
+            else {
+                if (arr2[4] > num2) {
+                    arr2[4] = num2;
+                }
+            }
+
+            for (int i = (inits > 4 ? 4 : inits); i > 0; --i) {
+                if (arr2[i - 1] > arr2[i]) {
+                    std::swap(arr2[i -1], arr2[i]);
+                }
+                else {
+                    break;
+                }
+            }
+            ++inits;
+        }
+        else {
+            std::cout << "For exit enter -2.\n";
+        }
+    }
+    print(arr2, 0, arr2.size() - 1);
+//*/
 
     std::cout << "\nTask 4. Modulo sorting.\n";
+    std::cout << "Given an array of numbers sorted in ascending order\n";
+    std::cout << "Need to sort by module.\n";
+    std::vector<int> arr3 = {
+        -100, -50, -5, 1, 10, 15
+    };
+    auto size = arr3.size();
 
+    if (size > 0) {
+        size_t first = 0;
+        for (const auto & value : arr3) {
+            if (value >= 0) {
+                break;
+            }
+            ++first;
+        }
+
+        std::cout << "Source array:\n";
+        print(arr3, 0, size - 1);
+    
+    
+        std::cout << "Array sorted by module:\n";
+        print(arr3, 0, size - 1);
+
+    }
     return 0;
 }
