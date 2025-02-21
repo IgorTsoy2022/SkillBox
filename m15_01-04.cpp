@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -537,29 +538,42 @@ void modulo_sort(std::vector<T>& arr) {
         return;
     }
 
-    size_t first = 0;
+    std::sort(arr.begin(), arr.end());
+
+    size_t first_positive_value_id = 0;
     for (const auto& value : arr) {
-        if (value >= 0 || first == size - 1) {
+        if (value >= 0 || first_positive_value_id == size - 1) {
             break;
         }
-        ++first;
+        ++first_positive_value_id;
     }
 
-    if (first < 1) {
+    if (first_positive_value_id < 1) {
         return;
     }
 
-    for (size_t i = 0; i < first; ++i) {
+    auto right = arr[first_positive_value_id] < 0 ?
+                     first_positive_value_id : first_positive_value_id - 1;
+    for (size_t i = 0; i < first_positive_value_id / 2; ++i) {
+        std::swap(arr[i], arr[right - i]);
+    }
 
-        for (size_t j = first; j < size; ++j) {
-            if (-arr[i] > arr[j])
+    if (arr[first_positive_value_id] < 0) {
+        return;
+    }
+
+    for (size_t i = first_positive_value_id; i < size; ++i) {
+        for (size_t j = i; j > 0; --j) {
+            if ((arr[j] < 0 ? -arr[j] : arr[j]) < 
+                (arr[j - 1] < 0 ? -arr[j - 1] : arr[j - 1])) {
+                std::swap(arr[j], arr[j - 1]);
+            }
         }
     }
 
 }
 
 int main () {
-/*
     std::cout << "Task 1. Maximum sum of consecutive numbers (maximum subarray problem).\n";
     std::vector<int> arr = { -2, 1, -3, 1, -1, 2, 1, 3, 5, 4 };
     std::cout << "Given an array:\n";
@@ -571,7 +585,7 @@ int main () {
 
     std::cout << "\nTask 2. Find summands.\n";
     std::cout << "Given an array of integers and a number that is the sum of two numbers\n";
-    std::cout << "from the array.You need to find these two numbers in the array.\n";
+    std::cout << "from the array. You need to find these two numbers in the array.\n";
     std::cout << "An array:\n";
     std::vector<int> arr1 = { 2, 7, 11, 15 };
     print(arr1, 0, arr1.size() - 1);
@@ -640,73 +654,25 @@ int main () {
         }
     }
     print(arr2, 0, arr2.size() - 1);
-//*/
 
     std::cout << "\nTask 4. Modulo sorting.\n";
     std::cout << "Given an array of numbers sorted in ascending order\n";
     std::cout << "Need to sort by module.\n";
-/*
+
     std::vector<int> arr3 = {
-        -100, -50, -5, 1, 10, 15
+        -100, -50, -30, -5, -4, -3, -2, 1, 5, 10, 15
     };
-*/
-    std::vector<int> arr3 = {
-    -100, -50, -5, -4, -3, -1
-    };
-/*
-    std::vector<int> arr3 = {
-    1, 2, 3, 4, 5, 6
-    };
-*/
+
     auto size = arr3.size();
 
     if (size > 0) {
         std::cout << "Source array:\n";
         print(arr3, 0, size - 1);
 
-        size_t first = 0;
-        for (const auto & value : arr3) {
-            if (value >= 0 || first == size - 1) {
-                break;
-            }
-            ++first;
-        }
-
-        for (size_t i = first; i > 0; --i) {
-            if ((arr3[i - 1] < 0 ? -arr3[i - 1] : arr3[i - 1]) > arr3[i]) {
-                std::swap(arr3[i - 1], arr3[i]);
-            }
-        }
-
-
-        std::swap(arr3[0], arr3[first]);
-
-        for (size_t i = first; i < size - 1; ++i) {
-            if ((arr3[i] < 0 ? -arr3[i] : arr3[i]) > arr3[i + 1]) {
-                std::swap(arr3[i], arr3[i + 1]);
-            }
-            else {
-                std::cout << "break1\n";
-                break;
-            }
-        }
-        std::cout << first << "!!\n";
-
-        for (size_t i = 1; i < first + 1; ++i) {
-            if ((arr3[i] < 0 ? -arr3[i] : arr3[i]) > arr3[i + 1]) {
-                std::swap(arr3[i], arr3[i + 1]);
-            }
-            else {
-                std::cout << "break2\n";
-                break;
-            }
-        }
-
-
+        modulo_sort(arr3);
 
         std::cout << "Array sorted by module:\n";
         print(arr3, 0, size - 1);
-
     }
     return 0;
 }
