@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdio.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -425,57 +426,188 @@ bool getRowNumbers(const std::string& prompt, std::vector<T>& arr) {
 }
 
 ////////////////////////////////////////////////
-// Task 1. Maximum sum of consecutive numbers
-//         (maximum subarray problem).
-////////////////////////////////////////////////
-
-
-
-////////////////////////////////////////////////
-// Task 2. Find summands.
-////////////////////////////////////////////////
-
-
-////////////////////////////////////////////////
-// Task 3. Find ascending number.
+// Task 1.
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
-// Task 4. Modulo sorting.
+// Task 2. Fractional number stitcher
 ////////////////////////////////////////////////
+
+double stitch_numbers(int integer_part, int fraction_part) {
+    double result = 0;
+    std::string fraction = '.' + std::to_string(fraction_part);
+    result = integer_part + std::stod(fraction);
+    return result;
+}
+
+////////////////////////////////////////////////
+// Task 3. 
+////////////////////////////////////////////////
+
+////////////////////////////////////////////////
+// Task 4. Mechanical piano.
+////////////////////////////////////////////////
+
+std::string dectobin(int num) {
+    num = std::abs(num);
+    std::string result;
+    while (num != 0) {
+        result.push_back(num % 2 + '0');
+        num /= 2;
+    }
+
+    auto size = result.size();
+    for (int i = 0; i < size / 2; ++i) {
+        std::swap(result[i], result[size -1 - i]);
+    }
+ 
+    return result;
+}
+
+int bintodec(const std::string & str) {
+	auto size = str.size();
+	int result = 0;
+	int factor = 1;
+	for (int i = size - 1; i >= 0; --i) {
+	    result += (str[i] - '0') * factor;
+	    factor *= 2;
+	}
+	return result;
+}
+
+enum note {
+    DO = 1,
+    RE = 2,
+    MI = 4,
+    FA = 8,
+    SOL = 16,
+    LA = 32,
+    SI = 64
+};
+
+////////////////////////////////////////////////
+// Task 5. Smart home.
+////////////////////////////////////////////////
+
+enum switches {
+    LIGHTS_INSIDE = 1,
+    LIGHTS_OUTSIDE = 2,
+    HEATERS = 4,
+    WATER_PIPE_HEATING = 8,
+    CONDITIONER = 16
+};
 
 
 int main () {
+/*
     std::cout << "Task 1. Speedometer.\n";
-    
-    float speed = 0,  speed_value = 0;
-    float epsilon = 0.01f;
-    char speed_txt[6];
-    std::cout << "Enter \"exit\" for exit.\n";
-    while (true) {
-        if (getNumber("Speed delta: ", speed_value)) {
-            speed += speed_value;
-            speed = speed > 150 ? 150 : speed;
-            sprintf_s(speed_txt, "%.1f", speed);
-            std::cout << "Speed: " << speed_txt << "\n";
-            if (speed < 0 || std::abs(speed) < epsilon) {
-                break;
-            }
-            continue;
+    {
+        float speed = 0,  speed_value = 0;
+        float epsilon = 0.01f;
+        char speed_txt[6];
+        std::cout << "Enter \"exit\" for exit.\n";
+        while (true) {
+            if (getNumber("Speed delta: ", speed_value)) {
+                speed += speed_value;
+                speed = speed > 150 ? 150 : speed;
+                std::sprintf(speed_txt, "%.1f", speed);
+                std::cout << "Speed: " << speed_txt << "\n";
+                if (speed < 0 || std::abs(speed) < epsilon) {
+                    break;
+                }
+                continue;
+             }
+            break;
         }
-        break;
     }
 
-    std::cout << "\nTask 2. Find summands.\n";
+    std::cout << "\nTask 2. Fractional number stitcher.\n";
+    {
+        int integer_part = 0, fraction_part = 0;
+        bool allCorrect = getNumber("Enter integer part: ", integer_part);
+        if (allCorrect) {
+            allCorrect = getNumber("Enter fractional part:", fraction_part);
+        }
+        if (allCorrect) {
+            std::cout << "Result: " << stitch_numbers(integer_part, fraction_part) << "\n";
+        }
+    }
 
+    std::cout << "\nTask 3. Calculator.\n";
+    {
+        std::string buffer = "";
+        std::cin >> buffer;
+        std::stringstream buffer_stream(buffer);
+        char c ='0';
+        double a = 0, b = 0;
+        buffer_stream >> a >> c >> b;
+        double result = 0;
+        switch (c) {
+        case '+' :
+            result = a + b;
+            break;
+        case '-' :
+            result = a - b;
+            break;
+        case '*' :
+            result = a * b;
+            break;
+        case '/':
+            result = a / b;;
+            break;
+        }
+        std::cout << "Result: " << result << "\n";
+    }
 
-    std::cout << "\nTask 3. Find ascending number.\n";
+    std::cout << "\nTask 4. Mechanical piano.\n";
+    {
+        bool correct = false;
+        int accord = 0;
+        std::string buffer = "";
+        std::cin >> buffer;
+        for (auto & c : buffer) {
+            correct = (c > '0' && c < '8');
+            if (!correct) {
+                break;
+            }
+            accord |= 1 << (c - '0') - 1;
+        }
+        
+        if (correct) {
+        	if (accord & DO) {
+        	    std::cout << "DO";
+        	}
+        	if (accord & RE) {
+        	    std::cout << "RE";
+        	}
+        	if (accord & MI) {
+        	    std::cout << "MI";
+        	}
+        	if (accord & FA) {
+        	    std::cout << "FA";
+        	}
+       	if (accord & SOL) {
+        	    std::cout << "SOL";
+        	} 
+       	if (accord & LA) {
+        	    std::cout << "LA";
+        	} 
+        	if (accord & SI) {
+        	    std::cout << "SI";
+        	}
+        }
+        else {
+            std::cout << "Incorrect input!\n";
+        }
+    }
+//*/
 
-
-    std::cout << "\nTask 4. Modulo sorting.\n";
-    std::cout << "Given an array of numbers sorted in ascending order\n";
-    std::cout << "Need to sort by module.\n";
-
+    std::cout << "\nTask 5. Smart home.\n";
+    short time = 0;
+    short temperature_inside = 0;
+    short temperature_outside = 0;
+    bool movenent = false;
+    short color_temperature = 5000;
 
     return 0;
 }
