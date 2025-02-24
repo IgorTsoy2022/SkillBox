@@ -490,15 +490,18 @@ enum note {
 ////////////////////////////////////////////////
 
 enum switches {
-    LIGHTS_INSIDE = 1,
-    LIGHTS_OUTSIDE = 2,
-    HEATERS = 4,
-    WATER_PIPE_HEATING = 8,
-    CONDITIONER = 16
+    POWER = 1,
+    SOCKETS = 2,
+    LIGHTS_INSIDE = 4,
+    LIGHTS_OUTSIDE = 8,
+    HEATERS = 16,
+    WATER_PIPE_HEATING = 32,
+    CONDITIONER = 64
 };
 
 
 int main () {
+    std::cout << std::boolalpha;
 /*
     std::cout << "Task 1. Speedometer.\n";
     {
@@ -586,10 +589,10 @@ int main () {
         	if (accord & FA) {
         	    std::cout << "FA";
         	}
-       	if (accord & SOL) {
+            if (accord & SOL) {
         	    std::cout << "SOL";
         	} 
-       	if (accord & LA) {
+            if (accord & LA) {
         	    std::cout << "LA";
         	} 
         	if (accord & SI) {
@@ -608,6 +611,71 @@ int main () {
     short temperature_outside = 0;
     bool movenent = false;
     short color_temperature = 5000;
+    const short color_temperature_step = (5000 - 2700) / (20 - 16);
+
+    /*
+    POWER = 1,
+    SOCKETS = 2,
+    LIGHTS_INSIDE = 4,
+    LIGHTS_OUTSIDE = 8,
+    HEATERS = 16,
+    WATER_PIPE_HEATING = 32,
+    CONDITIONER = 64
+    */
+
+    // temperature_inside, temperature_outside, movenent, lights
+    std::vector<std::string> hourly_sensor_readings {
+        /* 00:00 */ "23, 8, yes, on",
+        /* 01:00 */ "22, 5, no, off",
+        /* 02:00 */ "20, 0, no, off",    // < 22 HEATERS ON
+        /* 03:00 */ "21, -3, no, off",       // < 0 WATER_PIPE_HEATING ON
+        /* 04:00 */ "22, -5, no, off",
+        /* 05:00 */ "23, -5, no, off",                            // LIGHTS_OUTSIDE OFF
+        /* 06:00 */ "24, 0, yes, on",        // > 5 WATER_PIPE_HEATING OFF
+        /* 07:00 */ "25, 8, yes, off",
+        /* 08:00 */ "26, 10, yes, off",  // > 25 HEATERS OFF
+        /* 09:00 */ "26, 15, yes, off",
+        /* 10:00 */ "25, 20, no, off",
+        /* 11:00 */ "25, 21, no, off",
+        /* 12:00 */ "25, 25, yes, off",
+        /* 13:00 */ "27, 30, yes, off",
+        /* 14:00 */ "30, 32, yes, off",      // 30 CONDITIONER ON
+        /* 15:00 */ "27, 30, no, off",
+        /* 16:00 */ "26, 29, no, off",                            // LIGHTS_OUTSIDE ON
+        /* 17:00 */ "25, 25, yes, on",       // 25 CONDITIONER OFF
+        /* 18:00 */ "24, 20, yes, on",
+        /* 19:00 */ "23, 18, yes, on",
+        /* 20:00 */ "22, 15, yes, on",
+        /* 21:00 */ "21, 12, yes, on",  // < 22 HEATERS ON
+        /* 22:00 */ "22, 10, yes, on",
+        /* 23:00 */ "23, 10, no, on",
+        /* 00:00 */ "26, 11, no, on",   // > 25 HEATERS OFF
+
+    };
+
+    std::cout << "Since the readings are taken from sensors, we will exclude checking\n"
+              << "for incorrect input data.\n";
+    int switches_state = 0;
+    switches_state |= POWER;   // Power on.
+    switches_state |= SOCKETS; // Sockets on.
+
+    char c = '0';
+    char buff1[3], buff2[3];
+
+    for (const std::string & readings : hourly_sensor_readings) {
+        std::cout << (time < 10 ? "0" : "") << time << ":00 h " << readings << "\n";
+        std::stringstream buffer_stream(readings);
+        buffer_stream >> temperature_inside >> temperature_outside >> buff1 >> buff2;
+        std::cout << "buff1 = " << buff1 << "\n";
+        movenent = (buff1 == "yes") ? true : false;
+        std::cout << "movenent=" << movenent << "\n";
+
+        if (time == 0) {
+            color_temperature = 5000;
+        }
+
+        time = time > 22 ? 0 : time + 1;
+    }
 
     return 0;
 }
