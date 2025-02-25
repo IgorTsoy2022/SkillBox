@@ -499,6 +499,25 @@ enum switches {
     CONDITIONER = 64
 };
 
+std::vector<std::string> split(const std::string & str, const char delimeter = ' ') {
+	std::vector<std::string> result;
+	std::string word = "";
+	for (const auto & c : str) {
+	    if (c == delimeter) {
+	        if (word.size() > 0) {
+	            result.push_back(word);
+	            word.clear();
+	        }
+	    }
+	    else {
+	        word += c;
+	    }
+	}
+    if (word.size() > 0) {
+        result.push_back(word);
+    }
+    return result;
+}
 
 int main () {
     std::cout << std::boolalpha;
@@ -609,7 +628,8 @@ int main () {
     short time = 0;
     short temperature_inside = 0;
     short temperature_outside = 0;
-    bool movenent = false;
+    bool movement = false;
+    bool lights = false;
     short color_temperature = 5000;
     const short color_temperature_step = (5000 - 2700) / (20 - 16);
 
@@ -660,15 +680,29 @@ int main () {
     switches_state |= SOCKETS; // Sockets on.
 
     char c = '0';
-    char buff1[3], buff2[3];
+    for (const std::string & str : hourly_sensor_readings) {
+        std::cout << (time < 10 ? "0" : "") << time << ":00 h " << str << "\n";
+        auto readings = split(str);
+        temperature_inside = std::stoi(readings[0]);
+        temperature_outside = std::stoi(readings[1]);
+        if (readings[2] == "yes") {
+            movement = true;
+        }
+        else {
+        	movement = false;
+        }
+        lights = (readings[3] == "on");
 
-    for (const std::string & readings : hourly_sensor_readings) {
-        std::cout << (time < 10 ? "0" : "") << time << ":00 h " << readings << "\n";
-        std::stringstream buffer_stream(readings);
-        buffer_stream >> temperature_inside >> temperature_outside >> buff1 >> buff2;
-        std::cout << "buff1 = " << buff1 << "\n";
-        movenent = (buff1 == "yes") ? true : false;
-        std::cout << "movenent=" << movenent << "\n";
+        std::cout << temperature_inside << " " << temperature_outside << "\n";
+        std::cout << readings[2] << "movement=" << movement << "\n";
+
+
+        if (switches_state & LIGHTS_INSIDE || switches_state & LIGHTS_OUTSIDE) {
+            if (time >= 16 && time <= 20) {
+                color_temperature += color_temperature_state * (time - 16);
+            }
+        }
+
 
         if (time == 0) {
             color_temperature = 5000;
