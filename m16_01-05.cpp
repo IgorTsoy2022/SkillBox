@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -433,11 +434,17 @@ bool getRowNumbers(const std::string& prompt, std::vector<T>& arr) {
 // Task 2. Fractional number stitcher
 ////////////////////////////////////////////////
 
-double stitch_numbers(int integer_part, int fraction_part) {
-    double result = 0;
-    std::string fraction = '.' + std::to_string(fraction_part);
-    result = integer_part + std::stod(fraction);
-    return result;
+bool check_numbers(const std::string& str) {
+    for (const auto& c : str) {
+        if (c < '0' || c > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+double stitch_numbers(int integer_part, const std::string & fraction_part) {
+    return (double) integer_part + std::stod('.' + fraction_part);
 }
 
 ////////////////////////////////////////////////
@@ -500,19 +507,19 @@ enum switches {
 };
 
 std::vector<std::string> split(const std::string & str, const char delimeter = ' ') {
-    std::vector<std::string> result;
-    std::string word = "";
-    for (const auto & c : str) {
-        if (c == delimeter) {
-            if (word.size() > 0) {
-                result.push_back(word);
-                word.clear();
-            }
-        }
-        else {
-            word += c;
-        }
-    }
+	std::vector<std::string> result;
+	std::string word = "";
+	for (const auto & c : str) {
+	    if (c == delimeter) {
+	        if (word.size() > 0) {
+	            result.push_back(word);
+	            word.clear();
+	        }
+	    }
+	    else {
+	        word += c;
+	    }
+	}
     if (word.size() > 0) {
         result.push_back(word);
     }
@@ -521,7 +528,7 @@ std::vector<std::string> split(const std::string & str, const char delimeter = '
 
 int main () {
     std::cout << std::boolalpha;
-/*
+
     std::cout << "Task 1. Speedometer.\n";
     {
         float speed = 0,  speed_value = 0;
@@ -532,7 +539,8 @@ int main () {
             if (getNumber("Speed delta: ", speed_value)) {
                 speed += speed_value;
                 speed = speed > 150 ? 150 : speed;
-                std::sprintf(speed_txt, "%.1f", speed);
+                //std::sprintf(speed_txt, "%.1f", speed);
+                sprintf_s(speed_txt, "%.1f", speed);
                 std::cout << "Speed: " << speed_txt << "\n";
                 if (speed < 0 || std::abs(speed) < epsilon) {
                     break;
@@ -545,14 +553,35 @@ int main () {
 
     std::cout << "\nTask 2. Fractional number stitcher.\n";
     {
-        int integer_part = 0, fraction_part = 0;
-        bool allCorrect = getNumber("Enter integer part: ", integer_part);
-        if (allCorrect) {
-            allCorrect = getNumber("Enter fractional part:", fraction_part);
+        std::string str_number = "";
+        bool allCorrect = false;
+        while (true) {
+            std::cout << "Enter integer part: ";
+            std::cin >> str_number;
+            if (check_numbers(str_number)) {
+                break;
+            }
+            else {
+                std::cout << "Incorrect input! Enter digits only!\n";
+            }
         }
-        if (allCorrect) {
-            std::cout << "Result: " << stitch_numbers(integer_part, fraction_part) << "\n";
+        int precision = str_number.size();
+        int integer_part = stoi(str_number);
+
+        while (true) {
+            std::cout << "Enter fractional part: ";
+            std::cin >> str_number;
+            if (check_numbers(str_number)) {
+                break;
+            }
+            else {
+                std::cout << "Incorrect input! Enter digits only!\n";
+            }
         }
+        precision += str_number.size();
+
+        std::cout << std::setprecision(precision) << "Result: "
+                  << stitch_numbers(integer_part, str_number) << "\n";
     }
 
     std::cout << "\nTask 3. Calculator.\n";
@@ -617,12 +646,12 @@ int main () {
         	if (accord & SI) {
         	    std::cout << "SI";
         	}
+            std::cout << "\n";
         }
         else {
             std::cout << "Incorrect input!\n";
         }
     }
-//*/
 
     std::cout << "\nTask 5. Smart home.\n";
     short time = 0;
@@ -631,81 +660,135 @@ int main () {
     bool movement = false;
     bool lights = false;
     short color_temperature = 5000;
-    const short color_temperature_step = (5000 - 2700) / (20 - 16);
-
-    /*
-    POWER = 1,
-    SOCKETS = 2,
-    LIGHTS_INSIDE = 4,
-    LIGHTS_OUTSIDE = 8,
-    HEATERS = 16,
-    WATER_PIPE_HEATING = 32,
-    CONDITIONER = 64
-    */
+    const short color_temperature_step = (5000 - 2700) / (20 - 15);
 
     // temperature_inside, temperature_outside, movenent, lights
     std::vector<std::string> hourly_sensor_readings {
-        /* 00:00 */ "23, 8, yes, on",
-        /* 01:00 */ "22, 5, no, off",
-        /* 02:00 */ "20, 0, no, off",    // < 22 HEATERS ON
-        /* 03:00 */ "21, -3, no, off",       // < 0 WATER_PIPE_HEATING ON
-        /* 04:00 */ "22, -5, no, off",
-        /* 05:00 */ "23, -5, no, off",                            // LIGHTS_OUTSIDE OFF
-        /* 06:00 */ "24, 0, yes, on",        // > 5 WATER_PIPE_HEATING OFF
-        /* 07:00 */ "25, 8, yes, off",
-        /* 08:00 */ "26, 10, yes, off",  // > 25 HEATERS OFF
-        /* 09:00 */ "26, 15, yes, off",
-        /* 10:00 */ "25, 20, no, off",
-        /* 11:00 */ "25, 21, no, off",
-        /* 12:00 */ "25, 25, yes, off",
-        /* 13:00 */ "27, 30, yes, off",
-        /* 14:00 */ "30, 32, yes, off",      // 30 CONDITIONER ON
-        /* 15:00 */ "27, 30, no, off",
-        /* 16:00 */ "26, 29, no, off",                            // LIGHTS_OUTSIDE ON
-        /* 17:00 */ "25, 25, yes, on",       // 25 CONDITIONER OFF
-        /* 18:00 */ "24, 20, yes, on",
-        /* 19:00 */ "23, 18, yes, on",
-        /* 20:00 */ "22, 15, yes, on",
-        /* 21:00 */ "21, 12, yes, on",  // < 22 HEATERS ON
-        /* 22:00 */ "22, 10, yes, on",
-        /* 23:00 */ "23, 10, no, on",
-        /* 00:00 */ "26, 11, no, on",   // > 25 HEATERS OFF
+        /* 00:00 */ "23 8 yes on",
+        /* 01:00 */ "22 5 no off",
+        /* 02:00 */ "20 0 no off",    // < 22 HEATERS ON
+        /* 03:00 */ "21 -3 no off",       // < 0 WATER_PIPE_HEATING ON
+        /* 04:00 */ "22 -5 no off",
+        /* 05:00 */ "23 -5 no off",             // LIGHTS_OUTSIDE OFF
+        /* 06:00 */ "24 0 yes on",        // > 5 WATER_PIPE_HEATING OFF
+        /* 07:00 */ "25 8 yes off",
+        /* 08:00 */ "26 10 yes off",  // > 25 HEATERS OFF
+        /* 09:00 */ "26 15 yes off",
+        /* 10:00 */ "25 20 no off",
+        /* 11:00 */ "25 21 no off",
+        /* 12:00 */ "25 25 yes off",
+        /* 13:00 */ "27 30 yes off",
+        /* 14:00 */ "30 32 yes off",      // 30 CONDITIONER ON
+        /* 15:00 */ "27 30 no off",
+        /* 16:00 */ "26 29 no off",             // LIGHTS_OUTSIDE ON
+        /* 17:00 */ "25 25 yes on",       // 25 CONDITIONER OFF
+        /* 18:00 */ "24 20 yes on",
+        /* 19:00 */ "23 18 yes on",
+        /* 20:00 */ "22 15 yes on",
+        /* 21:00 */ "21 12 yes on",  // < 22 HEATERS ON
+        /* 22:00 */ "22 10 yes on",
+        /* 23:00 */ "23 10 no on",
+        /* 00:00 */ "26 11 no on",   // > 25 HEATERS OFF
 
     };
 
     std::cout << "Since the readings are taken from sensors, we will exclude checking\n"
               << "for incorrect input data.\n";
+    std::cout << "The data read from the sensors will be fed in the following order:\n";
+    std::cout << "Temperature inside, temperature_outside, movenent, lights.\n";
     int switches_state = 0;
     switches_state |= POWER;   // Power on.
     switches_state |= SOCKETS; // Sockets on.
 
-    char c = '0';
     for (const std::string & str : hourly_sensor_readings) {
-        std::cout << (time < 10 ? "0" : "") << time << ":00 h " << str << "\n";
+        std::cout << (time < 10 ? "0" : "") << time << ":00h : " << str << "\n";
         auto readings = split(str);
         temperature_inside = std::stoi(readings[0]);
         temperature_outside = std::stoi(readings[1]);
-        if (readings[2] == "yes") {
-            movement = true;
-        }
-        else {
-        	movement = false;
-        }
+        movement = (readings[2] == "yes");
         lights = (readings[3] == "on");
 
-        std::cout << temperature_inside << " " << temperature_outside << "\n";
-        std::cout << readings[2] << "movement=" << movement << "\n";
-
-
-        if (switches_state & LIGHTS_INSIDE || switches_state & LIGHTS_OUTSIDE) {
-            if (time >= 16 && time <= 20) {
-                color_temperature += color_temperature_state * (time - 16);
+        if (temperature_outside < 0) {
+            if (~switches_state & WATER_PIPE_HEATING) {
+                switches_state |= WATER_PIPE_HEATING;
+                std::cout << "   Water pipe heating ON!\n";
             }
         }
 
+        if (temperature_outside > 5) {
+            if (switches_state & WATER_PIPE_HEATING) {
+                switches_state &= ~WATER_PIPE_HEATING;
+                std::cout << "   Water pipe heating OFF!\n";
+            }
+        }
+
+        if (temperature_inside < 22) {
+            if (~switches_state & HEATERS) {
+                switches_state |= HEATERS;
+                std::cout << "   Heaters ON!\n";
+            }
+        }
+
+        if (temperature_inside > 25) {
+            if (switches_state & HEATERS) {
+                switches_state &= ~HEATERS;
+                std::cout << "   Heaters OFF!\n";
+            }
+        }
+
+        if (temperature_inside > 29) {
+            if (~switches_state & CONDITIONER) {
+                switches_state |= CONDITIONER;
+                std::cout << "   Conditioner ON!\n";
+            }
+        }
+
+        if (temperature_inside < 26) {
+            if (switches_state & CONDITIONER) {
+                switches_state &= ~CONDITIONER;
+                std::cout << "   Conditioner OFF!\n";
+            }
+        }
+
+        if (lights) {
+            if (~switches_state & LIGHTS_INSIDE) {
+                switches_state |= LIGHTS_INSIDE;
+                std::cout << "   Lights inside ON!\n";
+            }
+        }
+        else {
+            if (switches_state & LIGHTS_INSIDE) {
+                switches_state &= ~LIGHTS_INSIDE;
+                std::cout << "   Lights inside OFF!\n";
+            }
+        }
+
+        if (time > 15 && time < 21 && movement) {
+            if (~switches_state & LIGHTS_OUTSIDE) {
+                switches_state |= LIGHTS_OUTSIDE;
+                std::cout << "   Lights outside ON!\n";
+            }
+        }
+        else {
+            if (switches_state & LIGHTS_OUTSIDE) {
+                switches_state &= ~LIGHTS_OUTSIDE;
+                std::cout << "   Lights outside OFF!\n";
+            }
+        }
+
+        if (switches_state & LIGHTS_INSIDE ||
+            switches_state & LIGHTS_OUTSIDE) {
+            if (time > 15 && time < 21) {
+                color_temperature = 5000 - color_temperature_step * (time - 15);
+                std::cout << "   Color temperature: "
+                          << color_temperature << "K\n";
+            }
+        }
 
         if (time == 0) {
             color_temperature = 5000;
+            std::cout << "   Color temperature: "
+                << color_temperature << "K\n";
         }
 
         time = time > 22 ? 0 : time + 1;
