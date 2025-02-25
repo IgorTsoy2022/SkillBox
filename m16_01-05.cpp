@@ -500,19 +500,19 @@ enum switches {
 };
 
 std::vector<std::string> split(const std::string & str, const char delimeter = ' ') {
-	std::vector<std::string> result;
-	std::string word = "";
-	for (const auto & c : str) {
-	    if (c == delimeter) {
-	        if (word.size() > 0) {
-	            result.push_back(word);
-	            word.clear();
-	        }
-	    }
-	    else {
-	        word += c;
-	    }
-	}
+    std::vector<std::string> result;
+    std::string word = "";
+    for (const auto & c : str) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+                result.push_back(word);
+                word.clear();
+            }
+        }
+        else {
+            word += c;
+        }
+    }
     if (word.size() > 0) {
         result.push_back(word);
     }
