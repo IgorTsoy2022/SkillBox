@@ -197,6 +197,16 @@ void check_png_file(const std::string & filename) {
 
 // Task 5. What, where, when.
 
+bool is_number(const std::string& str) {
+    for (const auto& c : str) {
+        if (c >= '0' && c <= '9') {
+            continue;
+        }
+        return false;
+    }
+    return true;
+}
+
 int revolve(std::vector<bool> & drum, int shift) {
     static int current;
     auto size = drum.size();
@@ -221,6 +231,60 @@ int revolve(std::vector<bool> & drum, int shift) {
 
     }
     return -1;
+}
+
+void game_experts() {
+    const int sectors = 13;
+    int experts = 0;
+    int TVviewers = 0;
+
+    std::vector<bool> drum(sectors, true);
+    std::vector<std::string> questions = {
+        "q01.txt", "q02.txt", "q03.txt",
+        "q04.txt", "q05.txt", "q06.txt",
+        "q07.txt", "q08.txt", "q09.txt",
+        "q10.txt", "q11.txt", "q12.txt",
+        "q13.txt"
+    };
+    std::vector<std::string> answers = {
+        "a01.txt", "a02.txt", "a03.txt",
+        "a04.txt", "a05.txt", "a06.txt",
+        "a07.txt", "a08.txt", "a09.txt",
+        "a10.txt", "a11.txt", "a12.txt",
+        "a13.txt"
+    };
+
+    int index = 0;
+    int winscore = sectors / 2;
+    while (experts < winscore && TVviewers < winscore) {
+        bool exit = false;
+        std::cout << "Current sector is " << index + 1
+                  << ". Spin the drum to get a question\n"
+                  << "by entering a number (type \"exit\" for exit): ";
+        int offset = 0;
+        std::string input = "";
+        while (std::getline(std::cin, input)) {
+            if (input == "exit") {
+                exit = true;
+                break;
+            }
+            if (is_number(input)) {
+                offset = std::stoi(input);
+                break;
+            }
+            std::cout << "Incorrect number. Try again: ";
+        }
+
+        if (exit) {
+            std::cout << "Game over!\n";
+            break;
+        }
+
+        index = revolve(drum, offset);
+        std::cout << "Current sector is " << index + 1 << " Attention! Question:\n";
+
+        ++experts;
+    }
 }
 
 int main() {
@@ -314,43 +378,7 @@ int main() {
 
     std::cout << "\nTask 5.  What, where, when.\n";
 
-    const int sectors = 13;
 
-    std::vector<bool> drum(sectors, true);
-    std::vector<std::string> questions(sectors, "");
-    std::vector<std::string> answers(sectors, "");
-    int experts = 0;
-    int TVviewers = 0;
-
-    questions = {
-        "q01.txt", "q02.txt", "q03.txt",
-        "q04.txt", "q05.txt", "q06.txt",
-        "q07.txt", "q08.txt", "q09.txt",
-        "q10.txt", "q11.txt", "q12.txt",
-        "q13"
-    };
-
-    answers = {
-        "a01.txt", "a02.txt", "a03.txt",
-        "a04.txt", "a05.txt", "a06.txt",
-        "a07.txt", "a08.txt", "a09.txt",
-        "a10.txt", "a11.txt", "a12.txt",
-        "a13"
-    };
-    
-    int index = 0;
-    int winscore = sectors / 2;
-    while (experts < winscore && TVviewers < winscore) {
-        std::cout << "Current sector is " << index + 1 << ". Spin the drum to get\n"
-    << " a question by entering a number: ";
-        int offset = 0;
-        std::string input = "";
-        std::getline(std::cin, input);
-        std::cout << offset << "\n";
- //       std::getline(std::cin, input);
-        
-        ++ experts;
-    }
     
     print(questions, 0, 12);
     
