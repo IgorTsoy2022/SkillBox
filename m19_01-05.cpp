@@ -222,7 +222,6 @@ int revolve(std::vector<bool> & drum, int shift) {
         if (current > size - 1) {
             current -= size;
         }
-        std::cout << "i=" << i << " cur=" << current << "\n";
 
         if (drum[current]) {
             drum[current] = false;
@@ -256,6 +255,7 @@ void game_experts() {
 
     int index = 0;
     int winscore = sectors / 2;
+    winscore = 7;
     while (experts < winscore && TVviewers < winscore) {
         bool exit = false;
         std::cout << "Current sector is " << index + 1
@@ -281,9 +281,52 @@ void game_experts() {
         }
 
         index = revolve(drum, offset);
-        std::cout << "Current sector is " << index + 1 << " Attention! Question:\n";
+        std::cout << "Current sector is " << index + 1 << ".\nAttention! Question:\n";
+        
+        if (text_view(questions[index])) {
+            std::cout << "\n";
+            std::string experts_answer = "";
+            std::cout << "Type your answer (one word):";
+            std::getline(std::cin, experts_answer);
+            toupper(experts_answer);
 
-        ++experts;
+            std::string right_answer = "";
+            std::fstream fs;
+            fs.open(answers[index]);
+            if (fs.is_open()) {
+                if (std::getline(fs, right_answer)) {
+                    std::cout << "The right answer is " << right_answer << "\n";
+                    
+                    toupper(right_answer);
+                    if (experts_answer == right_answer) {
+                        ++experts;
+                        std::cout << "Current round won experts!\n";
+                    }
+                    else {
+                        ++TVviewers;
+                        std::cout << "Current round won TV viewrs!\n";
+                    }
+                    std::cout << "Current score:\n";
+                    std::cout << "Experts: " << experts << "\n";
+                    std::cout << "TV viewers: " << TVviewers << "\n";
+                }
+                else {
+           std::cout << "File with no answer!\n";
+                }
+            }
+            else {
+                std::cout << "File with answer not found!\n";
+            }
+        }
+        else {
+            std::cout << "File with question not found!\n";
+        }
+    }
+    if (experts > TVviewers) {
+        std::cout << "The experts won the game!";
+    }
+    else {
+        std::cout << "The TV viewers won the game!\n";
     }
 }
 
@@ -378,9 +421,7 @@ int main() {
 
     std::cout << "\nTask 5.  What, where, when.\n";
 
-
-    
-    print(questions, 0, 12);
+    game_experts();
     
     return 0;
 }
