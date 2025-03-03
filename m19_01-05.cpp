@@ -3,7 +3,23 @@
 #include <sstream>
 #include <string>
 #include <tuple>
-#include <unordered_map>
+#include <vector>
+
+template<typename A>
+void print(const A & arr, size_t from, size_t to) {
+    std::cout << "[";
+    if (from > to) {
+        for (size_t i = from; i > to; --i) {
+            std::cout << arr[i] << " ";
+        }
+    }
+    else {
+        for (size_t i = from; i < to; ++i) {
+	        std::cout << arr[i] << " ";
+	    }
+    }
+    std::cout << arr[to] << "]\n";
+}
 
 void toupper(std::string& text) {
     for (auto& c : text) {
@@ -20,6 +36,8 @@ void tolower(std::string& text) {
         }
     }
 }
+
+// Task 1. Search word
 
 int search_in_file(const std::string& filename, std::string& search_word) {
     std::fstream fs;
@@ -48,6 +66,162 @@ int search_in_file(const std::string& filename, std::string& search_word) {
     return count;
 }
 
+// Task 2. Text viewer.
+
+bool text_view(const std::string & filename) {
+    bool isOk = false;
+    std::ifstream fs;
+    fs.open(filename, std::ios::binary);
+    if (fs.is_open()) {
+        char buffer [33];
+        while (!fs.eof()) {
+            fs.read(buffer, 32);
+            buffer[fs.gcount()] = 0;
+            std::cout << buffer;
+        }
+        isOk = true;
+    }
+    fs.close();
+    return isOk;
+}
+
+// Task 3. Payroll.
+std::pair<std::string, double> highest_payout(const std::string & filename, double & total, int & status) {
+    std::pair<std::string, double> result = { "", 0 };
+    std::ifstream fs;
+    fs.open(filename, std::ios::binary);
+    if (fs.is_open()) {
+        status = -1;
+        std::string buffer = "";
+        std::string first_name = "";
+        std::string surname = "";
+        double wage = 0;
+        std::string date = "";
+        while (std::getline(fs, buffer)) {
+            std::stringstream buffer_stream(buffer);
+            buffer_stream >> first_name >> surname >> wage >> date;
+            total += wage;
+            if (wage > result.second) {
+                status = 1;
+                result.second = wage;
+                result.first = first_name + " " + surname;
+            }
+        }
+    }
+    else {
+        status = 0;
+    }
+    fs.close();
+
+    return result;
+}
+
+// Task 4. PNG file detector.
+
+template<typename T>
+void swap(T & a, T & b) {
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+
+template<typename T>
+void reverse(T & arr, size_t size) {
+    for (size_t i = 0; i < size / 2; ++i) {
+        swap(arr[i], arr[size - 1 - i]);
+    }
+}
+
+std::string get_extension(const std::string & filename) {
+    bool has_extension = false;
+    int size = filename.size();
+    int start = size - 1;
+    while (start >= 0) {
+        has_extension = (filename[start] == '.');
+        if (has_extension) {
+            break;
+        }
+        --start;
+    }
+
+    if (has_extension) {
+        return filename.substr(start + 1, size - start - 1);
+    }
+
+    return "";
+}
+
+template<typename T1, typename T2>
+bool operator==(const T1 & lhs, const T2 & rhs) {
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void check_png_file(const std::string & filename) {
+    auto size = filename.size();
+    bool extension_is_png = false;
+    if (size > 4) {
+        std::string extension = get_extension(filename);
+        tolower(extension);
+        extension_is_png =  (extension == "png");
+    }
+
+    std::ifstream fs;
+    fs.open(filename, std::ios::binary);
+    if (fs.is_open()) {
+        if (extension_is_png) {
+            std::cout << "The extension of the file is \"png\"\n";
+        }
+        else {
+            std::cout << "The extension of the file is not \"png\"\n";
+        }
+
+        char buffer[4];	
+        std::string comp = "0PNG";
+        comp[0] = -119;
+
+        fs.read(buffer, 4);
+        if (comp == buffer) {
+            std::cout << "First 4 bytes of the file indicate that it is probably a png-file.\n";
+        }
+    }
+    else {
+        std::cout << "File not found!\n";
+     }
+    fs.close();
+}
+
+// Task 5. What, where, when.
+
+int revolve(std::vector<bool> & drum, int shift) {
+    static int current;
+    auto size = drum.size();
+    if (size < 1) {
+        return -1;
+    }
+    current += shift;
+    if (current > size - 1) {
+        current %= size;
+    }
+    
+    for (int i = 0; i < size; ++i, ++current) {
+        if (current > size - 1) {
+            current -= size;
+        }
+        std::cout << "i=" << i << " cur=" << current << "\n";
+
+        if (drum[current]) {
+            drum[current] = false;
+            return current;
+        }
+
+    }
+    return -1;
+}
 
 int main() {
 /*
@@ -55,6 +229,10 @@ int main() {
     {
         std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Hello darkness.txt";
         std::string word = "silence";
+        
+        std::cout << "Enter the filename to read:";
+        std::getline(std::cin, filename);
+        std::cin.clear();
 
         std::fstream fs;
         fs.open(filename);
@@ -91,56 +269,90 @@ int main() {
     std::cout << "\nTask 2. Text viewer.\n";
     {
         std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Hello darkness.txt";
-//        std::getline(std::cin, filename);
+        std::cout << "Enter the filename to read:";
+        std::getline(std::cin, filename);
+        std::cin.clear();
 
-        std::ifstream fs;
-        fs.open(filename, std::ios::binary);
-        if (fs.is_open()) {
-            std::cout << "File content:\n";
-            char buffer [33];
-
-            while (!fs.eof()) {
-                fs.read(buffer, 32);
-                buffer[fs.gcount()] = 0;
-                std::cout << buffer;
-            }
+        if (!text_view(filename)) {
+            std::cout << "File not found!\n";
         }
-        fs.close();
-
     }
 
     std::cout << "\nTask 3. Payroll.\n";
     {
         std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Payroll.txt";
-        std::ifstream fs;
-        fs.open(filename, std::ios::binary);
-        if (fs.is_open()) {
-            std::string buffer = "";
-            std::string first_name = "";
-            std::string surname = "";
-            std::string highest_bidder = "";
-            double wage = 0, maxwage = 0, total = 0;
-            std::string date = "";
-            while (std::getline(fs, buffer)) {
-                std::stringstream buffer_stream(buffer);
-                buffer_stream >> first_name >> surname >> wage >> date;
-                total += wage;
-                if (wage > maxwage) {
-                    maxwage = wage;
-                    highest_bidder = first_name + " " + surname;
-                }
-                std::cout << first_name << " " << surname << " " << wage << " " << date << "\n";
-            }
-            std::cout << "The total amount of payments on the payroll was " << total << " USD.\n";
-            std::cout << "The maximum amount of " << maxwage
-                      << " USD was paid to " << highest_bidder << ".\n";
+        filename = "Payroll.txt";
+        std::cout << "Enter the payroll filename to find the largest payout\n";
+        std::cout << "and the total payout: ";
+        std::getline(std::cin, filename);
+        std::cin.clear();
+        int status = 0;
+        double total = 0;
+        auto result = highest_payout(filename, total, status);
+        if (status > 0) {
+            std::cout << "The total amount of payments on the payroll was $" << total << ".\n";
+            std::cout << "The largest payout of $" << result.second
+                      << " was received by " << result.first << ".\n";
         }
-        fs.close();
+        else if (status == -1) {
+            std::cout << "Incorrect data format!\n";
+        }
+        else {
+            std::cout << "File not found!\n";
+        }
+    }
 
+    std::cout << "\nTask 4. PNG file detector.\n";
+    {
+        std::string filename = "money.png";
+        std::cout << "Enter the filename to check if it is a png file: ";
+        std::getline(std::cin, filename);
+        std::cin.clear();
+        check_png_file(filename);
     }
 //*/
 
-    std::cout << "\nTask 4. PNG file detector.\n";
+    std::cout << "\nTask 5.  What, where, when.\n";
 
+    const int sectors = 13;
+
+    std::vector<bool> drum(sectors, true);
+    std::vector<std::string> questions(sectors, "");
+    std::vector<std::string> answers(sectors, "");
+    int experts = 0;
+    int TVviewers = 0;
+
+    questions = {
+        "q01.txt", "q02.txt", "q03.txt",
+        "q04.txt", "q05.txt", "q06.txt",
+        "q07.txt", "q08.txt", "q09.txt",
+        "q10.txt", "q11.txt", "q12.txt",
+        "q13"
+    };
+
+    answers = {
+        "a01.txt", "a02.txt", "a03.txt",
+        "a04.txt", "a05.txt", "a06.txt",
+        "a07.txt", "a08.txt", "a09.txt",
+        "a10.txt", "a11.txt", "a12.txt",
+        "a13"
+    };
+    
+    int index = 0;
+    int winscore = sectors / 2;
+    while (experts < winscore && TVviewers < winscore) {
+        std::cout << "Current sector is " << index + 1 << ". Spin the drum to get\n"
+    << " a question by entering a number: ";
+        int offset = 0;
+        std::string input = "";
+        std::getline(std::cin, input);
+        std::cout << offset << "\n";
+ //       std::getline(std::cin, input);
+        
+        ++ experts;
+    }
+    
+    print(questions, 0, 12);
+    
     return 0;
 }
