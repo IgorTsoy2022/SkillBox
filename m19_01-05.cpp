@@ -153,12 +153,20 @@ std::string get_extension(const std::string & filename) {
 
 template<typename T1, typename T2>
 bool operator==(const T1 & lhs, const T2 & rhs) {
-    for (size_t i = 0; i < lhs.size(); ++i) {
+    for (size_t i = 0; lhs[i] != '\0'; ++i) {
         if (lhs[i] != rhs[i]) {
             return false;
         }
     }
     return true;
+}
+
+void assign(char* lhs, const char* rhs) {
+    size_t index = 0;
+    for (; rhs[index] != '\0'; ++index) {
+        *(lhs + index) = *(rhs + index);
+    }
+    *(lhs + index) = 0;
 }
 
 void check_png_file(const std::string & filename) {
@@ -255,10 +263,9 @@ void game_experts() {
 
     int index = 0;
     int winscore = sectors / 2;
-    winscore = 7;
     while (experts < winscore && TVviewers < winscore) {
         bool exit = false;
-        std::cout << "Current sector is " << index + 1
+        std::cout << "\nCurrent sector is " << index + 1
                   << ". Spin the drum to get a question\n"
                   << "by entering a number (type \"exit\" for exit): ";
         int offset = 0;
@@ -281,12 +288,13 @@ void game_experts() {
         }
 
         index = revolve(drum, offset);
-        std::cout << "Current sector is " << index + 1 << ".\nAttention! Question:\n";
+        std::cout << "Current sector is " << index + 1
+                  << ".\nAttention! The question:\n";
         
         if (text_view(questions[index])) {
             std::cout << "\n";
             std::string experts_answer = "";
-            std::cout << "Type your answer (one word):";
+            std::cout << "Type your answer (one word): ";
             std::getline(std::cin, experts_answer);
             toupper(experts_answer);
 
@@ -295,17 +303,18 @@ void game_experts() {
             fs.open(answers[index]);
             if (fs.is_open()) {
                 if (std::getline(fs, right_answer)) {
-                    std::cout << "The right answer is " << right_answer << "\n";
-                    
                     toupper(right_answer);
                     if (experts_answer == right_answer) {
                         ++experts;
-                        std::cout << "Current round won experts!\n";
+                        std::cout << "That's right! Current round won experts!\n";
                     }
                     else {
                         ++TVviewers;
+                        std::cout << "You're wrong! The right answer is "
+                                  << right_answer << "\n";
                         std::cout << "Current round won TV viewrs!\n";
                     }
+
                     std::cout << "Current score:\n";
                     std::cout << "Experts: " << experts << "\n";
                     std::cout << "TV viewers: " << TVviewers << "\n";
@@ -331,19 +340,20 @@ void game_experts() {
 }
 
 int main() {
-/*
     std::cout << "Task 1. Search word.\n";
     {
-        std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Hello darkness.txt";
+        std::string filename = "Hello darkness.txt";
         std::string word = "silence";
         
-        std::cout << "Enter the filename to read:";
+        std::cout << "Enter the filename to read: ";
         std::getline(std::cin, filename);
         std::cin.clear();
 
+        bool filefound = false;
         std::fstream fs;
         fs.open(filename);
-        if (fs.is_open()) {
+        filefound = fs.is_open();
+        if (filefound) {
             std::cout << "File content:\n";
             std::string buffer = "";
             while (std::getline(fs, buffer)) {
@@ -352,31 +362,36 @@ int main() {
         }
         fs.close();
 
-        std::cout << "\nFile: \"" << filename << "\".\n";
-        std::cout << "Enter word for search (\"exit\" for exit): ";
-        while (std::getline(std::cin, word)) {
-            auto word_count = search_in_file(filename, word);
+        if (filefound) {
+            std::cout << "\nFile: \"" << filename << "\".\n";
+            std::cout << "Enter a word for search (\"exit\" for exit): ";
+            while (std::getline(std::cin, word)) {
+                auto word_count = search_in_file(filename, word);
 
-            std::cout << "The word \"" << word << "\" was ";
-            if (word_count > 0) {
-                std::cout << "found " << word_count << " times.\n";
-            }
-            else {
-                std::cout << "not found.\n";
-            }
+                std::cout << "The word \"" << word << "\" was ";
+                if (word_count > 0) {
+                    std::cout << "found " << word_count << " times.\n";
+                }
+                else {
+                    std::cout << "not found.\n";
+                }
 
-            if (word == "EXIT") {
-                break;
-            }
+                if (word == "EXIT") {
+                    break;
+                }
 
-            std::cout << "\nEnter word for search (\"exit\" for exit): ";
+                std::cout << "\nEnter word for search (\"exit\" for exit): ";
+            }
+        }
+        else {
+            std::cout << "\nFile: \"" << filename << "\" not found!\n";
         }
     }
 
     std::cout << "\nTask 2. Text viewer.\n";
     {
-        std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Hello darkness.txt";
-        std::cout << "Enter the filename to read:";
+        std::string filename = "Hello darkness.txt";
+        std::cout << "Enter the filename to read: ";
         std::getline(std::cin, filename);
         std::cin.clear();
 
@@ -387,8 +402,7 @@ int main() {
 
     std::cout << "\nTask 3. Payroll.\n";
     {
-        std::string filename = "C:\\CPP\\GIT\\SkillBox-main\\Payroll.txt";
-        filename = "Payroll.txt";
+        std::string filename = "Payroll.txt";
         std::cout << "Enter the payroll filename to find the largest payout\n";
         std::cout << "and the total payout: ";
         std::getline(std::cin, filename);
@@ -412,12 +426,25 @@ int main() {
     std::cout << "\nTask 4. PNG file detector.\n";
     {
         std::string filename = "money.png";
+
+/*
+        std::ofstream fs;
+        fs.open(filename, std::ios::binary);
+        char buffer[5];
+
+        if (fs.is_open()) {
+            assign(buffer, "0PNG");
+            buffer[0] = -119;
+            fs.write(buffer, 4);
+        }
+        fs.close();
+*/
+
         std::cout << "Enter the filename to check if it is a png file: ";
         std::getline(std::cin, filename);
         std::cin.clear();
         check_png_file(filename);
     }
-//*/
 
     std::cout << "\nTask 5.  What, where, when.\n";
 
