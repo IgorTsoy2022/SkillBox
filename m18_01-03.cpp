@@ -33,17 +33,17 @@ void reverse(T* p) {
 
 // Task 1. SWAP arrays.
 
-template<typename T, const size_t N>
-void swaparrays(std::vector<T>& v, T(&a)[N]) {
-    for (size_t i = 0; i < N; ++i) {
-        swap(v[i], a[i]);
+template<typename T>
+void swaparrays(std::vector<T>& v, T a[]) {
+    for (size_t i = 0; i < v.size(); ++i) {
+        swap(v[i], *(a + i));
     }
 }
 
 // Task 2. Count ways to reach N.
 
-template<typename T, std::size_t N>
-T count_ways(T step, T(&ways_storage)[N], T max_jump_range = 3) {
+template<typename T>
+T count_ways(T step, T ways_storage[], T max_jump_range = 3) {
     if (step == 0) {
         return 1;
     }
@@ -54,7 +54,7 @@ T count_ways(T step, T(&ways_storage)[N], T max_jump_range = 3) {
 
     T ways = 0;
     for (T i = 1; i <= max_jump_range && step - i >= 0; ++i) {
-	ways += count_ways(step - i, ways_storage, max_jump_range);
+	    ways += count_ways(step - i, ways_storage, max_jump_range);
     }
     ways_storage[step - 1] = ways;
 
@@ -69,7 +69,7 @@ T count_ways(T step, std::vector<T> & ways_storage,
     }
 
     if (ways_storage.size() < step) {
-	ways_storage.resize(step, -1);
+	    ways_storage.resize(step, -1);
     }
 
     if (ways_storage[step - 1] > -1) {
@@ -78,7 +78,7 @@ T count_ways(T step, std::vector<T> & ways_storage,
 
     T ways = 0;
     for (T i = 1; i <= max_jump_range && step - i >= 0; ++i) {
-	ways += count_ways(step - i, ways_storage, max_jump_range);
+	    ways += count_ways(step - i, ways_storage, max_jump_range);
     }
     ways_storage[step - 1] = ways;
 
@@ -93,7 +93,7 @@ void evendigits(long long value, int& evens_count) {
     }
 
     if (value < 10) {
-	return;
+	    return;
     }
 
     evendigits(value / 10, evens_count);
@@ -103,45 +103,45 @@ int main() {
 
     std::cout << "Task 1. SWAP arrays.\n";
     {
-	std::vector<int> v { 1, 2, 3, 4, 5, 6, 7, 8 };
-	int a[8] = { 1, 4, 9, 16, 25, 36, 49, 56 };
-	std::cout << "v = ";
-	print(v, 0, 7);
-	std::cout << "a = ";
-	print(a, 0, 7);
-	std::cout << "Arrays after swap:\n";
-	swaparrays(v, a);
-	std::cout << "v = ";
-	print(v, 0, 7);
-	std::cout << "a = ";
-	print(a, 0, 7);
+	    std::vector<int> v { 1, 2, 3, 4, 5, 6, 7, 8 };
+	    int a[8] = { 1, 4, 9, 16, 25, 36, 49, 64 };
+	    std::cout << "v = ";
+	    print(v, 0, 7);
+	    std::cout << "a = ";
+	    print(a, 0, 7);
+	    std::cout << "Arrays after swap:\n";
+	    swaparrays(v, a);
+	    std::cout << "v = ";
+	    print(v, 0, 7);
+	    std::cout << "a = ";
+	   print(a, 0, 7);
     }
 
     std::cout << "\nTask 2. Count ways to reach N.\n";
     {
-	const int steps = 5;
-	int max_jump_range = 3;
-	int ways_storage[steps];
-	for (size_t i = 0; i < steps; ++i) {
+	    const int steps = 5;
+	    int max_jump_range = 3;
+	    int ways_storage[steps];
+	    for (size_t i = 0; i < steps; ++i) {
             ways_storage[i] = -1;
-	}
+	    }
 
-	std::cout << "The rabbit can reach to step " << steps
+	    std::cout << "The rabbit can reach to step " << steps
                   << " with a maximum jump of " << max_jump_range << " in "
-	          << count_ways(steps, ways_storage, max_jump_range)
-		  << " ways.\n";
+	              << count_ways(steps, ways_storage, max_jump_range)
+		          << " ways.\n";
 	}
 
     std::cout << "\nTask 3. Count even digits.\n";
     {
-	long long bignum = 9223372036854775806;
-	int evens_count = 0;
-	evendigits(bignum, evens_count);
-	std::cout << "There " << (evens_count > 1 ? "are " : "is ")
+	    long long bignum = 9223372036854775806;
+	    int evens_count = 0;
+	    evendigits(bignum, evens_count);
+	    std::cout << "There " << (evens_count > 1 ? "are " : "is ")
                   << evens_count << " even digit"
                   << (evens_count > 1 ? "s" : "")
                   << " in number: " << bignum << "\n";
-   }
+    }
 
    return 0;
 }
