@@ -1,7 +1,41 @@
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 #include <unordered_map>
+
+template<typename A>
+void print(const A& arr, size_t from, size_t to) {
+    std::cout << "[";
+    if (from > to) {
+        for (size_t i = from; i > to; --i) {
+            std::cout << arr[i] << " ";
+        }
+    }
+    else {
+        for (size_t i = from; i < to; ++i) {
+            std::cout << arr[i] << " ";
+        }
+    }
+    std::cout << arr[to] << "]\n";
+}
+
+void toupper(std::string& text) {
+    for (auto& c : text) {
+        if (c >= 'a' && c <= 'z') {
+            c = c - 32;
+        }
+    }
+}
+
+void tolower(std::string& text) {
+    for (auto& c : text) {
+        if (c >= 'A' && c <= 'Z') {
+            c = c + 32;
+        }
+    }
+}
 
 int leap_year(int year) {
     if (year % 400 == 0) {
@@ -39,7 +73,7 @@ bool is_date(int year, int month, int day) {
 }
 
 bool is_number(const std::string str) {
-    for (const auto c : str) {
+    for (const auto & c : str) {
         if (c >= '0' && c <= '9') {
             continue;
         }
@@ -51,8 +85,46 @@ bool is_number(const std::string str) {
     return true;
 }
 
+std::vector<std::string> 
+split(const std::string& str, const char delimeter = ' ') {
+    std::vector<std::string> result;
+    std::string word = "";
+    for (const auto& c : str) {
+        if (c == delimeter) {
+            if (word.size() > 0) {
+                result.push_back(word);
+                word.clear();
+            }
+        }
+        else {
+            word += c;
+        }
+    }
+    if (word.size() > 0) {
+        result.push_back(word);
+    }
+    return result;
+}
+
+
+
 int main() {
-    std::cout << std::boolalpha;
-    std::cout << is_number(".56712g3") << "\n";
-    std::cout << std::stod(".6") << "\n";      return 0;
+
+    std::ofstream file;
+    file.open("test.txt");
+    file.setf(std::ios::boolalpha);
+    file.setf(std::ios::showpos);
+    file.setf(std::ios::showpoint);
+    file.setf(std::ios::fixed);
+    file.precision(3);
+    file.width(10);
+
+    int number = 8;
+    file.write((char*)&number, sizeof(number));
+
+    file.close();
+
+    std::cout << std::rand() % 51 << "\n";
+
+    return 0;
 }
