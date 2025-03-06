@@ -79,6 +79,7 @@ bool text_view(const std::string & filename) {
             buffer[fs.gcount()] = 0;
             std::cout << buffer;
         }
+        std::cout << "\n";
         isOk = true;
     }
     fs.close();
@@ -345,9 +346,9 @@ int main() {
         std::string filename = "Hello darkness.txt";
         std::string word = "silence";
         
-        std::cout << "Enter the filename to read: ";
-        std::getline(std::cin, filename);
-        std::cin.clear();
+        std::cout << "The filename to read: \"" << filename << "\"\n";
+//        std::getline(std::cin, filename);
+//        std::cin.clear();
 
         bool filefound = false;
         std::fstream fs;
@@ -403,10 +404,10 @@ int main() {
     std::cout << "\nTask 3. Payroll.\n";
     {
         std::string filename = "Payroll.txt";
-        std::cout << "Enter the payroll filename to find the largest payout\n";
-        std::cout << "and the total payout: ";
-        std::getline(std::cin, filename);
-        std::cin.clear();
+        std::cout << "The payroll filename to find the largest payout\n";
+        std::cout << "and the total payout: \"" << filename << "\"\n";
+//        std::getline(std::cin, filename);
+//        std::cin.clear();
         int status = 0;
         double total = 0;
         auto result = highest_payout(filename, total, status);
