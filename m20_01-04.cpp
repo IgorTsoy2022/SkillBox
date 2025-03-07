@@ -142,6 +142,72 @@ bool is_ddmmyyyy(const std::string& ddmmyyyy, const char delimeter,
     return is_date(d);
 }
 
+long fillATM(const std::string& filename, 
+             std::vector<int> & banknotes, int & total_notes) {
+
+    long total_amount = 0;
+    total_notes = 0;
+    auto sizeofint = sizeof(int);
+    std::ifstream fileread(filename, std::ios::binary);
+    if (fileread.is_open()) {
+        int index = 0;
+        for (auto& num : banknotes) {
+            fileread.read((char*)&num, sizeofint);
+            std::cout << num << "\n";
+            total_notes += num;
+            switch (index++) {
+            case 0:
+                total_amount += num * 100;
+                break;
+            case 1:
+                total_amount += num * 200;
+                break;
+            case 2:
+                total_amount += num * 500;
+                break;
+            case 3:
+                total_amount += num * 1000;
+                break;
+            case 4:
+                total_amount += num * 2000;
+                break;
+            case 5:
+                total_amount += num * 5000;
+                break;
+            }
+        }
+    }
+    else {
+        total_notes = 0;
+        total_amount = 0;
+    }
+    fileread.close();
+
+    std::srand(std::time(nullptr));
+    //std::rand()%(max - min + 1) + min;
+    int nominal = std::rand() % 6;
+    int notes = std::rand() % (166 - 100 + 1) + 100;
+    std::cout << "notes=" << notes << "\n";
+    std::cout << "nominal=" << nominal << "\n";
+
+    std::ofstream filewrite(filename, std::ios::binary);
+    int number = 100;
+    filewrite.write((char*)&number, sizeof(number));
+    number = 120;
+    filewrite.write((char*)&number, sizeof(number));
+    number = 150;
+    filewrite.write((char*)&number, sizeof(number));
+    number = 200;
+    filewrite.write((char*)&number, sizeof(number));
+    number = 220;
+    filewrite.write((char*)&number, sizeof(number));
+    number = 250;
+    filewrite.write((char*)&number, sizeof(number));
+
+    filewrite.close();
+
+    return total_amount;
+}
 
 int main() {
 
@@ -244,12 +310,11 @@ int main() {
             }
         }
     }
-//*/
 
     std::cout << "\nTask 3. Fishing.\n";
     {
         std::ofstream file;
-        file.open("river.txt");
+        file.open("coolspot.txt");
         file << "sunfish\n";
         file << "shad\n";
         file << "carp\n";
@@ -262,14 +327,70 @@ int main() {
         file.close();
     }
     {
+        std::string coolspot = "coolspot.txt";
+        std::string fishcorral = "fishcorral.txt";
         std::string fish = "";
-        std::ofstream file;
-        file.open("basket.txt", std::ios::app);
-        file.close();
-    
-    
+        std::string fishfromspot = "";
+        std::unordered_map<std::string, int> fishes_in_corral;
+
+        std::ifstream file_coolspot(coolspot);
+        if (file_coolspot.is_open()) {
+            std::ofstream file_fishcorral(fishcorral, std::ios::app);
+            while (true) {
+                std::cout << "Enter the species of fish you intend to catch (\"exit\" for exit): ";
+                std::cin >> fish;
+                std::cin.clear();
+                if (fish == "exit") {
+                    break;
+                }
+                while (!file_coolspot.eof()) {
+                    file_coolspot >> fishfromspot;
+                    if (fish == fishfromspot) {
+                        file_fishcorral << fish << "\n";
+                        ++fishes_in_corral[fish];
+                        std::cout << "One fish \"" << fish << "\" caught.\n";
+                        break;
+                    }
+                }
+                if (file_coolspot.eof()) {
+                    std::cout << "The flow has reached the end.\n";
+                    std::cout << "Press 'y' if you want to fish again:";
+                    std::cin >> fish;
+                    if (fish == "y") {
+                        file_coolspot.close();
+                        file_coolspot.open(coolspot);
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+            file_fishcorral.close();
+        }
+        else {
+            std::cout << "File \"" << coolspot << "\" not found! Look for another fishing spot.\n";
+        }
+        file_coolspot.close();
+
+        std::cout << "Fish caught in the session:\n";
+        for (const auto& [fish, q] : fishes_in_corral) {
+            std::cout << fish << " - " << q << "\n";
+        }
     }
-    
-    
+//*/
+
+    std::cout << "\nTask 4. ATM machine.\n";
+    // 100 200 500 1000 2000 5000
+    // 0   1   2   3    4    5
+    {
+        std::string filename = "ATM.bin";
+
+        int total_notes = 0;
+        std::vector<int> banknotes(6, 0);
+        auto total_amount = fillATM(filename, banknotes, total_notes);
+        std::cout << "total_notes = " << total_notes << "\n";
+        std::cout << "total_amount = " << total_amount << "\n";
+    }
+
     return 0;
 }
