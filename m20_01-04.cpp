@@ -202,46 +202,74 @@ int main() {
         }
         file.close();
     }
-//*/
-    std::cout << "\nTask 2. Drawing random pictures.\n";
-    std::cout << "Enter the dimensions of the picture: width and height: ";
-    std::string input;
-    std::string strwidth = "";
-    std::string strheight = "";
-    char byte = 0;
-    char lf = '\n';
-    int width = 0, height = 0;
-    while (std::getline(std::cin, input)) {
-        if (input == "exit") {
-            break;
-        }
-        std::stringstream input_stream(input);
-        input_stream >> strwidth >> strheight;
-        if (is_number(strwidth) && is_number(strheight)) {
-            width = std::stoi(strwidth);
-            height = std::stoi(strheight);
-            std::ofstream file;
-            file.open("binary_pic.txt", std::ios::binary);
-            if (file.is_open()) {
-                std::srand(std::time(nullptr));
-                for (int i = 0; i < height; ++i) {
-                    for (int j = 0; j < width; ++j) {
-                        byte = std::rand() % 2;
-                        std::cout << (int)byte;
-                        file.write(/*(char*)*/&byte, 1);
-                    }
-                    std::cout << lf;
-                    file.write(/*(char*)*/&lf, 1);
-                }
-            }
 
-            file.close();
-            break;
-        }
-        else {
-            std::cout << "Non-numeric data entered!\n";
+    std::cout << "\nTask 2. Drawing random pictures.\n";
+    {
+        std::cout << "Enter the dimensions of the picture: width and height: ";
+        std::string input;
+        std::string strwidth = "";
+        std::string strheight = "";
+        char byte = 0;
+        char lf = '\n';
+        int width = 0, height = 0;
+        while (std::getline(std::cin, input)) {
+            if (input == "exit") {
+                break;
+            }
+            std::stringstream input_stream(input);
+            input_stream >> strwidth >> strheight;
+            if (is_number(strwidth) && is_number(strheight)) {
+                width = std::stoi(strwidth);
+                height = std::stoi(strheight);
+                std::ofstream file;
+                file.open("binary_pic.txt", std::ios::binary);
+                if (file.is_open()) {
+                    std::srand(std::time(nullptr));
+                    for (int i = 0; i < height; ++i) {
+                        for (int j = 0; j < width; ++j) {
+                            byte = std::rand() % 2;
+                            std::cout << (int)byte;
+                            file.write(&byte, 1);
+                        }
+                        std::cout << lf;
+                        file.write(&lf, 1);
+                    }
+                }
+
+                file.close();
+                break;
+            }
+            else {
+                std::cout << "Non-numeric data entered!\n";
+            }
         }
     }
+//*/
 
+    std::cout << "\nTask 3. Fishing.\n";
+    {
+        std::ofstream file;
+        file.open("river.txt");
+        file << "sunfish\n";
+        file << "shad\n";
+        file << "carp\n";
+        file << "bass\n";
+        file << "bullhead\n";
+        file << "carp\n";
+        file << "walleye\n";
+        file << "catfish\n";
+        file << "carp\n";
+        file.close();
+    }
+    {
+        std::string fish = "";
+        std::ofstream file;
+        file.open("basket.txt", std::ios::app);
+        file.close();
+    
+    
+    }
+    
+    
     return 0;
 }
