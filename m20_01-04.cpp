@@ -146,10 +146,28 @@ bool is_ddmmyyyy(const std::string& ddmmyyyy, const char delimeter,
     return is_date(d);
 }
 
+bool text_view(const std::string& filename) {
+    bool isOk = false;
+    std::ifstream fs;
+    fs.open(filename, std::ios::binary);
+    if (fs.is_open()) {
+        char buffer[33];
+        while (!fs.eof()) {
+            fs.read(buffer, 32);
+            buffer[fs.gcount()] = 0;
+            std::cout << buffer;
+        }
+        isOk = true;
+    }
+    fs.close();
+    return isOk;
+}
+
 // Task 4. ATM machine.
 
 template<std::size_t N>
-std::map<int, int>  initialize_banknotes(const std::array<int, N> & nominals) {
+std::map<int, int>
+initialize_banknotes(const std::array<int, N> & nominals) {
     std::map<int, int> banknotes;
     banknotes[0] = 0;
     for (int i = 0; i < N; ++i) {
@@ -158,7 +176,8 @@ std::map<int, int>  initialize_banknotes(const std::array<int, N> & nominals) {
     return banknotes;
 }
 
-long readATM(const std::string & filename, std::map<int, int> & banknotes) {
+long readATM(const std::string & filename, 
+             std::map<int, int> & banknotes) {
     long total_amount = 0;
     int total_notes = 0;
     auto sizeofint = sizeof(int);
@@ -169,7 +188,6 @@ long readATM(const std::string & filename, std::map<int, int> & banknotes) {
         if (it != banknotes.end()) {
             ++it;
             for (; it != banknotes.end(); ++it) {
-            std::cout << it -> first << "\n";
                 file.read((char*) & it -> second, sizeofint);
                 total_notes += it -> second;
                 total_amount += it -> first * it -> second;
@@ -187,51 +205,8 @@ long readATM(const std::string & filename, std::map<int, int> & banknotes) {
     return total_amount;
 }
 
-/*
-long readATM(const std::string & filename,
-         std::vector<int>& banknotes) {
-    auto sizeofint = sizeof(int);
-    auto size = banknotes.size();
-    long total_amount = 0;
-    int total_notes = 0;
-    std::ifstream fileread(filename, std::ios::binary);
-    if (fileread.is_open()) {
-        for (int i = 0; i < size - 1; ++i) {
-            fileread.read((char*)&banknotes[i], sizeofint);
-            total_notes += banknotes[i];
-            switch (i) {
-            case 0:
-                total_amount += banknotes[i] * 100;
-                break;
-            case 1:
-                total_amount += banknotes[i] * 200;
-                break;
-            case 2:
-                total_amount += banknotes[i] * 500;
-                break;
-            case 3:
-                total_amount += banknotes[i] * 1000;
-                break;
-            case 4:
-                total_amount += banknotes[i] * 2000;
-                break;
-            case 5:
-                total_amount += banknotes[i] * 5000;
-                break;
-            }
-        }
-        banknotes[size - 1] = total_notes;
-    }
-    else {
-        std::fill_n(banknotes.begin(), 
-        banknotes.size(), 0);
-    }
-    fileread.close();
-    return total_amount;
-}
-*/
-
-long showATM(const std::map<int, int> & banknotes, std::ostream & stream = std::cout) {
+long showATM(const std::map<int, int> & banknotes, 
+             std::ostream & stream = std::cout) {
     long total_amount = 0;
     std::string snominal = "";
     std::cout << "Current ATM status:\n";
@@ -242,10 +217,16 @@ long showATM(const std::map<int, int> & banknotes, std::ostream & stream = std::
             total_amount += it -> first * it -> second;
 
             if (it -> first < 1000) {
-                snominal = "   " + std::to_string(it -> first) + " RUR : ";
+                snominal = "   " + std::to_string(it -> first) +
+                           " RUR : ";
+            }
+            else if (it->first < 10000) {
+                snominal = " " +  std::to_string(it -> first / 1000) +
+                           "'000 RUR : ";
             }
             else {
-                snominal = " " +  std::to_string(it -> first / 1000) + "'000 RUR : ";
+                snominal = std::to_string(it->first / 1000) +
+                           "'000 RUR : ";
             }
             stream << snominal;
 
@@ -290,88 +271,8 @@ long showATM(const std::map<int, int> & banknotes, std::ostream & stream = std::
     return total_amount;
 }
 
-/*
-long showATM(const std::vector<int> & banknotes, std::ostream & stream = std::cout) {
-    long total_amount = 0;
-    std::cout << "Current ATM status:\n";
-    for (int i = 0; i < banknotes.size(); ++i) {
-        switch (i) {
-        case 0:
-            total_amount += 100 * banknotes[0];
-            stream << "  100 : " << banknotes[0] << "\n";
-            break;
-        case 1:
-            total_amount += 200 * banknotes[1];
-            stream << "  200 : " << banknotes[1] << "\n";
-            break;
-        case 2:
-            total_amount += 500 * banknotes[2];
-            stream << "  500 : " << banknotes[2] << "\n";
-            break;
-        case 3:
-            total_amount += 1000 * banknotes[3];
-            stream << "1'000 : " << banknotes[3] << "\n";
-            break;
-        case 4:
-            total_amount += 2000 * banknotes[4];
-            stream << "2'000 : " << banknotes[4] << "\n";
-            break;
-        case 5:
-            total_amount += 5000 * banknotes[5];
-            stream << "5'000 : " << banknotes[5] << "\n";
-            break;
-        case 6:
-            stream << "Total : " << banknotes[6] << "\n";
-            stream << "Total amount : " << total_amount << "\n";
-            break;
-        }
-    }
-    return total_amount;
-}
-*/
-
-long amountATM(const std::map<int, int> & banknotes) {
-    long total_amount = 0;
-    auto it = banknotes.begin();
-    if (it != banknotes.end()) {
-    	++it;
-        for (; it != banknotes.end(); ++it) {
-            total_amount += it -> first * it -> second;
-        }
-    }
-    return total_amount;
-}
-
-/*
-long amountATM(std::vector<int> & banknotes) {
-    long total_amount = 0;
-    for (int i = 0; i < banknotes.size() - 1; ++i) {
-        switch (i) {
-        case 0:
-            total_amount += banknotes[i] * 100;
-            break;
-        case 1:
-            total_amount += banknotes[i] * 200;
-            break;
-        case 2:
-            total_amount += banknotes[i] * 500;
-            break;
-        case 3:
-            total_amount += banknotes[i] * 1000;
-            break;
-        case 4:
-            total_amount += banknotes[i] * 2000;
-            break;
-        case 5:
-            total_amount += banknotes[i] * 5000;
-            break;
-        }
-    }
-    return total_amount;
-}
-*/
-
-void writeATM(const std::string & filename, std::map<int, int> banknotes) {
+void writeATM(const std::string & filename,
+              std::map<int, int> banknotes) {
     auto sizeofint = sizeof(int);
     std::ofstream file(filename, std::ios::binary);
     auto it = banknotes.begin();
@@ -384,99 +285,97 @@ void writeATM(const std::string & filename, std::map<int, int> banknotes) {
     file.close();
 }
 
-/*
-void writeATM(const std::string & filename, std::vector<int> & banknotes) {
-    int sizeofint = sizeof(int);
-    auto size = banknotes.size();
-    std::ofstream filewrite(filename, std::ios::binary);
-    for (int i = 0; i < size - 1; ++i) {
-        filewrite.write((char*)&banknotes[i], sizeofint);
-    }
-    filewrite.close();
-}
-*/
-
-template<std::size_t N>
-void depositATM(std::map<int, int> & banknotes,
-        const std::array<int, N> & nominals,
-        const int max_notes = 1000) {
-
-    int total_notes = banknotes[0];
+void depositATM(std::map<int, int> & banknotes, const int fill_note = 0,
+                const int max_notes = 1000) {
+    auto total_notes = banknotes[0];
     if (total_notes == max_notes) {
         return;
     }
-    
+    auto size = banknotes.size();
+    if (size < 2) {
+        return;
+    }
+ 
     std::srand(std::time(nullptr));
-    //std::rand()%(max - min + 1) + min;
-    auto min_notes = max_notes / N / 2;
-    auto divisor = max_notes / N - min_notes + 1;
+    // std::rand() % (max - min + 1) + min;
+    auto min_notes = max_notes / (size - 1) / 2;
+    auto divisor = max_notes / (size - 1) - min_notes + 1;
 
-    int index = std::rand() % N;
-    int notes = 0;
+//    auto it = banknotes.rbegin();
+    auto it = banknotes.end();
+    --it;
+    if (fill_note > 0) {
+        auto fill_it = banknotes.find(fill_note);
+        if (fill_it != banknotes.end()) {
+            it = fill_it;
+        }
+    }
+
     while (total_notes < max_notes) {
-        notes = std::rand() % divisor + min_notes;
+ 
+        auto notes = std::rand() % divisor + min_notes;
         auto delta = max_notes - total_notes;
         if (notes > delta) {
             notes = delta;
         }
 
-        banknotes[nominals[index]] += notes;
+        it->second += notes;
         total_notes += notes;
+        --it;
 
-        if (index == N - 1) {
-            index = 0;
+        if (it == banknotes.begin()) {
+            it = banknotes.end();
+            --it;
         }
-        else {
-            ++index;
+
+        /*
+        if (it -> first == 0 || it == banknotes.rend()) {
+            it = banknotes.rbegin();
         }
+        */
     }
     banknotes[0] = total_notes;
-
 }
 
-/*
-void depositATM(std::vector<int> & banknotes) {
-    const int max_notes = 1000;
-    auto size = banknotes.size();
-    auto total_notes = banknotes[size - 1];
-
-    if (total_notes == max_notes) {
-        return;
+bool withdrawATM(std::map<int, int>& banknotes, long amount,
+                 int & request_nominal) {
+    auto it = banknotes.rbegin();
+    if (it == banknotes.rend()) {
+        return false;
     }
+    request_nominal = 0;
 
-    std::srand(std::time(nullptr));
-    //std::rand()%(max - min + 1) + min;
-
-    int index = std::rand() % (size - 1);
-    int notes = 0;
-    while (total_notes < max_notes) {
-        notes = std::rand() % (167 - 100 + 1) + 100;
-        auto delta = max_notes - total_notes;
-        if (notes > delta) {
-            notes = delta;
+    int total = 0;
+    std::vector<std::pair<int, int>> withdraw{};
+    for (; it != banknotes.rend(); ++it) {
+        auto nominal = it -> first;
+        if (nominal == 0) {
+            break;
         }
 
-        banknotes[index] += notes;
-        total_notes += notes;
-
-        if (index == size -2) {
-            index = 0;
-        }
-        else {
-            ++index;
+        if (amount >= nominal) {
+            auto notes = amount / nominal;
+            if (it -> second < notes) {
+                notes = it -> second;
+                if (request_nominal == 0) {
+                    request_nominal = nominal;
+                    std::cout << "request_nominal=" << request_nominal << "\n";
+                }
+            }
+            total += notes;
+            amount -= notes * nominal;
+            withdraw.push_back({ nominal, notes });
         }
     }
-    banknotes[size - 1] = total_notes;
-}
-*/
 
-bool withdrawATM(std::vector<int> & banknotes, long amount) {
-    bool success = false;
-    for (int i = banknotes.size() - 2; i >= 0; --i) {
-       if (amount >= banknotes[i]) {
-       }
-       std::cout << i << "\n";
+    if (amount == 0) {
+        for (const auto& notes : withdraw) {
+            banknotes[notes.first] -= notes.second;
+        }
+        banknotes[0] -= total;
+        return true;
     }
+
     return false;
 }
 
@@ -500,15 +399,15 @@ int main() {
     file.close();
  */
 
-/*
     std::cout << "Task 1. Entry in the statement of accounts.\n";
     {
         std::cout << "Consecutively enter the rows with the entries : Name and\n";
         std::cout << "Surname of the payee, date and amount of payment. The\n";
         std::cout << "data must be separated by spaces (type \"exit\" for exit):\n";
 
+        std::string filename = "payroll_test.txt";
         std::ofstream file;
-        file.open("payroll_test.txt", std::ios::app);
+        file.open(filename, std::ios::app);
         if (file.is_open()) {
             date d{};
             std::string input;
@@ -538,6 +437,7 @@ int main() {
             }
         }
         file.close();
+        text_view(filename);
     }
 
     std::cout << "\nTask 2. Drawing random pictures.\n";
@@ -648,7 +548,6 @@ int main() {
             std::cout << fish << " - " << q << "\n";
         }
     }
-//*/
 
     std::cout << "\nTask 4. ATM machine.\n";
     // 100 200 500 1000 2000 5000
@@ -657,46 +556,42 @@ int main() {
         std::string filename = "ATM.bin";
         const int note_types = 6;
         const std::array<int, note_types> nominals = {
-        100, 200, 500, 1000, 2000, 5000
+            100, 200, 500, 1000, 2000, 5000
         };
 
-//        auto banknotes = initialize_banknotes(nominals);
+        auto banknotes = initialize_banknotes(nominals);
 
         auto total_amount = readATM(filename, banknotes);
-        int total_notes = banknotes[0];
+        auto total_notes = banknotes[0];
         
         showATM(banknotes);
 
-/*
-        int size = 7;   // 0 - 5 for nominals, 6 for total_notes
-        std::vector<int> banknotes(size, 0);
-                
-        auto total_amount = readATM(filename, banknotes);
-        int total_notes = banknotes[size - 1];
-        
-        showATM(banknotes);
-        
+        int request_nominal = 0;
         std::string input = "";
-        while(true) {
-            std::cout << "Enter \"+\" for depositing notes, \"-\" for cash withdrawal, \"x\" for quit: ";
+        while (true) {
+            std::cout << "Enter \"+\" for depositing notes,"
+                      << " \"-\" for cash withdrawal,"
+                      << " \"x\" for quit: ";
             std::cin >> input;
             if (input == "x") {
                 break;
             }
             if (input == "+") {
-                depositATM(banknotes);
-                total_notes = banknotes[size - 1];
+                depositATM(banknotes, request_nominal);
+                request_nominal = 0;
+                total_notes = banknotes[0];
                 total_amount = showATM(banknotes);
                 continue;
             }
             if (input == "-") {
-                std::cout << "Enter the amount to withdraw multiples of 100:";
+                std::cout << "Enter the amount to withdraw multiples of 100: ";
                 std::cin >> input;
                 if (is_number(input)) {
-                	long amount = std::stod(input);
-                	if (!withdrawATM(banknotes, amount)) {
-                	    std::cout << "The requested amount cannot be issued. Please enter another amount.\n";
-                	}
+                    long amount = std::stod(input);
+                    if (!withdrawATM(banknotes, amount, request_nominal)) {
+                        std::cout << "The requested amount cannot be issued.\n";
+                        std::cout << "Please enter another amount.\n";
+                    }
                     else {
                         showATM(banknotes);
                     }
@@ -706,10 +601,8 @@ int main() {
                 }
             }
         }
-        writeATM(filename,
-        banknotes);
+        writeATM(filename, banknotes);
         showATM(banknotes);
-*/
     }
 
     return 0;
