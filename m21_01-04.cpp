@@ -42,6 +42,9 @@ void tolower(std::string& text) {
 }
 
 bool is_number(const std::string str) {
+    if (str.size() < 1) {
+        return false;
+    }
     for (const auto& c : str) {
         if (c >= '0' && c <= '9') {
             continue;
@@ -171,38 +174,34 @@ void write(std::ofstream& file, PAYROLL& p) {
     int size = p.name.size();
     file.write((char*)&size, sizeof(size));
     file.write((char*)p.name.c_str(), size);
-    std::cout << "write size = " << size << "\n";
-    std::cout << "write p.name = " << p.name << "\n";
 
     auto strdate = date_to_ddmmyyyy(p.date);
     size = strdate.size();
     file.write((char*)&size, sizeof(size));
-    file.write(strdate.c_str(), size);
+    file.write((char*)strdate.c_str(), size);
 
     file.write((char*)&p.amount, sizeof(p.amount));
-    char c = '\n';
-    file.write(&c, 1);
 }
 
-void read(std::ifstream& file, PAYROLL& p) {
+bool read(std::ifstream& file, PAYROLL& p) {
     int size = 0;
-    file.read((char*)&size, sizeof(size));
-    std::cout << "read size = " << size << "\n";
+    file.read((char*)&size, sizeof(size));    if(file.eof()) {
+        return false;
+    }
+
     p.name.resize(size);
     file.read((char*)p.name.c_str(), size);
-    std::cout << "read p.name = " << p.name << "\n";
 
     file.read((char*)&size, sizeof(size));
     std::string strdate = "";
     strdate.resize(size);
     file.read((char*)strdate.c_str(), size);
-    std::cout << "read strdate = " << strdate << "\n";
 
     ddmmyyyy_to_date(strdate, '.', p.date);
 
     file.read((char*)&p.amount, sizeof(p.amount));
-    std::cout << "read p.amount = " << p.amount << "\n";
 
+    return !file.eof();
 }
 
 void print(const std::vector<PAYROLL>& plist) {
@@ -244,18 +243,18 @@ int main() {
         std::vector<PAYROLL> paylist;
         std::string filename = "payroll_test.bin";
         std::ofstream file;
-        file.open(filename, /*std::ios::app |*/ std::ios::binary);
+        file.open(filename, std::ios::app | std::ios::binary);
         if (file.is_open()) {
             std::string input;
-            std::string gap = " ";
-            std::string fname = "";
-            std::string lname = "";
-            std::string strdate = "";
-            std::string amount = "";
             while (std::getline(std::cin, input)) {
                 if (input == "exit") {
                     break;
                 }
+
+                std::string fname = "";
+                std::string lname = "";
+                std::string strdate = "";
+                std::string amount = "";
 
                 std::stringstream input_stream(input);
                 input_stream >> fname >> lname >> strdate >> amount;
@@ -282,7 +281,6 @@ int main() {
             }
         }
         file.close();
-        print(paylist);
     }
     {
         std::vector<PAYROLL> paylist;
@@ -291,18 +289,15 @@ int main() {
         file.open(filename, std::ios::binary);
         if (file.is_open()) {
             PAYROLL p{};
-            while (true) {
-                read(file, p);
-                paylist.push_back(p);
-
-                if (file.eof()) {
-                    break;
+            while (!file.eof()) {
+                if (read(file, p)) {
+                    paylist.push_back(p);
                 }
             }
         }
 
         file.close();
-        std::cout << "Read:\n";
+        std::cout << "File content:\n";
         print(paylist);
     }
 
