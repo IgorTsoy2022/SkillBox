@@ -301,7 +301,6 @@ struct ROOM {
 };
 
 struct FLOOR {
-    int number = 0;
     double height = 0.0;
     double area = 0.0;
     std::vector<ROOM> rooms;
@@ -315,9 +314,25 @@ enum class BUILDING_TYPE {
     UNKNOWN
 };
 
+std::string building_type(const BUILDING_TYPE & bt) {
+    switch(bt) {
+    case BUILDING_TYPE::HOUSE:
+        return "HOUSE";
+    case BUILDING_TYPE::GARAGE:
+        return "GARAGE";
+    case BUILDING_TYPE::LODGE:
+        return "LODGE";
+    case BUILDING_TYPE::BATHHOUSE:
+        return "BATHHOUSE";
+    case BUILDING_TYPE::UNKNOWN:
+        return "UNKNOWN";
+    }
+}
+
 struct BUILDING {
-    BUILDING_TYPE building = BUILDING_TYPE::UNKNOWN;
+    BUILDING_TYPE type = BUILDING_TYPE::UNKNOWN;
     double area = 0.0;
+    int kiln = 0;
     std::vector<FLOOR> floors;
 };
 
@@ -325,6 +340,31 @@ struct PLOT {
     double area = 0.0;
     std::vector<BUILDING> buildings;
 };
+
+void print(const std::vector<FLOOR> & floors) {
+    for (int i = 0; i < floors.size(); ++i) {
+        std::cout << "        " << i + 1 << " floor " << floors[i].area << " sq. m., height: " << floors[i].height 
+        << " m. \n";
+    }
+}
+
+void print(const std::vector<BUILDING> & buildings) {
+    for (const auto & b : buildings) {
+        std::cout << "    " << b.floors.size() << "-floor " << building_type(b.type) << "  " << b.area << " sq. m.";
+        if (b.kiln > 0) {
+            std::cout << ", " << b.kiln << " kikns.";
+        }
+        std::cout << "\n";
+        print(b.floors);
+    }
+}
+
+void print(const std::vector<PLOT> & plots) {
+    for (int i = 0; i < plots.size(); ++i) {
+        std::cout << "Plot #" << i + 1 << ": area = " << plots[i].area << " sq. m.\n";
+        print(plots[i].buildings);
+    }
+}
 
 int main() {
 
@@ -377,6 +417,46 @@ int main() {
 
     std::cout << "\nTask 2. Settlement.\n";
     {
+        std::vector<PLOT> plots;
+        int number = 0;
+        std::string input = "";
+        std::cout << "Enter the number of plots:";
+        std::cin >> input;
+        std::cin.clear();
+        if (is_number(input)) {
+            number = std::stod(input);
+        }
+        if (number > 0) {
+            std::string sdouble = "";
+            std::string sinteger = "";
+            plots.resize(number);
+            
+            std::cout << "Enter the area in square meters and the number of buildings,\n";
+            std::cout << "separated by a space for each plot or \"exit\" for exit.\n";
+            int index = 0;
+//            std::cout << "Plot #1: ";
+            while(std::getline(std::cin, input)) {
+                if (input == "exit") {
+                    break;
+                }
+                std::stringstream input_stream(input);
+                input_stream >> sdouble >> sinteger;
+                if (is_number(sdouble) && is_number(sinteger)) {
+                    plots[index].area = std::stod(sdouble);
+                    int size = std::stod(sinteger);
+                    if (size > 0) {
+                        plots[index].buildings.resize(size);
+                    }
+                    ++index;
+                }
+                if (index == number) {
+                    break;
+                }
+                std::cout << "Plot #" << index + 1 << ": ";
+            }
+            print(plots);
+            
+        }
 
     }
 
