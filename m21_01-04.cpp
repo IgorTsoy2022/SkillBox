@@ -1,13 +1,10 @@
-#include <cstdlib>
 #include <ctime>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <array>
 #include <string>
 #include <vector>
-#include <map>
-#include <unordered_map>
 
 template<typename A>
 void print(const A& arr, size_t from, size_t to) {
@@ -127,8 +124,8 @@ split(const std::string& str, const char delimeter = ' ') {
     return result;
 }
 
-bool ddmmyyyy_to_date(const std::string& ddmmyyyy, const char delimeter,
-                      DATE& date) {
+bool ddmmyyyy_to_date(const std::string& ddmmyyyy,
+                      const char delimeter, DATE& date) {
     auto size = ddmmyyyy.size();
     if (size < 6) {
         return false;
@@ -154,7 +151,8 @@ bool ddmmyyyy_to_date(const std::string& ddmmyyyy, const char delimeter,
     return is_date(date);
 }
 
-std::string date_to_ddmmyyyy(const DATE& date, const char delimeter = '.') {
+std::string date_to_ddmmyyyy(const DATE& date,
+                             const char delimeter = '.') {
     std::string ddmmyyyy = "";
 
     if (date.day < 10) {
@@ -284,18 +282,61 @@ bool text_view(const std::string& filename) {
 // Task 2. Settlement.
 
 enum class ROOM_TYPE {
-    BEDROOM,
-    LIVING,
-    NURSERY,
-    CABINET,
-    CANTEEN,
-    KITCHEN,
-    BATHROOM,
-    UNKNOWN
+    UNKNOWN = 0,
+    BEDROOM = 1,
+    LIVING = 2,
+    NURSERY = 3,
+    CABINET = 4,
+    CANTEEN = 5,
+    KITCHEN = 6,
+    BATHROOM = 7
 };
 
+ROOM_TYPE get_room_type(int number) {
+    switch (number) {
+    case 1:
+        return ROOM_TYPE::BEDROOM;
+    case 2:
+        return ROOM_TYPE::LIVING;
+    case 3:
+        return ROOM_TYPE::NURSERY;
+    case 4:
+        return ROOM_TYPE::CABINET;
+    case 5:
+        return ROOM_TYPE::CANTEEN;
+    case 6:
+        return ROOM_TYPE::KITCHEN;
+    case 7:
+        return ROOM_TYPE::BATHROOM;
+    default :
+        return ROOM_TYPE::UNKNOWN;
+        break;
+    }
+}
+
+std::string text_room_type(const ROOM_TYPE& rt) {
+    switch (rt) {
+    case ROOM_TYPE::BEDROOM:
+        return "BEDROOM";
+    case ROOM_TYPE::LIVING:
+        return "LIVING ROOM";
+    case ROOM_TYPE::NURSERY:
+        return "CHILDREN ROOM";
+    case ROOM_TYPE::CABINET:
+        return "CABINET";
+    case ROOM_TYPE::CANTEEN:
+        return "DINING ROOM";
+    case ROOM_TYPE::KITCHEN:
+        return "KITCHEN";
+    case ROOM_TYPE::BATHROOM:
+        return "BATHROOM";
+    case ROOM_TYPE::UNKNOWN:
+        return "UNKNOWN";
+    }
+}
+
 struct ROOM {
-    ROOM_TYPE room = ROOM_TYPE::UNKNOWN;
+    ROOM_TYPE type = ROOM_TYPE::UNKNOWN;
     std::string name = "";
     double area = 0.0;
 };
@@ -307,14 +348,30 @@ struct FLOOR {
 };
 
 enum class BUILDING_TYPE {
-    HOUSE,
-    GARAGE,
-    LODGE,
-    BATHHOUSE,
-    UNKNOWN
+    UNKNOWN = 0,
+    HOUSE = 1,
+    GARAGE = 2,
+    LODGE = 3,
+    BATHHOUSE = 4
 };
 
-std::string building_type(const BUILDING_TYPE & bt) {
+BUILDING_TYPE get_building_type(int number) {
+    switch (number) {
+    case 1:
+        return BUILDING_TYPE::HOUSE;
+    case 2:
+        return BUILDING_TYPE::GARAGE;
+    case 3:
+        return BUILDING_TYPE::LODGE;
+    case 4:
+        return BUILDING_TYPE::BATHHOUSE;
+    default:
+        return BUILDING_TYPE::UNKNOWN;
+        break;
+    }
+}
+
+std::string text_building_type(const BUILDING_TYPE & bt) {
     switch(bt) {
     case BUILDING_TYPE::HOUSE:
         return "HOUSE";
@@ -332,7 +389,7 @@ std::string building_type(const BUILDING_TYPE & bt) {
 struct BUILDING {
     BUILDING_TYPE type = BUILDING_TYPE::UNKNOWN;
     double area = 0.0;
-    int kiln = 0;
+    int kilns = 0;
     std::vector<FLOOR> floors;
 };
 
@@ -341,18 +398,161 @@ struct PLOT {
     std::vector<BUILDING> buildings;
 };
 
+void update_room(ROOM& room, std::istream& stream) {
+    std::string input = "";
+    std::string stype = "";
+    std::string sname = "";
+    std::string sarea = "";
+
+    std::cout << "            Enter the type of room (1 for BEDROOM, 2 for LIVING ROOM,\n";
+    std::cout << "            3 for CHILDREN ROOM, 4 for CABINET, 5 for DINING ROOM,\n";
+    std::cout << "            6 for KITCHEN, 7 for BATHROOM), room name and area,\n";
+    std::cout << "            separated by a space: ";
+
+    if (std::getline(stream, input)) {
+        std::stringstream input_stream(input);
+        int number = 0;
+        input_stream >> stype >> sname >> sarea;
+        if (is_number(stype)) {
+            number = std::stod(stype);
+            room.type = get_room_type(number);
+        }
+        room.name = sname;
+
+        if (is_number(sarea)) {
+            room.area = std::stod(sarea);
+        }
+    }
+}
+
+void update_floor(FLOOR& floor, std::istream& stream) {
+    std::string input = "";
+    std::string sarea = "";
+    std::string sheight = "";
+    std::string srooms = "";
+
+    std::cout << "        Enter the area in square meters, ceiling height\n";
+    std::cout << "        and the number of rooms, separated by a space: ";
+
+    if (std::getline(stream, input)) {
+        std::stringstream input_stream(input);
+        input_stream >> sarea >> sheight >> srooms;
+        if (is_number(sarea) && is_number(sheight)) {
+            floor.area = std::stod(sarea);
+            floor.height = std::stod(sheight);
+        }
+        int number = 0;
+        if (is_number(srooms)) {
+            number = std::stod(srooms);
+        }
+        floor.rooms.resize(number);
+        number = 1;
+        for (auto& room : floor.rooms) {
+            std::cout << "            Room #" << number++ << ":\n";
+            update_room(room, std::cin);
+        }
+    }
+}
+
+void update_building(BUILDING & building, std::istream& stream) {
+    std::string input = "";
+    std::string stype = "";
+    std::string sarea = "";
+    std::string sfloors = "";
+    std::string skilns = "";
+
+    std::cout << "    Enter the type of building (1 for HOUSE, 2 for GARAGE,\n";
+    std::cout << "    3 for LODGE, 4 for BATHHOUSE), the area in square meters,\n";
+    std::cout << "    the number of floors, and, if any, the number of kilns,\n";
+    std::cout << "    separated by a space: ";
+
+    if (std::getline(stream, input)) {
+        std::stringstream input_stream(input);
+        int number = 0;
+        input_stream >> stype >> sarea >> sfloors >> skilns;
+        if (is_number(stype) && is_number(sarea)) {
+            number = std::stod(stype);
+            building.type = get_building_type(number);
+            building.area = std::stod(sarea);
+        }
+        if (is_number(skilns)) {
+            building.kilns = std::stod(skilns);
+        }
+        number = 0;
+        if (is_number(sfloors)) {
+            number = std::stod(sfloors);
+        }
+        building.floors.resize(number > 0 ? number : 1);
+        number = 1;
+        for (auto& floor : building.floors) {
+            std::cout << "        Floor #" << number++ << ":\n";
+            update_floor(floor, std::cin);
+        }
+    }
+}
+
+std::vector<PLOT> make_plots(const int number, std::istream& stream) {
+    std::vector<PLOT> plots(number);
+    std::string input = "";
+    std::string sarea = "";
+    std::string sbuildings = "";
+
+    std::cout << "Enter the area in square meters and the number of buildings,\n";
+    std::cout << "separated by a space for each plot.\n";
+    std::cout << "For exit type \"exit\".\n";
+    int index = 0;
+    //            std::cout << "Plot #1: ";
+    while (std::getline(stream, input)) {
+        if (input == "exit") {
+            break;
+        }
+        std::stringstream input_stream(input);
+        input_stream >> sarea >> sbuildings;
+        if (is_number(sarea) && is_number(sbuildings)) {
+            plots[index].area = std::stod(sarea);
+            int size = std::stod(sbuildings);
+            if (size > 0) {
+                plots[index].buildings.resize(size);
+                int number = 1;
+                for (auto& building : plots[index].buildings) {
+                    std::cout << "    Building #" << number++ << ":\n";
+                    update_building(building, std::cin);
+                }
+            }
+            ++index;
+        }
+        if (index == number) {
+            break;
+        }
+        std::cout << "Plot #" << index + 1 << ": ";
+    }
+    return plots;
+}
+
+void print(const std::vector<ROOM>& rooms) {
+    for (const auto r : rooms) {
+        std::cout << "            " << text_room_type(r.type)
+                  << " #" << r.name << " "
+                  << r.area << " sq.m.\n";
+    }
+}
+
 void print(const std::vector<FLOOR> & floors) {
     for (int i = 0; i < floors.size(); ++i) {
-        std::cout << "        " << i + 1 << " floor " << floors[i].area << " sq. m., height: " << floors[i].height 
-        << " m. \n";
+        std::cout << "        " << i + 1 << " floor "
+                  << floors[i].area << " sq.m., height: "
+                  << floors[i].height << " m.\n";
+        print(floors[i].rooms);
     }
 }
 
 void print(const std::vector<BUILDING> & buildings) {
     for (const auto & b : buildings) {
-        std::cout << "    " << b.floors.size() << "-floor " << building_type(b.type) << "  " << b.area << " sq. m.";
-        if (b.kiln > 0) {
-            std::cout << ", " << b.kiln << " kikns.";
+        std::cout << "    " << b.floors.size() << "-floor "
+                  << text_building_type(b.type) << " "
+                  << b.area << " sq.m.";
+        if (b.kilns > 0) {
+            std::cout << ", " << b.kilns << " kilns.";
         }
         std::cout << "\n";
         print(b.floors);
@@ -361,9 +561,64 @@ void print(const std::vector<BUILDING> & buildings) {
 
 void print(const std::vector<PLOT> & plots) {
     for (int i = 0; i < plots.size(); ++i) {
-        std::cout << "Plot #" << i + 1 << ": area = " << plots[i].area << " sq. m.\n";
+        std::cout << "Plot #" << i + 1 << ": area = "
+                  << plots[i].area << " sq.m.\n";
         print(plots[i].buildings);
     }
+}
+
+// Task 3. The mathematical vector.
+
+struct COORD {
+    double x = 0.0;
+    double y = 0.0;
+};
+
+COORD operator-(const COORD& a) {
+    COORD result;
+    result.x = -a.x;
+    result.y = -a.y;
+    return result;
+}
+
+COORD operator+(const COORD& a, const COORD& b) {
+    COORD result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    return result;
+}
+
+COORD operator-(const COORD& a, const COORD& b) {
+    COORD result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    return result;
+}
+
+COORD operator*(const COORD& a, const double c) {
+    COORD result;
+    result.x = a.x * c;
+    result.y = a.y * c;
+    return result;
+}
+
+COORD operator*(const double c, const COORD& a) {
+    COORD result;
+    result.x = a.x * c;
+    result.y = a.y * c;
+    return result;
+}
+
+double vector_length(const COORD& a) {
+    return std::sqrt(a.x * a.x + a.y * a.y);
+}
+
+COORD vector_normalize(const COORD& a) {
+    COORD result;
+    auto length = vector_length(a);
+    result.x = a.x / length;
+    result.y = a.y / length;
+    return result;
 }
 
 int main() {
@@ -375,8 +630,9 @@ int main() {
         std::string filename = "payroll_test.bin";
         std::vector<PAYROLL> paylist;
 
-        std::cout << "Type \"list\" to view the statement or \"add\" to add an entry";
-        std::cout << " or \"exit\" for exit: ";
+        std::cout << "Type \"list\" to view the statement"
+                  << " or \"add\" to add an entry\n";
+        std::cout << "or \"exit\" for exit: ";
         bool hasbeenread = false;
         bool hasbeenwritten = false;
         std::string input;
@@ -409,59 +665,145 @@ int main() {
                 write(filename, paylist);
                 hasbeenwritten = true;
             }
-            std::cout << "Type \"list\" to view the statement or \"add\" to add an entry";
-            std::cout << " or \"exit\" for exit: ";
+            std::cout << "Type \"list\" to view the statement"
+                      << " or \"add\" to add an entry\n";
+            std::cout << "or \"exit\" for exit: ";
         }
     }
-//*/
 
     std::cout << "\nTask 2. Settlement.\n";
     {
-        std::vector<PLOT> plots;
         int number = 0;
         std::string input = "";
         std::cout << "Enter the number of plots:";
         std::cin >> input;
-        std::cin.clear();
         if (is_number(input)) {
             number = std::stod(input);
         }
         if (number > 0) {
-            std::string sdouble = "";
-            std::string sinteger = "";
-            plots.resize(number);
-            
-            std::cout << "Enter the area in square meters and the number of buildings,\n";
-            std::cout << "separated by a space for each plot or \"exit\" for exit.\n";
-            int index = 0;
-//            std::cout << "Plot #1: ";
-            while(std::getline(std::cin, input)) {
-                if (input == "exit") {
-                    break;
-                }
-                std::stringstream input_stream(input);
-                input_stream >> sdouble >> sinteger;
-                if (is_number(sdouble) && is_number(sinteger)) {
-                    plots[index].area = std::stod(sdouble);
-                    int size = std::stod(sinteger);
-                    if (size > 0) {
-                        plots[index].buildings.resize(size);
-                    }
-                    ++index;
-                }
-                if (index == number) {
-                    break;
-                }
-                std::cout << "Plot #" << index + 1 << ": ";
-            }
+            auto plots = make_plots(number, std::cin);
+            std::cout << "The plots of settlement:\n";
             print(plots);
-            
+
+            double total_area = 0.0;
+            double total_building_area = 0.0;
+            for (const auto& plot : plots) {
+                total_area += plot.area;
+                for (const auto& building : plot.buildings) {
+                    total_building_area += building.area;
+                }
+            }
+            std::cout << "Total area of settlement: " << total_area << "\n";
+            std::cout << "Total area of buildings: " << total_building_area << "\n";
         }
-
     }
+//*/
 
-    std::cout << "\nTask 3. Fishing.\n";
+    std::cout << "\nTask 3. The mathematical vector.\n";
     {
+        std::string input = "";
+        std::string sax = "";
+        std::string say = "";
+        std::string sbx = "";
+        std::string sby = "";
+        std::cout << "Operations with 2-dimensional vectors.\n";
+        std::cout << "Command \"+\" for vector addition.\n";
+        std::cout << "Command \"-\" for vector subtraction.\n";
+        std::cout << "Command \"scalar\" for multiplication of a vector by a scalar.\n";
+        std::cout << "Command \"length\" for vector length.\n";
+        std::cout << "Command \"normalize\" for vector normalization.\n";
+        std::cout << "Command \"exit\" for exit.\n";
+        std::cout << "Command: ";
+        while (std::getline(std::cin, input)) {
+            if (input == "exit") {
+                break;
+            }
+            if (input == "+") {
+                std::cout << "Sequentially enter the coordinates of the 2 vectors: ";
+                if (std::getline(std::cin, input)) {
+                    std::stringstream input_stream(input);
+                    input_stream >> sax >> say >> sbx >> sby;
+                    if (is_number(sax) && is_number(say) &&
+                        is_number(sbx) && is_number(sby)) {
+                        COORD a = { std::stod(sax), std::stod(say) };
+                        COORD b = { std::stod(sbx), std::stod(sby) };
+                        auto result = a + b;
+                        std::cout << "The result of a + b: "
+                                  << result.x << " " << result.y << "\n";
+                    }
+                    else {
+                        std::cout << "Incorrect number!\n";
+                    }
+                }
+            }
+            if (input == "-") {
+                std::cout << "Sequentially enter the coordinates of the 2 vectors: ";
+                if (std::getline(std::cin, input)) {
+                    std::stringstream input_stream(input);
+                    input_stream >> sax >> say >> sbx >> sby;
+                    if (is_number(sax) && is_number(say) &&
+                        is_number(sbx) && is_number(sby)) {
+                        COORD a = { std::stod(sax), std::stod(say) };
+                        COORD b = { std::stod(sbx), std::stod(sby) };
+                        auto result = a - b;
+                        std::cout << "The result of a - b: "
+                                  << result.x << " " << result.y << "\n";
+                    }
+                    else {
+                        std::cout << "Incorrect number!\n";
+                    }
+                }
+            }
+            if (input == "scalar") {
+                std::cout << "Sequentially enter the coordinates of a vector and a scalar: ";
+                if (std::getline(std::cin, input)) {
+                    std::stringstream input_stream(input);
+                    input_stream >> sax >> say >> sbx;
+                    if (is_number(sax) && is_number(say) &&
+                        is_number(sbx)) {
+                        COORD a = { std::stod(sax), std::stod(say) };
+                        auto result = a * std::stod(sbx);
+                        std::cout << "The result of a * scalar: "
+                                  << result.x << " " << result.y << "\n";
+                    }
+                    else {
+                        std::cout << "Incorrect number!\n";
+                    }
+                }
+            }
+            if (input == "length") {
+                std::cout << "Sequentially enter the coordinates of a vector: ";
+                if (std::getline(std::cin, input)) {
+                    std::stringstream input_stream(input);
+                    input_stream >> sax >> say;
+                    if (is_number(sax) && is_number(say)) {
+                        COORD a = { std::stod(sax), std::stod(say) };
+                        std::cout << "The length of the vector a: "
+                                  << vector_length(a) << "\n";
+                    }
+                    else {
+                        std::cout << "Incorrect number!\n";
+                    }
+                }
+            }
+            if (input == "normalize") {
+                std::cout << "Sequentially enter the coordinates of a vector: ";
+                if (std::getline(std::cin, input)) {
+                    std::stringstream input_stream(input);
+                    input_stream >> sax >> say;
+                    if (is_number(sax) && is_number(say)) {
+                        COORD a = { std::stod(sax), std::stod(say) };
+                        auto result = vector_normalize(a);
+                        std::cout << "Normalized vector a: "
+                                  << result.x << " " << result.y << "\n";
+                    }
+                    else {
+                        std::cout << "Incorrect number!\n";
+                    }
+                }
+            }
+            std::cout << "Command: ";
+        }
     }
 
     std::cout << "\nTask 4. ATM machine.\n";
