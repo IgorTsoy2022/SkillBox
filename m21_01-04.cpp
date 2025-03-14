@@ -57,7 +57,7 @@ bool is_number(const std::string str) {
 
 // Task 1. Entry in the statement of accounts.
 
-struct DATE {
+struct CURRDATE {
     int year = 0;
     int month = 0;
     int day = 0;
@@ -65,7 +65,7 @@ struct DATE {
 
 struct PAYROLL {
     std::string name = "";
-    DATE date;
+    CURRDATE date;
     double amount = 0.0;
 };
 
@@ -82,7 +82,7 @@ int leap_year(int year) {
     return 0;
 }
 
-bool is_date(const DATE& date) {
+bool is_date(const CURRDATE& date) {
     if (date.month < 1 || date.month > 12 ||
         date.day < 1) {
         return false;
@@ -126,7 +126,7 @@ split(const std::string& str, const char delimeter = ' ') {
 }
 
 bool ddmmyyyy_to_date(const std::string& ddmmyyyy,
-                      const char delimeter, DATE& date) {
+                      const char delimeter, CURRDATE& date) {
     auto size = ddmmyyyy.size();
     if (size < 6) {
         return false;
@@ -152,7 +152,7 @@ bool ddmmyyyy_to_date(const std::string& ddmmyyyy,
     return is_date(date);
 }
 
-std::string date_to_ddmmyyyy(const DATE& date,
+std::string date_to_ddmmyyyy(const CURRDATE& date,
                              const char delimeter = '.') {
     std::string ddmmyyyy = "";
 
@@ -225,7 +225,7 @@ void write(const std::string& filename, std::vector<PAYROLL> & paylist,
             std::stringstream input_stream(input);
             input_stream >> name >> lname >> strdate >> stramount;
 
-            DATE date{};
+            CURRDATE date{};
             PAYROLL p{};
             if (ddmmyyyy_to_date(strdate, '.', date)) {
                 if (is_number(stramount)) {
@@ -570,52 +570,52 @@ void print(const std::vector<PLOT> & plots) {
 
 // Task 3. The mathematical vector.
 
-struct POINT {
+struct VEC2D {
     double x = 0.0;
     double y = 0.0;
 };
 
-POINT operator-(const POINT& a) {
-    POINT result;
+VEC2D operator-(const VEC2D& a) {
+    VEC2D result;
     result.x = -a.x;
     result.y = -a.y;
     return result;
 }
 
-POINT operator+(const POINT& a, const POINT& b) {
-    POINT result;
+VEC2D operator+(const VEC2D& a, const VEC2D& b) {
+    VEC2D result;
     result.x = a.x + b.x;
     result.y = a.y + b.y;
     return result;
 }
 
-POINT operator-(const POINT& a, const POINT& b) {
-    POINT result;
+VEC2D operator-(const VEC2D& a, const VEC2D& b) {
+    VEC2D result;
     result.x = a.x - b.x;
     result.y = a.y - b.y;
     return result;
 }
 
-POINT operator*(const POINT& a, const double c) {
-    POINT result;
+VEC2D operator*(const VEC2D& a, const double c) {
+    VEC2D result;
     result.x = a.x * c;
     result.y = a.y * c;
     return result;
 }
 
-POINT operator*(const double c, const POINT& a) {
-    POINT result;
+VEC2D operator*(const double c, const VEC2D& a) {
+    VEC2D result;
     result.x = a.x * c;
     result.y = a.y * c;
     return result;
 }
 
-double vector_length(const POINT& a) {
+double vector_length(const VEC2D& a) {
     return std::sqrt(a.x * a.x + a.y * a.y);
 }
 
-POINT vector_normalize(const POINT& a) {
-    POINT result;
+VEC2D vector_normalize(const VEC2D& a) {
+    VEC2D result;
     auto length = vector_length(a);
     result.x = a.x / length;
     result.y = a.y / length;
@@ -631,24 +631,225 @@ struct CHARACTER {
     int damage = 0;
 };
 
-std::vector<CHARACTER> initializing_enemies(const int number) {
-    std::vector<CHARACTER> enemies(number);
-    std::srand(std::time(nullptr));
-    // std::rand() % (max - min + 1) + min;
+void initializing_enemies(const int number, 
+                          std::vector<CHARACTER>& enemies) {
+    enemies.resize(number);
     int id = 1;
     for (auto & enemy : enemies) {
         enemy.name = "Enemy #" + std::to_string(id++);
+        //  std::rand() % (max - min + 1) + min;
         enemy.health = std::rand() % 101 + 50;
         enemy.armor = std::rand() % 51;
         enemy.damage = std::rand() % 16 + 15;
     }
-    
-    return enemies;
 }
+
+bool place_character(std::vector<std::vector<int>>& map,
+                     int width, int height, 
+                    const int character_no) {
+    //  std::rand() % (max - min + 1) + min;
+    int x = std::rand() % width;
+    int y = std::rand() % height;
+    std::cout << "x=" << x << " y=" << y << "\n";
+    for (int i = y; i < height; ++i) {
+        for (int j = x; j < width; ++j) {
+            if (map[i][j] == 0) {
+                map[i][j] = character_no;
+                return true;
+            }
+        }
+        for (int j = 0; j < x; ++j) {
+            if (map[i][j] == 0) {
+                map[i][j] = character_no;
+                return true;
+            }
+        }
+    }
+    for (int i = 0; i < y; ++i) {
+        for (int j = x; j < width; ++j) {
+            if (map[i][j] == 0) {
+                map[i][j] = character_no;
+                return true;
+            }
+        }
+        for (int j = 0; j < x; ++j) {
+            if (map[i][j] == 0) {
+                map[i][j] = character_no;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void initializing_map(const int width, const int height,
+                      std::vector<std::vector<int>>& map,
+                      const int enemies) {
+    map.resize(height, std::vector<int>(width, 0));
+    int x = 0, y = 0;
+    for (int i = 1; i < enemies + 1; ++i) {
+        if (!place_character(map, width, height, i)) {
+            return;
+        }
+    }
+    place_character(map, width, height, enemies + 1);
+}
+
+void save(const std::string& filename,
+          const std::vector<std::vector<int>>& map,
+          const std::vector<CHARACTER>& enemies,
+          const CHARACTER& hero) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        return;
+    }
+
+    int size = hero.name.size();
+    file.write((char*)&size, sizeof(size));
+    file.write((char*)hero.name.c_str(), size);
+    file.write((char*)&hero.health, sizeof(hero.health));
+    file.write((char*)&hero.armor, sizeof(hero.armor));
+    file.write((char*)&hero.damage, sizeof(hero.damage));
+
+    size = enemies.size();
+    file.write((char*)&size, sizeof(size));
+
+    for (const auto& enemy : enemies) {
+        size = enemy.name.size();
+        file.write((char*)&size, sizeof(int));
+        file.write((char*)enemy.name.c_str(), size);
+        file.write((char*)&enemy.health, sizeof(enemy.health));
+        file.write((char*)&enemy.armor, sizeof(enemy.armor));
+        file.write((char*)&enemy.damage, sizeof(enemy.damage));
+    }
+
+    int width = 0, height = map.size();
+    if (height > 0) {
+        width = map[0].size();
+    }
+    file.write((char*)&width, sizeof(width));
+    file.write((char*)&height, sizeof(height));
+
+    for (auto& row : map) {
+        for (auto& point : row) {
+            file.write((char*)&point, sizeof(point));
+        }
+    }
+
+    file.close();
+}
+
+bool load(const std::string& filename,
+          std::vector<std::vector<int>>& map,
+          std::vector<CHARACTER>& enemies, CHARACTER& hero) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    int size = 0;
+    file.read((char*)&size, sizeof(int));
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+    hero.name.resize(size);
+    file.read((char*)hero.name.c_str(), size);
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+    file.read((char*)&hero.health, sizeof(hero.health));
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+    file.read((char*)&hero.armor, sizeof(hero.armor));
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+    file.read((char*)&hero.damage, sizeof(hero.damage));
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+
+    file.read((char*)&size, sizeof(int));
+    if (file.eof()) {
+        file.close();
+        return false;
+    }
+    enemies.resize(size);
+
+    for (auto& enemy : enemies) {
+        file.read((char*)&size, sizeof(int));
+        if (file.eof()) {
+            file.close();
+            return false;
+        }
+        enemy.name.resize(size);
+        file.read((char*)enemy.name.c_str(), size);
+        if (file.eof()) {
+            file.close();
+            return false;
+        }
+        file.read((char*)&enemy.health, sizeof(enemy.health));
+        if (file.eof()) {
+            file.close();
+            return false;
+        }
+        file.read((char*)&enemy.armor, sizeof(enemy.armor));
+        if (file.eof()) {
+            file.close();
+            return false;
+        }
+        file.read((char*)&enemy.damage, sizeof(enemy.damage));
+        if (file.eof()) {
+            file.close();
+            return false;
+        }
+    }
+
+    int width = 0, height = 0;
+    file.read((char*)&width, sizeof(int));
+    if (!file.eof()) {
+        file.read((char*)&height, sizeof(int));
+    }
+    if (width == 0 || height == 0) {
+        file.close();
+        return false;
+    }
+
+    map.resize(height, std::vector<int>(width, 0));
+    for (auto& row : map) {
+        for (auto& point : row) {
+            file.read((char*)&point, sizeof(point));
+            if (file.eof()) {
+                file.close();
+                return false;
+            }
+        }
+    }
+
+    file.close();
+    return true;
+}
+
+void print(const CHARACTER& person) {
+    std::cout << person.name
+              << " health: " << person.health
+              << " armor: " << person.armor
+              << " damage: " << person.damage << "\n";
+}
+
 
 void print(const std::vector<CHARACTER> & enemies) {
     for (const auto & enemy : enemies) {
-        std::cout << enemy.name << " health: " << enemy.health << " armor: " << enemy.armor << " damage: " << enemy.damage << "\n";
+        std::cout << enemy.name
+                  << " health: " << enemy.health
+                  << " armor: " << enemy.armor
+                  << " damage: " << enemy.damage << "\n";
     }
 }
 
@@ -658,22 +859,41 @@ void goto_xy(SHORT x, SHORT y) {
     ::SetConsoleCursorPosition(hStdOut, position);
 }
 
-void draw_frame(const int width, const int height, SHORT row) {
+void draw_frame(const std::vector<std::vector<int>> & map, const int hero,
+                const SHORT row) {
+    int height = map.size();
+    if (height < 1) {
+        return;
+    }
+    int width = map[0].size();
+
     goto_xy(0, row);
     std::cout << "+";
-    for (SHORT i = 0; i < width; ++i) {
+    for (int i = 0; i < width; ++i) {
         std::cout << "---";
     }
     std::cout << "+\n";
-    for (SHORT j = 0; j < height; ++j) {
+
+    for (const auto& row : map) {
         std::cout << "|";
-        for (SHORT i = 0; i < width; ++i) {
-            std::cout << " . ";
+
+        for (const auto& point : row) {
+            if (point == 0) {
+                std::cout << " . ";
+            }
+            else if (point == hero) {
+                std::cout << " P ";
+            }
+            else {
+                std::cout << " E ";
+            }
         }
+
         std::cout << "|\n";
     }
+
     std::cout << "+";
-    for (SHORT i = 0; i < width; ++i) {
+    for (int i = 0; i < width; ++i) {
         std::cout << "---";
     }
     std::cout << "+\n";
@@ -782,8 +1002,8 @@ int main() {
                     input_stream >> sax >> say >> sbx >> sby;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx) && is_number(sby)) {
-                        POINT a = { std::stod(sax), std::stod(say) };
-                        POINT b = { std::stod(sbx), std::stod(sby) };
+                        VEC2D a = { std::stod(sax), std::stod(say) };
+                        VEC2D b = { std::stod(sbx), std::stod(sby) };
                         auto result = a + b;
                         std::cout << "The result of a + b: "
                                   << result.x << " " << result.y << "\n";
@@ -800,8 +1020,8 @@ int main() {
                     input_stream >> sax >> say >> sbx >> sby;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx) && is_number(sby)) {
-                        POINT a = { std::stod(sax), std::stod(say) };
-                        POINT b = { std::stod(sbx), std::stod(sby) };
+                        VEC2D a = { std::stod(sax), std::stod(say) };
+                        VEC2D b = { std::stod(sbx), std::stod(sby) };
                         auto result = a - b;
                         std::cout << "The result of a - b: "
                                   << result.x << " " << result.y << "\n";
@@ -818,7 +1038,7 @@ int main() {
                     input_stream >> sax >> say >> sbx;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx)) {
-                        POINT a = { std::stod(sax), std::stod(say) };
+                        VEC2D a = { std::stod(sax), std::stod(say) };
                         auto result = a * std::stod(sbx);
                         std::cout << "The result of a * scalar: "
                                   << result.x << " " << result.y << "\n";
@@ -834,7 +1054,7 @@ int main() {
                     std::stringstream input_stream(input);
                     input_stream >> sax >> say;
                     if (is_number(sax) && is_number(say)) {
-                        POINT a = { std::stod(sax), std::stod(say) };
+                        VEC2D a = { std::stod(sax), std::stod(say) };
                         std::cout << "The length of the vector a: "
                                   << vector_length(a) << "\n";
                     }
@@ -849,7 +1069,7 @@ int main() {
                     std::stringstream input_stream(input);
                     input_stream >> sax >> say;
                     if (is_number(sax) && is_number(say)) {
-                        POINT a = { std::stod(sax), std::stod(say) };
+                        VEC2D a = { std::stod(sax), std::stod(say) };
                         auto result = vector_normalize(a);
                         std::cout << "Normalized vector a: "
                                   << result.x << " " << result.y << "\n";
@@ -869,11 +1089,83 @@ int main() {
     	const int width = 15;
     	const int height = 15;
     	const int number_of_enemies = 5;
-    	auto enemies = initializing_enemies(number_of_enemies);
+
+        std::string filename = "battle.bin";
+        CHARACTER hero;
+        std::vector<CHARACTER> enemies;
+        std::vector<std::vector<int>> map;
+
+        if (!load(filename, map, enemies, hero)) {
+            std::srand(std::time(nullptr));
+            initializing_enemies(number_of_enemies, enemies);
+            initializing_map(width, height, map, number_of_enemies);
+
+            std::string input = "";
+            std::cout << "Enter the hero's name: ";
+            if (std::getline(std::cin, input)) {
+                hero.name = input;
+            }
+            std::cout << "Enter the hero's health (50 - 150): ";
+            if (std::getline(std::cin, input)) {
+                if (is_number(input)) {
+                    int num = std::stod(input);
+                    if (num > 150) {
+                        num = 150;
+                    }
+                    else if (num < 50) {
+                        num = 50;
+                    }
+                    hero.health = num;
+                }
+            }
+            std::cout << "Enter the hero's armor (0 - 50): ";
+            if (std::getline(std::cin, input)) {
+                if (is_number(input)) {
+                    int num = std::stod(input);
+                    if (num > 50) {
+                        num = 50;
+                    }
+                    else if (num < 0) {
+                        num = 0;
+                    }
+                    hero.armor = num;
+                }
+            }
+            std::cout << "Enter the hero's damage (15 - 30): ";
+            if (std::getline(std::cin, input)) {
+                if (is_number(input)) {
+                    int num = std::stod(input);
+                    if (num > 30) {
+                        num = 30;
+                    }
+                    else if (num < 15) {
+                        num = 15;
+                    }
+                    hero.damage = num;
+                }
+            }
+        }
+        print(hero);
+        print(enemies);
+
+    	draw_frame(map, number_of_enemies + 1, 7);
+
+        SHORT row = 25;
+        char c = '0';
+        goto_xy(0, row);
+        while (true) {
+            std::cin.get(c);
+            std::cin.ignore(std::cin.rdbuf()->in_avail());
+            if (c == 'x') {
+                break;
+            }
+        }
+
+//        std::cout << c << "\n";
+
+        save(filename, map, enemies, hero);
     	
-    	std::vector<std::vector<int>> field(height, std::vector<int>(width, 0));
-    	draw_frame(width, height, 4);
-    	
+        print(hero);
     	print(enemies);
     }
 
