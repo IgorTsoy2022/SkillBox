@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <windows.h>
 
 template<typename A>
 void print(const A& arr, size_t from, size_t to) {
@@ -569,56 +570,113 @@ void print(const std::vector<PLOT> & plots) {
 
 // Task 3. The mathematical vector.
 
-struct COORD {
+struct POINT {
     double x = 0.0;
     double y = 0.0;
 };
 
-COORD operator-(const COORD& a) {
-    COORD result;
+POINT operator-(const POINT& a) {
+    POINT result;
     result.x = -a.x;
     result.y = -a.y;
     return result;
 }
 
-COORD operator+(const COORD& a, const COORD& b) {
-    COORD result;
+POINT operator+(const POINT& a, const POINT& b) {
+    POINT result;
     result.x = a.x + b.x;
     result.y = a.y + b.y;
     return result;
 }
 
-COORD operator-(const COORD& a, const COORD& b) {
-    COORD result;
+POINT operator-(const POINT& a, const POINT& b) {
+    POINT result;
     result.x = a.x - b.x;
     result.y = a.y - b.y;
     return result;
 }
 
-COORD operator*(const COORD& a, const double c) {
-    COORD result;
+POINT operator*(const POINT& a, const double c) {
+    POINT result;
     result.x = a.x * c;
     result.y = a.y * c;
     return result;
 }
 
-COORD operator*(const double c, const COORD& a) {
-    COORD result;
+POINT operator*(const double c, const POINT& a) {
+    POINT result;
     result.x = a.x * c;
     result.y = a.y * c;
     return result;
 }
 
-double vector_length(const COORD& a) {
+double vector_length(const POINT& a) {
     return std::sqrt(a.x * a.x + a.y * a.y);
 }
 
-COORD vector_normalize(const COORD& a) {
-    COORD result;
+POINT vector_normalize(const POINT& a) {
+    POINT result;
     auto length = vector_length(a);
     result.x = a.x / length;
     result.y = a.y / length;
     return result;
+}
+
+// Task 4. Game.
+
+struct CHARACTER {
+    std::string name = "Unknown";
+    int health = 0;
+    int armor = 0;
+    int damage = 0;
+};
+
+std::vector<CHARACTER> initializing_enemies(const int number) {
+    std::vector<CHARACTER> enemies(number);
+    std::srand(std::time(nullptr));
+    // std::rand() % (max - min + 1) + min;
+    int id = 1;
+    for (auto & enemy : enemies) {
+        enemy.name = "Enemy #" + std::to_string(id++);
+        enemy.health = std::rand() % 101 + 50;
+        enemy.armor = std::rand() % 51;
+        enemy.damage = std::rand() % 16 + 15;
+    }
+    
+    return enemies;
+}
+
+void print(const std::vector<CHARACTER> & enemies) {
+    for (const auto & enemy : enemies) {
+        std::cout << enemy.name << " health: " << enemy.health << " armor: " << enemy.armor << " damage: " << enemy.damage << "\n";
+    }
+}
+
+void goto_xy(SHORT x, SHORT y) {
+    HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position = { x, y };
+    ::SetConsoleCursorPosition(hStdOut, position);
+}
+
+void draw_frame(const int width, const int height, SHORT row) {
+    goto_xy(0, row);
+    std::cout << "+";
+    for (SHORT i = 0; i < width; ++i) {
+        std::cout << "---";
+    }
+    std::cout << "+\n";
+    for (SHORT j = 0; j < height; ++j) {
+        std::cout << "|";
+        for (SHORT i = 0; i < width; ++i) {
+            std::cout << " . ";
+        }
+        std::cout << "|\n";
+    }
+    std::cout << "+";
+    for (SHORT i = 0; i < width; ++i) {
+        std::cout << "---";
+    }
+    std::cout << "+\n";
 }
 
 int main() {
@@ -697,7 +755,6 @@ int main() {
             std::cout << "Total area of buildings: " << total_building_area << "\n";
         }
     }
-//*/
 
     std::cout << "\nTask 3. The mathematical vector.\n";
     {
@@ -725,8 +782,8 @@ int main() {
                     input_stream >> sax >> say >> sbx >> sby;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx) && is_number(sby)) {
-                        COORD a = { std::stod(sax), std::stod(say) };
-                        COORD b = { std::stod(sbx), std::stod(sby) };
+                        POINT a = { std::stod(sax), std::stod(say) };
+                        POINT b = { std::stod(sbx), std::stod(sby) };
                         auto result = a + b;
                         std::cout << "The result of a + b: "
                                   << result.x << " " << result.y << "\n";
@@ -743,8 +800,8 @@ int main() {
                     input_stream >> sax >> say >> sbx >> sby;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx) && is_number(sby)) {
-                        COORD a = { std::stod(sax), std::stod(say) };
-                        COORD b = { std::stod(sbx), std::stod(sby) };
+                        POINT a = { std::stod(sax), std::stod(say) };
+                        POINT b = { std::stod(sbx), std::stod(sby) };
                         auto result = a - b;
                         std::cout << "The result of a - b: "
                                   << result.x << " " << result.y << "\n";
@@ -761,7 +818,7 @@ int main() {
                     input_stream >> sax >> say >> sbx;
                     if (is_number(sax) && is_number(say) &&
                         is_number(sbx)) {
-                        COORD a = { std::stod(sax), std::stod(say) };
+                        POINT a = { std::stod(sax), std::stod(say) };
                         auto result = a * std::stod(sbx);
                         std::cout << "The result of a * scalar: "
                                   << result.x << " " << result.y << "\n";
@@ -777,7 +834,7 @@ int main() {
                     std::stringstream input_stream(input);
                     input_stream >> sax >> say;
                     if (is_number(sax) && is_number(say)) {
-                        COORD a = { std::stod(sax), std::stod(say) };
+                        POINT a = { std::stod(sax), std::stod(say) };
                         std::cout << "The length of the vector a: "
                                   << vector_length(a) << "\n";
                     }
@@ -792,7 +849,7 @@ int main() {
                     std::stringstream input_stream(input);
                     input_stream >> sax >> say;
                     if (is_number(sax) && is_number(say)) {
-                        COORD a = { std::stod(sax), std::stod(say) };
+                        POINT a = { std::stod(sax), std::stod(say) };
                         auto result = vector_normalize(a);
                         std::cout << "Normalized vector a: "
                                   << result.x << " " << result.y << "\n";
@@ -805,9 +862,19 @@ int main() {
             std::cout << "Command: ";
         }
     }
+//*/
 
-    std::cout << "\nTask 4. ATM machine.\n";
+    std::cout << "\nTask 4. Game.\n";
     {
+    	const int width = 15;
+    	const int height = 15;
+    	const int number_of_enemies = 5;
+    	auto enemies = initializing_enemies(number_of_enemies);
+    	
+    	std::vector<std::vector<int>> field(height, std::vector<int>(width, 0));
+    	draw_frame(width, height, 4);
+    	
+    	print(enemies);
     }
 
     return 0;
