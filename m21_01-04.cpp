@@ -1,11 +1,15 @@
 #include <ctime>
 #include <cmath>
-#include <iostream>
+#include <iostream>    // streambuf, hex, sgetc, sbumpc
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <iomanip>      // setw, setfill
 #include <windows.h>
+#include <termios.h>  // struct termios, tcgetattr(), tcsetattr()
+#include <stdio.h>       // perror(), stderr, stdin, fileno()
 
 template<typename A>
 void print(const A& arr, size_t from, size_t to) {
@@ -629,11 +633,48 @@ struct CHARACTER {
     int health = 0;
     int armor = 0;
     int damage = 0;
+    int x = 0;
+    int y = 0;
 };
+
+void initializing_hero(CHARACTER& hero) {
+    std::string input = "";
+    std::cout << "Enter the hero's name: ";
+    if (std::getline(std::cin, input)) {
+        if (input.size() > 0) {
+            hero.name = input;
+        }
+    }
+    std::cout << "Enter the hero's health: ";
+    if (std::getline(std::cin, input)) {
+        if (is_number(input)) {
+            int num = std::stod(input);
+            hero.health = num < 0 ? 0 : num;
+        }
+    }
+    std::cout << "Enter the hero's armor: ";
+    if (std::getline(std::cin, input)) {
+        if (is_number(input)) {
+            int num = std::stod(input);
+            hero.armor = num < 0 ? 0 : num;
+        }
+    }
+    std::cout << "Enter the hero's damage: ";
+    if (std::getline(std::cin, input)) {
+        if (is_number(input)) {
+            int num = std::stod(input);
+            hero.damage = num < 0 ? 0 : num;
+        }
+    }
+}
 
 void initializing_enemies(const int number, 
                           std::vector<CHARACTER>& enemies) {
+    if (number < 1) {
+        return;
+    }
     enemies.resize(number);
+
     int id = 1;
     for (auto & enemy : enemies) {
         enemy.name = "Enemy #" + std::to_string(id++);
@@ -645,22 +686,35 @@ void initializing_enemies(const int number,
 }
 
 bool place_character(std::vector<std::vector<int>>& map,
-                     int width, int height, 
-                    const int character_no) {
+                    CHARACTER& character,
+                    const int character_id) {
+    const int height = map.size();
+    if (height < 1) {
+        return false;
+    }
+    const int width = map[0].size();
+    if (width < 1) {
+        return false;
+    }
+
     //  std::rand() % (max - min + 1) + min;
-    int x = std::rand() % width;
-    int y = std::rand() % height;
-    std::cout << "x=" << x << " y=" << y << "\n";
+    const int x = std::rand() % width;
+    const int y = std::rand() % height;
+
     for (int i = y; i < height; ++i) {
         for (int j = x; j < width; ++j) {
             if (map[i][j] == 0) {
-                map[i][j] = character_no;
+                map[i][j] = character_id;
+                character.x = j;
+                character.y = i;
                 return true;
             }
         }
         for (int j = 0; j < x; ++j) {
             if (map[i][j] == 0) {
-                map[i][j] = character_no;
+                map[i][j] = character_id;
+                character.x = j;
+                character.y = i;
                 return true;
             }
         }
@@ -668,13 +722,17 @@ bool place_character(std::vector<std::vector<int>>& map,
     for (int i = 0; i < y; ++i) {
         for (int j = x; j < width; ++j) {
             if (map[i][j] == 0) {
-                map[i][j] = character_no;
+                map[i][j] = character_id;
+                character.x = j;
+                character.y = i;
                 return true;
             }
         }
         for (int j = 0; j < x; ++j) {
             if (map[i][j] == 0) {
-                map[i][j] = character_no;
+                map[i][j] = character_id;
+                character.x = j;
+                character.y = i;
                 return true;
             }
         }
@@ -684,15 +742,16 @@ bool place_character(std::vector<std::vector<int>>& map,
 
 void initializing_map(const int width, const int height,
                       std::vector<std::vector<int>>& map,
-                      const int enemies) {
+std::vector<CHARACTER>& enemies, CHARACTER & hero) {
+    map.clear();
     map.resize(height, std::vector<int>(width, 0));
-    int x = 0, y = 0;
-    for (int i = 1; i < enemies + 1; ++i) {
-        if (!place_character(map, width, height, i)) {
+    int id = 1;
+    for (auto & enemy : enemies) {
+        if (!place_character(map, enemy, id++)) {
             return;
         }
     }
-    place_character(map, width, height, enemies + 1);
+    place_character(map, hero, id);
 }
 
 void save(const std::string& filename,
@@ -727,11 +786,12 @@ void save(const std::string& filename,
     if (height > 0) {
         width = map[0].size();
     }
+
     file.write((char*)&width, sizeof(width));
     file.write((char*)&height, sizeof(height));
 
-    for (auto& row : map) {
-        for (auto& point : row) {
+    for (auto& rows : map) {
+        for (auto& point : rows) {
             file.write((char*)&point, sizeof(point));
         }
     }
@@ -739,46 +799,46 @@ void save(const std::string& filename,
     file.close();
 }
 
-bool load(const std::string& filename,
+int load(const std::string& filename,
           std::vector<std::vector<int>>& map,
           std::vector<CHARACTER>& enemies, CHARACTER& hero) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
-        return false;
+        return 0;
     }
 
     int size = 0;
     file.read((char*)&size, sizeof(int));
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
     hero.name.resize(size);
     file.read((char*)hero.name.c_str(), size);
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
     file.read((char*)&hero.health, sizeof(hero.health));
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
     file.read((char*)&hero.armor, sizeof(hero.armor));
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
     file.read((char*)&hero.damage, sizeof(hero.damage));
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
 
     file.read((char*)&size, sizeof(int));
     if (file.eof()) {
         file.close();
-        return false;
+        return 0;
     }
     enemies.resize(size);
 
@@ -786,28 +846,28 @@ bool load(const std::string& filename,
         file.read((char*)&size, sizeof(int));
         if (file.eof()) {
             file.close();
-            return false;
+            return 0;
         }
         enemy.name.resize(size);
         file.read((char*)enemy.name.c_str(), size);
         if (file.eof()) {
             file.close();
-            return false;
+            return 0;
         }
         file.read((char*)&enemy.health, sizeof(enemy.health));
         if (file.eof()) {
             file.close();
-            return false;
+            return 0;
         }
         file.read((char*)&enemy.armor, sizeof(enemy.armor));
         if (file.eof()) {
             file.close();
-            return false;
+            return 0;
         }
         file.read((char*)&enemy.damage, sizeof(enemy.damage));
         if (file.eof()) {
             file.close();
-            return false;
+            return 0;
         }
     }
 
@@ -818,22 +878,49 @@ bool load(const std::string& filename,
     }
     if (width == 0 || height == 0) {
         file.close();
-        return false;
+        return 0;
     }
 
+    map.clear();
     map.resize(height, std::vector<int>(width, 0));
-    for (auto& row : map) {
-        for (auto& point : row) {
+
+    const int hero_id = enemies.size() + 1;
+    int rest_enemies = 0;
+    int row = 0, col = 0;
+    for (auto& rows : map) {
+        for (auto& point : rows) {
             file.read((char*)&point, sizeof(point));
             if (file.eof()) {
                 file.close();
-                return false;
+                return 0;
             }
+            if (point > 0) {
+                if (point < hero_id) {
+                    ++rest_enemies;
+                    enemies[point - 1].x = col;
+                    enemies[point - 1].y = row;
+                }
+                else if (point == hero_id) {
+                    hero.x = col;
+                    hero.y = row;
+                }
+            }
+            ++col;
         }
+        col = 0;
+        ++row;
     }
 
     file.close();
-    return true;
+    return rest_enemies;
+}
+
+void load_default(std::vector<std::vector<int>>& map, int width, int height,
+      std::vector<CHARACTER>& enemies, int number_of_enemies, CHARACTER& hero) {
+    initializing_hero(hero);
+     initializing_enemies(number_of_enemies, enemies);
+
+    initializing_map(width, height, map, enemies, hero);
 }
 
 void print(const CHARACTER& person) {
@@ -841,8 +928,8 @@ void print(const CHARACTER& person) {
               << " health: " << person.health
               << " armor: " << person.armor
               << " damage: " << person.damage << "\n";
+    std::cout << "Coords: x = " << person.x << ", y = " << person.y << "\n";
 }
-
 
 void print(const std::vector<CHARACTER> & enemies) {
     for (const auto & enemy : enemies) {
@@ -850,7 +937,155 @@ void print(const std::vector<CHARACTER> & enemies) {
                   << " health: " << enemy.health
                   << " armor: " << enemy.armor
                   << " damage: " << enemy.damage << "\n";
+        std::cout << "Coords: x = " << enemy.x << ", y = " << enemy.y << "\n";
     }
+}
+
+int move(std::vector<std::vector<int>>& map, std::vector<CHARACTER>& enemies, CHARACTER& hero, int& rest_enemies, char c) {
+    const int height = map.size();
+    if (height < 1) {
+        return 0;
+    }
+    const int width = map[0].size();
+    if (width < 1) {
+        return 0;
+    }
+
+    const int hero_id = enemies.size() + 1;
+    if (hero_id < 2) {
+        return 0;
+    }
+
+    if (hero.health < 1) {
+        return 2;
+    }
+
+    int dx = 0, dy = 0;
+    switch (c) {
+    case 'u' :
+        dy = -1;
+        break;
+    case 'd' :
+        dy = 1;
+        break;
+    case 'l' :
+        dx = -1;
+        break;
+    case 'r' :
+        dx = 1;
+        break;
+    }
+
+    bool can_move = false;
+    int target_x = hero.x + dx;
+    int target_y = hero.y + dy;
+
+    if (target_x >= 0 && target_x < width && target_y >= 0 && target_y < height) {
+        int id = map[target_y][target_x];
+        if (id > 0 && id < hero_id) {
+            --id;
+            int damage = hero.damage;
+            int armor = enemies[id].armor;
+            int health = enemies[id].health;
+            if (damage > armor) {
+                enemies[id].armor = 0;
+                damage -= armor;
+                if (damage >= health) {
+                    enemies[id].health = 0;
+                    can_move = true;
+                    --rest_enemies;
+                    health =-health;
+                }
+                else {
+                    enemies[id].health -= damage;
+                    health =-damage;
+                }
+                armor =-armor;
+            }
+            else {
+                enemies[id].armor -= damage;
+                armor = -damage;
+                health = 0;
+            }
+            std::cout << "Enemy #" << id +1 << ". Armor: " << armor << " = " << enemies[id].armor << ". Health: " << health << " = " << enemies[id].health << ".\n";
+        }
+        else {
+            can_move = true;
+        }
+        if (can_move) {
+            map[hero.y][hero.x] = 0;
+            map[target_y][target_x] = hero_id;
+            hero.x = target_x;
+            hero.y = target_y;
+        }
+        if (rest_enemies < 1) {
+            return 1;
+        }
+    }
+
+ //  std::rand() % (max - min + 1) + min;
+
+    int enemy_id = 0;
+    for (auto & enemy : enemies) {
+        ++enemy_id;
+        if (enemy.health == 0) {
+            continue;
+        }
+        int dx = 0, dy = 0;
+        int dir = std::rand() % 4 + 1;
+        switch (dir) {
+        case 1:
+            dy = -1;
+            break;
+        case 2:
+            dy = 1;
+            break;
+        case 3:
+            dx = -1;
+            break;
+        case 4:
+            dx = 1;
+            break;
+        }
+        can_move = false;
+        target_x = enemy.x + dx;
+        target_y = enemy.y + dy;
+        if (target_x >= 0 && target_x < width && target_y >= 0 && target_y < height) {
+            int id = map[target_y][target_x];
+            if (id == hero_id) {
+                int damage = enemy.damage;
+                int armor = hero.armor;
+                int health = hero.health;
+                if (damage > armor) {
+                    hero.armor = 0;
+                    damage -= armor;
+                    if (damage >= health) {
+                        hero.health = 0;
+                        can_move = true;
+                    }
+                    else {
+                        hero.health -= damage;
+                    }
+                }
+                else {
+                    hero.armor -= damage;
+                }
+            }
+            else if (id == 0) {
+                can_move = true;
+            }
+            if (can_move) {
+                map[enemy.y][enemy.x] = 0;
+                map[target_y][target_x] = enemy_id;
+                enemy.x = target_x;
+                enemy.y = target_y;
+            }
+            if (hero.health < 1) {
+                return 2;
+            }
+        }
+    }
+    return 0;
 }
 
 void goto_xy(SHORT x, SHORT y) {
@@ -859,13 +1094,16 @@ void goto_xy(SHORT x, SHORT y) {
     ::SetConsoleCursorPosition(hStdOut, position);
 }
 
-void draw_frame(const std::vector<std::vector<int>> & map, const int hero,
+void draw_frame(const std::vector<std::vector<int>> & map, const int hero_id,
                 const SHORT row) {
-    int height = map.size();
+    const int height = map.size();
     if (height < 1) {
         return;
     }
-    int width = map[0].size();
+    const int width = map[0].size();
+    if (width < 1) {
+        return;
+    }
 
     goto_xy(0, row);
     std::cout << "+";
@@ -874,14 +1112,14 @@ void draw_frame(const std::vector<std::vector<int>> & map, const int hero,
     }
     std::cout << "+\n";
 
-    for (const auto& row : map) {
+    for (const auto& rows : map) {
         std::cout << "|";
 
-        for (const auto& point : row) {
+        for (const auto& point : rows) {
             if (point == 0) {
                 std::cout << " . ";
             }
-            else if (point == hero) {
+            else if (point == hero_id) {
                 std::cout << " P ";
             }
             else {
@@ -1086,73 +1324,141 @@ int main() {
 
     std::cout << "\nTask 4. Game.\n";
     {
+    	::system("cls");
+ 
     	const int width = 15;
     	const int height = 15;
     	const int number_of_enemies = 5;
+        const SHORT map_row = 5;
 
         std::string filename = "battle.bin";
         CHARACTER hero;
         std::vector<CHARACTER> enemies;
         std::vector<std::vector<int>> map;
 
-        if (!load(filename, map, enemies, hero)) {
-            std::srand(std::time(nullptr));
-            initializing_enemies(number_of_enemies, enemies);
-            initializing_map(width, height, map, number_of_enemies);
+        std::srand(std::time(nullptr));
 
-            std::string input = "";
-            std::cout << "Enter the hero's name: ";
-            if (std::getline(std::cin, input)) {
-                hero.name = input;
-            }
-            std::cout << "Enter the hero's health (50 - 150): ";
-            if (std::getline(std::cin, input)) {
-                if (is_number(input)) {
-                    int num = std::stod(input);
-                    if (num > 150) {
-                        num = 150;
-                    }
-                    else if (num < 50) {
-                        num = 50;
-                    }
-                    hero.health = num;
-                }
-            }
-            std::cout << "Enter the hero's armor (0 - 50): ";
-            if (std::getline(std::cin, input)) {
-                if (is_number(input)) {
-                    int num = std::stod(input);
-                    if (num > 50) {
-                        num = 50;
-                    }
-                    else if (num < 0) {
-                        num = 0;
-                    }
-                    hero.armor = num;
-                }
-            }
-            std::cout << "Enter the hero's damage (15 - 30): ";
-            if (std::getline(std::cin, input)) {
-                if (is_number(input)) {
-                    int num = std::stod(input);
-                    if (num > 30) {
-                        num = 30;
-                    }
-                    else if (num < 15) {
-                        num = 15;
-                    }
-                    hero.damage = num;
-                }
-            }
+        std::string input = "";
+
+        auto rest_enemies = load(filename, map, enemies, hero);
+        
+         if (rest_enemies < 1 || hero.health < 1) {
+            
+            initializing_hero(hero);
+
+            rest_enemies = number_of_enemies;
+             initializing_enemies(number_of_enemies, enemies);
+
+            initializing_map(width, height, map, enemies, hero);
+
+            save(filename, map, enemies, hero);
         }
-        print(hero);
-        print(enemies);
 
-    	draw_frame(map, number_of_enemies + 1, 7);
+//        print(hero);
+//        print(enemies);
 
-        SHORT row = 25;
-        char c = '0';
+    	draw_frame(map, number_of_enemies + 1, map_row);
+
+        SHORT row = 23;
         goto_xy(0, row);
+
+        int result = 0;
+        // result = 1 - hero won
+        // result = 2 - hero lost
+        std::cout << "Enter \"save\" for save game, \"load\" for load game,\n";
+        std::cout << "\"play\" for play game, \"new\" for new game, \"exit\" for exit: ";
+        while (std::getline(std::cin, input)) {
+            if (input == "exit") {
+                break;
+            }
+            if (result > 0) {
+                if (result == 1) {
+                    std::cout << hero.name << " won!" << "\n";
+                }
+                else {
+                    std::cout << hero.name << " lost!" << "\n";
+                }
+                
+            }
+            if (input == "save") {
+                save(filename, map, enemies, hero);
+            }
+            else if (input == "load") {
+                rest_enemies = load(filename, map, enemies, hero);
+            }
+            else if (input == "new") {
+                initializing_hero(hero);
+                rest_enemies = number_of_enemies;
+                 initializing_enemies(number_of_enemies, enemies);
+                initializing_map(width, height, map, enemies, hero);
+                save(filename, map, enemies, hero);
+            }
+            else if (input == "play") {
+                std::cout << "Enter an character (or esc to quit): ";
+
+ //               goto_xy(0, map_row);
+
+                struct termios t;
+                struct termios t_saved;
+        
+                // Set terminal to single character mode.
+                tcgetattr(fileno(stdin), &t);
+                t_saved = t;
+                t.c_lflag &= (~ICANON & ~ECHO);
+                t.c_cc[VTIME] = 0;
+                t.c_cc[VMIN] = 1;
+                if (tcsetattr(fileno(stdin), TCSANOW, &t) < 0) {
+                    std::perror("Unable to set terminal to single character mode");
+                    return -1;
+                }
+
+                // Read single characters from std::cin.
+                std::streambuf *pbuf = std::cin.rdbuf();
+                bool done = false;
+                while (!done) {
+                    
+                    char c;
+                    if (pbuf->sgetc() == EOF) {
+                        done = true;
+                    }
+                    c = pbuf->sbumpc();
+                    if (c == 0x1b || c == 'x') {
+                        done = true;
+                    }
+                    else {
+//                        std::cout << "You entered character 0x" << std::setw(2) << std::setfill('0') << std::hex << int(c) << "'" << std::endl;
+                        
+                        result = move(map, enemies, hero, rest_enemies, c);
+//                        ::system("cls");
+//                        goto_xy(0, map_row);
+                        draw_frame(map, number_of_enemies + 1, map_row - 3);
+//                        goto_xy(0, 0);
+                        if (result == 1) {
+                            std::cout << hero.name << " won!" << "\n";
+                            break;
+                        }
+                        else if (result == 2) {
+                            std::cout << hero.name << " lost!" << "\n";
+                            break;
+                        }
+                        
+                    }
+                }
+
+                // Restore terminal mode.
+                if (tcsetattr(fileno(stdin), TCSANOW, &t_saved) < 0) {
+                    std::perror("Unable to restore terminal mode");
+                    return -1;
+                }
+            }
+
+
+
+            std::cout << "Enter \"save\" for save game, \"load\" for load game,\n";
+            std::cout << "\"play\" for play game, \"new\" for new game,  \"exit\" for exit: ";
+        }
+
+/*
         while (true) {
             std::cin.get(c);
             std::cin.ignore(std::cin.rdbuf()->in_avail());
@@ -1160,8 +1466,8 @@ int main() {
                 break;
             }
         }
+*/
 
-//        std::cout << c << "\n";
 
         save(filename, map, enemies, hero);
     	
