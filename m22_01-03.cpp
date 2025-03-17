@@ -53,8 +53,6 @@ bool is_number(const std::string str) {
     return true;
 }
 
-// Task 1. Telephone directory.
-
 int leap_year(int year) {
     if (year % 400 == 0) {
         return 1;
@@ -112,22 +110,53 @@ split(const std::string& str, const char delimeter = ' ') {
 
 // Task 1. Telephone directory.
 
-bool is_phone_number(const std::string input, const std::string format) {
-    auto size = input.size();
-    if (input.size() != format.size()) {
-        return false;
+long long phone_to_ll(const std::string & input) {
+    long long number = 0;
+    for (const char & c : input) {
+        if (c >= '0' && c <= '9') {
+            number *= 10;
+            number += c - 48;
+        }
+    }
+    
+    return number;
+}
+
+std::string ll_to_phone(long long number, const std::string format) {
+    std::string out = "";
+    long long divisor = 0;
+    for (const auto & c : format) {
+        if (c == '#') {
+            if (divisor == 0) {
+            	divisor = 1;
+            }
+            else {
+                divisor *= 10;
+            }
+        }
+    }
+    
+    for (const auto & c : format) {
+        if (c == '#') {
+            auto curnum = number / divisor;
+            out += std::to_string(curnum);
+            number -= curnum * divisor;
+            divisor /= 10;
+        }
+        else {
+            out += c;
+        }
     }
 
+    return out;
 }
 
 
 int main() {
 
-    std::cout << std::boolalpha;
-
     std::cout << "Task 1. Telephone directory.\n";
     {
-        std::map<std::string, std::string> phonebook;
+        std::map<long long, std::string> phonebook;
         std::string input = "";
         std::cout << "1. Entering a phone number and surname will add the entry to the directory.\n";
         std::cout << "2. Phone number query will output the surname of the subscriber.\n";
@@ -143,17 +172,48 @@ int main() {
             input_stream >> str1 >> str2;
             if (str1.size() > 0) {
                 if (str2.size() > 0) {
-                    if (str1[0] >= '0' && str1[0] <= '9') {
-
+                    if ((str1[0] >= '0' && str1[0] <= '9') ||
+                         str1[0] == '+' || str1[0] == '(') {
+                        phonebook[phone_to_ll(str1)] = str2;
                     }
                     else {
-
+                        std::cout << "First string is not a phone number!\n";
                     }
+                }
+                else {
+                     if ((str1[0] >= '0' && str1[0] <= '9') ||
+                         str1[0] == '+' || str1[0] == '(') {
+                        auto it = phonebook.find(phone_to_ll(str1));
+                        if (it != phonebook.end()) {
+                             std::cout << it->second << "\n";
+                         }
+                         else {
+                             std::cout << "The subscriber with the specified number was not found.\n";
+                         }
+                     }
+                     else {
+                         bool found = false;
+                         for (const auto& [num, name] : phonebook) {
+                             if (name == str1) {
+                                 found = true;
+                                 std::cout << ll_to_phone(num, "+# (###) ###-##-##") << " ";
+                             }
+                         }
+                         if (found) {
+                             std::cout << "\n";
+                         }
+                         else {
+                             std::cout << "The subscriber with the specified name was not found.\n";
+                         }
+                     }
                 }
             }
 
         }
 
+        for (const auto& [number, name] : phonebook) {
+            std::cout << ll_to_phone(number, "+# (###) ###-####") << " " << name << "\n";
+        }
     }
 
     std::cout << "\nTask 2. .\n";
