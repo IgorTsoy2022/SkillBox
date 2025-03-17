@@ -6,10 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <iomanip>      // setw, setfill
 #include <windows.h>
-#include <termios.h>  // struct termios, tcgetattr(), tcsetattr()
-#include <stdio.h>       // perror(), stderr, stdin, fileno()
 
 template<typename A>
 void print(const A& arr, size_t from, size_t to) {
@@ -639,27 +636,31 @@ struct CHARACTER {
 
 void initializing_hero(CHARACTER& hero) {
     std::string input = "";
-    std::cout << "Enter the hero's name: ";
+    std::cout << "Current hero's name is " << hero.name
+              << ". To coorect enter another name: ";
     if (std::getline(std::cin, input)) {
         if (input.size() > 0) {
             hero.name = input;
         }
     }
-    std::cout << "Enter the hero's health: ";
+    std::cout << "Current hero's health is " << hero.health
+              << ". To coorect enter another value: ";
     if (std::getline(std::cin, input)) {
         if (is_number(input)) {
             int num = std::stod(input);
             hero.health = num < 0 ? 0 : num;
         }
     }
-    std::cout << "Enter the hero's armor: ";
+    std::cout << "Current hero's armor is " << hero.armor
+              << ". To coorect enter another value: ";
     if (std::getline(std::cin, input)) {
         if (is_number(input)) {
             int num = std::stod(input);
             hero.armor = num < 0 ? 0 : num;
         }
     }
-    std::cout << "Enter the hero's damage: ";
+    std::cout << "Current hero's damage is " << hero.damage
+              << ". To coorect enter another value: ";
     if (std::getline(std::cin, input)) {
         if (is_number(input)) {
             int num = std::stod(input);
@@ -915,14 +916,6 @@ int load(const std::string& filename,
     return rest_enemies;
 }
 
-void load_default(std::vector<std::vector<int>>& map, int width, int height,
-      std::vector<CHARACTER>& enemies, int number_of_enemies, CHARACTER& hero) {
-    initializing_hero(hero);
-     initializing_enemies(number_of_enemies, enemies);
-
-    initializing_map(width, height, map, enemies, hero);
-}
-
 void print(const CHARACTER& person) {
     std::cout << person.name
               << " health: " << person.health
@@ -994,20 +987,22 @@ int move(std::vector<std::vector<int>>& map, std::vector<CHARACTER>& enemies, CH
                     enemies[id].health = 0;
                     can_move = true;
                     --rest_enemies;
-                    health =-health;
+                    health = -health;
                 }
                 else {
                     enemies[id].health -= damage;
-                    health =-damage;
+                    health = -damage;
                 }
-                armor =-armor;
+                armor = -armor;
             }
             else {
                 enemies[id].armor -= damage;
                 armor = -damage;
                 health = 0;
             }
-            std::cout << "Enemy #" << id +1 << ". Armor: " << armor << " = " << enemies[id].armor << ". Health: " << health << " = " << enemies[id].health << ".\n";
+            std::cout << "Enemy #" << id +1
+                      << ". Armor: " << armor << " = " << enemies[id].armor
+                      << ". Health: " << health << " = " << enemies[id].health << ".\n";
         }
         else {
             can_move = true;
@@ -1062,14 +1057,23 @@ int move(std::vector<std::vector<int>>& map, std::vector<CHARACTER>& enemies, CH
                     if (damage >= health) {
                         hero.health = 0;
                         can_move = true;
+                        health = -health;
                     }
                     else {
                         hero.health -= damage;
+                        health = -damage;
                     }
+                    armor = -armor;
                 }
                 else {
                     hero.armor -= damage;
+                    health = 0;
+                    armor = -damage;
                 }
+                std::cout << hero.name << " is attacked by " << enemy.name
+                          << ". Armor: " << armor << " = " << hero.armor
+                          << ". Health: " << health << " = " << hero.health << ".\n";
+
             }
             else if (id == 0) {
                 can_move = true;
@@ -1105,7 +1109,17 @@ void draw_frame(const std::vector<std::vector<int>> & map, const int hero_id,
         return;
     }
 
+    const std::string header = "Dangerous hunting";
+
     goto_xy(0, row);
+
+    std::string blank = "";
+    if (width * 3 > header.size()) {
+        blank.resize((width * 3 - header.size()) / 2, ' ');
+    }
+
+    std::cout << blank << header << "\n";
+
     std::cout << "+";
     for (int i = 0; i < width; ++i) {
         std::cout << "---";
@@ -1140,7 +1154,7 @@ void draw_frame(const std::vector<std::vector<int>> & map, const int hero_id,
 int main() {
 
     std::cout << std::boolalpha;
-/*
+
     std::cout << "Task 1. Payroll.\n";
     {
         std::string filename = "payroll_test.bin";
@@ -1320,16 +1334,24 @@ int main() {
             std::cout << "Command: ";
         }
     }
-//*/
 
     std::cout << "\nTask 4. Game.\n";
     {
     	::system("cls");
  
-    	const int width = 15;
-    	const int height = 15;
+    	const int width = 20;
+    	const int height = 20;
     	const int number_of_enemies = 5;
-        const SHORT map_row = 5;
+        const SHORT map_row = 0;
+        const SHORT prompt_row = height + map_row + 3;
+
+        const std::string prompt_line1 = 
+            "Enter \"save\" for save game, \"load\" for load game,\n";
+        const std::string prompt_line2 =
+            "\"new\" for new game, 'u' for move up, 'd' for move down,\n";
+        const std::string prompt_line3 =
+            "'l' for move left, 'r' for move right, \"exit\" for exit: ";
+        const std::string blank(90, ' ');
 
         std::string filename = "battle.bin";
         CHARACTER hero;
@@ -1338,139 +1360,147 @@ int main() {
 
         std::srand(std::time(nullptr));
 
-        std::string input = "";
-
         auto rest_enemies = load(filename, map, enemies, hero);
         
-         if (rest_enemies < 1 || hero.health < 1) {
+        if (rest_enemies < 1 || hero.health < 1) {
             
+            std::cout << "Dangerous hunting\n";
+
             initializing_hero(hero);
 
             rest_enemies = number_of_enemies;
-             initializing_enemies(number_of_enemies, enemies);
+            initializing_enemies(number_of_enemies, enemies);
 
             initializing_map(width, height, map, enemies, hero);
 
             save(filename, map, enemies, hero);
+            ::system("cls");
         }
-
-//        print(hero);
-//        print(enemies);
 
     	draw_frame(map, number_of_enemies + 1, map_row);
 
-        SHORT row = 23;
-        goto_xy(0, row);
+        goto_xy(0, prompt_row);
 
+        bool clear_screen = false;
         int result = 0;
         // result = 1 - hero won
         // result = 2 - hero lost
-        std::cout << "Enter \"save\" for save game, \"load\" for load game,\n";
-        std::cout << "\"play\" for play game, \"new\" for new game, \"exit\" for exit: ";
+        std::string input = "";
+        std::cout << prompt_line1 << prompt_line2 << prompt_line3;
         while (std::getline(std::cin, input)) {
             if (input == "exit") {
                 break;
             }
-            if (result > 0) {
-                if (result == 1) {
-                    std::cout << hero.name << " won!" << "\n";
-                }
-                else {
-                    std::cout << hero.name << " lost!" << "\n";
-                }
-                
-            }
             if (input == "save") {
+                if (clear_screen) {
+                    ::system("cls");
+                    clear_screen = false;
+                    draw_frame(map, number_of_enemies + 1, map_row);
+                    goto_xy(0, prompt_row + 3);
+                }
+
                 save(filename, map, enemies, hero);
+                std::cout << "The game is saved.\n";
+                clear_screen = true;
+
+                goto_xy(0, prompt_row + 2);
+                std::cout << blank;
+                goto_xy(0, prompt_row);
             }
             else if (input == "load") {
+                if (clear_screen) {
+                    ::system("cls");
+                    clear_screen = false;
+                    draw_frame(map, number_of_enemies + 1, map_row);
+                    goto_xy(0, prompt_row + 3);
+                }
+
                 rest_enemies = load(filename, map, enemies, hero);
+                std::cout << "The game is loaded.\n";
+                clear_screen = true;
+
+                goto_xy(0, prompt_row + 2);
+                std::cout << blank;
+                goto_xy(0, prompt_row);
             }
             else if (input == "new") {
+                if (clear_screen) {
+                    ::system("cls");
+                    clear_screen = false;
+                    draw_frame(map, number_of_enemies + 1, map_row);
+                    std::cout << prompt_line1 << prompt_line2 << prompt_line3
+                              << "\n";
+                }
+
                 initializing_hero(hero);
                 rest_enemies = number_of_enemies;
-                 initializing_enemies(number_of_enemies, enemies);
+                initializing_enemies(number_of_enemies, enemies);
                 initializing_map(width, height, map, enemies, hero);
                 save(filename, map, enemies, hero);
+
+                print(enemies);
+                clear_screen = true;
+
+                goto_xy(0, prompt_row + 2);
+                std::cout << blank;
+                goto_xy(0, prompt_row);
             }
-            else if (input == "play") {
-                std::cout << "Enter an character (or esc to quit): ";
+            else if (input == "u" || input == "d" ||
+                     input == "l" || input == "r") {
 
- //               goto_xy(0, map_row);
-
-                struct termios t;
-                struct termios t_saved;
-        
-                // Set terminal to single character mode.
-                tcgetattr(fileno(stdin), &t);
-                t_saved = t;
-                t.c_lflag &= (~ICANON & ~ECHO);
-                t.c_cc[VTIME] = 0;
-                t.c_cc[VMIN] = 1;
-                if (tcsetattr(fileno(stdin), TCSANOW, &t) < 0) {
-                    std::perror("Unable to set terminal to single character mode");
-                    return -1;
+                if (clear_screen) {
+                    ::system("cls");
+                    clear_screen = false;
+                    draw_frame(map, number_of_enemies + 1, map_row);
+                    goto_xy(0, prompt_row + 3);
                 }
 
-                // Read single characters from std::cin.
-                std::streambuf *pbuf = std::cin.rdbuf();
-                bool done = false;
-                while (!done) {
-                    
-                    char c;
-                    if (pbuf->sgetc() == EOF) {
-                        done = true;
-                    }
-                    c = pbuf->sbumpc();
-                    if (c == 0x1b || c == 'x') {
-                        done = true;
-                    }
-                    else {
-//                        std::cout << "You entered character 0x" << std::setw(2) << std::setfill('0') << std::hex << int(c) << "'" << std::endl;
-                        
-                        result = move(map, enemies, hero, rest_enemies, c);
-//                        ::system("cls");
-//                        goto_xy(0, map_row);
-                        draw_frame(map, number_of_enemies + 1, map_row - 3);
-//                        goto_xy(0, 0);
-                        if (result == 1) {
-                            std::cout << hero.name << " won!" << "\n";
-                            break;
-                        }
-                        else if (result == 2) {
-                            std::cout << hero.name << " lost!" << "\n";
-                            break;
-                        }
-                        
-                    }
+                result = move(map, enemies, hero, rest_enemies, input[0]);
+                clear_screen = true;
+                draw_frame(map, number_of_enemies + 1, map_row);
+
+                if (result == 1) {
+                    std::cout << hero.name << " won!" << "\n";
+                    break;
+                }
+                else if (result == 2) {
+                    std::cout << hero.name << " lost!" << "\n";
+                    break;
                 }
 
-                // Restore terminal mode.
-                if (tcsetattr(fileno(stdin), TCSANOW, &t_saved) < 0) {
-                    std::perror("Unable to restore terminal mode");
-                    return -1;
+                goto_xy(0, prompt_row + 2);
+                std::cout << blank;
+                goto_xy(0, prompt_row);
+            }
+            else {
+                if (clear_screen) {
+                    ::system("cls");
+                    clear_screen = false;
+                    draw_frame(map, number_of_enemies + 1, map_row);
+                }
+                else {
+                    goto_xy(0, prompt_row + 2);
+                    std::cout << blank;
+                    goto_xy(0, prompt_row);
                 }
             }
-
-
-
-            std::cout << "Enter \"save\" for save game, \"load\" for load game,\n";
-            std::cout << "\"play\" for play game, \"new\" for new game,  \"exit\" for exit: ";
+            std::cout << prompt_line1 << prompt_line2 << prompt_line3;
         }
-
-/*
-        while (true) {
-            std::cin.get(c);
-            std::cin.ignore(std::cin.rdbuf()->in_avail());
-            if (c == 'x') {
-                break;
-            }
-        }
-*/
-
 
         save(filename, map, enemies, hero);
-    	
+
+        if (clear_screen) {
+            ::system("cls");
+            clear_screen = false;
+            draw_frame(map, number_of_enemies + 1, map_row);
+            if (result == 1) {
+                std::cout << hero.name << " won!" << "\n";
+            }
+            else if (result == 2) {
+                std::cout << hero.name << " lost!" << "\n";
+            }
+        }
+
         print(hero);
     	print(enemies);
     }
