@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 template<typename A>
 void print(const A& arr, size_t from, size_t to) {
@@ -21,20 +22,37 @@ void print(const A& arr, size_t from, size_t to) {
     std::cout << arr[to] << "]\n";
 }
 
-void toupper(std::string& text) {
-    for (auto& c : text) {
-        if (c >= 'a' && c <= 'z') {
-            c = c - 32;
-        }
+template<typename M>
+void print(const M& container) {
+    for (const auto& [key, value] : container) {
+        std::cout << key << " " << value << "\n";
     }
 }
 
-void tolower(std::string& text) {
-    for (auto& c : text) {
-        if (c >= 'A' && c <= 'Z') {
-            c = c + 32;
+std::string toupper(const std::string& text) {
+    std::string result = "";
+    for (const auto& c : text) {
+        if (c >= 'a' && c <= 'z') {
+            result += (c - 32);
+        }
+        else {
+            result += c;
         }
     }
+    return result;
+}
+
+std::string tolower(std::string& text) {
+    std::string result = "";
+    for (const auto& c : text) {
+        if (c >= 'A' && c <= 'Z') {
+            result += (c + 32);
+        }
+        else {
+            result += c;
+        }
+    }
+    return result;
 }
 
 bool is_number(const std::string str) {
@@ -151,6 +169,75 @@ std::string ll_to_phone(long long number, const std::string format) {
     return out;
 }
 
+// Task 3. Anagrams.
+
+bool are_anagrams(const std::string& str1, const std::string& str2) {
+    if ((str1.size() < 1) || (str1 == str2)) {
+        return false;
+    }
+
+    std::map<char, int> letters;
+    for (const auto& c : str1) {
+        if (c == ' ') {
+            continue;
+        }
+
+        char key = (c >= 'a' && c <= 'z') ? c - 32 : c;
+        ++letters[key];
+    }
+
+    for (const auto& c : str2) {
+        if (c == ' ') {
+            continue;
+        }
+
+        char key = (c >= 'a' && c <= 'z') ? c - 32 : c;
+        
+        if (letters.count(key) == 0) {
+            return false;
+        }
+        if (letters.at(key) == 1) {
+            letters.erase(key);
+        }
+        else {
+            --letters.at(key);
+        }
+    }
+
+    return letters.empty();
+}
+
+
+bool are_weak_anagrams(const std::string& str1, const std::string& str2) {
+    if ((str1.size() < 1) || (str1 == str2)) {
+        return false;
+    }
+
+    std::set<char> letters;
+    for (const auto& c : str1) {
+        if (c == ' ') {
+            continue;
+        }
+
+        char key = (c >= 'a' && c <= 'z') ? c - 32 : c;
+        letters.insert(key);
+    }
+
+    for (const auto& c : str2) {
+        if (c == ' ') {
+            continue;
+        }
+
+        char key = (c >= 'a' && c <= 'z') ? c - 32 : c;
+
+        if (letters.count(key) == 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 int main() {
 
@@ -158,10 +245,13 @@ int main() {
     {
         std::map<long long, std::string> phonebook;
         std::string input = "";
-        std::cout << "1. Entering a phone number and surname will add the entry to the directory.\n";
-        std::cout << "2. Phone number query will output the surname of the subscriber.\n";
-        std::cout << "3. Surname query will output phone numbers of subscribers with the specified surname.\n";
-        std::cout << "Entry: ";
+        std::cout << "1. Entering a phone number and surname will add the\n"
+                  << "   entry to the directory.\n";
+        std::cout << "2. Phone number query will output the surname of the\n"
+                  << "   subscriber.\n";
+        std::cout << "3. Surname query will output phone numbers of subscribers\n"
+                  << "   with the specified surname.\n";
+        std::cout << "4. Entry \"exit\" for quit.\n";
         while (std::getline(std::cin, input)) {
             if (input == "exit") {
                 break;
@@ -181,47 +271,125 @@ int main() {
                     }
                 }
                 else {
-                     if ((str1[0] >= '0' && str1[0] <= '9') ||
+                    if ((str1[0] >= '0' && str1[0] <= '9') ||
                          str1[0] == '+' || str1[0] == '(') {
                         auto it = phonebook.find(phone_to_ll(str1));
                         if (it != phonebook.end()) {
-                             std::cout << it->second << "\n";
-                         }
-                         else {
-                             std::cout << "The subscriber with the specified number was not found.\n";
-                         }
-                     }
-                     else {
-                         bool found = false;
-                         for (const auto& [num, name] : phonebook) {
-                             if (name == str1) {
-                                 found = true;
-                                 std::cout << ll_to_phone(num, "+# (###) ###-##-##") << " ";
-                             }
-                         }
-                         if (found) {
-                             std::cout << "\n";
-                         }
-                         else {
-                             std::cout << "The subscriber with the specified name was not found.\n";
-                         }
-                     }
+                            std::cout << it->second << "\n";
+                        }
+                        else {
+                            std::cout << "The subscriber with the specified"
+                                      << " number was not found.\n";
+                        }
+                    }
+                    else {
+                        std::vector<long long> phone_numbers;
+                        str1 = toupper(str1);
+                        for (const auto& [num, name] : phonebook) {
+                            if (toupper(name) == str1) {
+                                phone_numbers.push_back(num);
+                            }
+                        }
+                        if (phone_numbers.size() > 0) {
+                            for (const auto& num : phone_numbers) {
+                                std::cout << 
+                                   ll_to_phone(num, "+# (###) ###-##-##")
+                                   << " ";
+                            }
+                            std::cout << "\n";
+                        }
+                        else {
+                            std::cout << "The subscriber with the specified name"
+                                      << " was not found.\n";
+                        }
+                    }
                 }
             }
-
         }
 
         for (const auto& [number, name] : phonebook) {
-            std::cout << ll_to_phone(number, "+# (###) ###-####") << " " << name << "\n";
+            std::cout << ll_to_phone(number, "+# (###) ###-####") << " "
+                      << name << "\n";
         }
     }
 
-    std::cout << "\nTask 2. .\n";
+    std::cout << "\nTask 2. Registry.\n";
     {
+        std::map<std::string, int> registry;
+        std::string input = "";
+        std::cout << "1. Enter the last name to be placed on the waiting list.\n";
+        std::cout << "2. Entry \"next\" to call the next patient.\n";
+        std::cout << "3. Entry \"exit\" for quit.\n";
+        std::cout << "<-";
+        while (std::getline(std::cin, input)) {
+            if (input == "exit") {
+                break;
+            }
+            if (input == "next") {
+                if (registry.empty()) {
+                    std::cout << "There's no one in line.\n";
+                }
+                else {
+                    auto it = registry.begin();
+                    std::cout << "-> " << it->first << "\n";
+                    if (it->second == 1) {
+                        registry.erase(it);
+                    }
+                    else {
+                        --it->second;
+                    }
+                }
+            }
+            else {
+                ++registry[input];
+            }
+            std::cout << "<-";
+        }
+        if (registry.empty()) {
+            std::cout << "The list of those left in line is empty.\n";
+        }
+        else {
+            std::cout << "The list of those left in line:\n";
+            print(registry);
+        }
     }
 
-    std::cout << "\nTask 3. .\n";
+    std::cout << "\nTask 3. Anagrams.\n";
     {
+        // Eleven plus two = twelve plus one
+
+        std::map<char, int> registry;
+        std::string input = "";
+        std::string str2 = "";
+        std::cout << "Enter two strings to see if they are anagrams or type\n"
+                  << "\"exit\" for quit.\n";
+        while (true) {
+            std::cout << "String 1 << ";
+            std::getline(std::cin, input);
+
+            if (input == "exit") {
+                break;
+            }
+
+            std::cout << "String 2 << ";
+            std::getline(std::cin, str2);
+
+            if (are_anagrams(input, str2)) {
+                std::cout << "Line \"" << input << "\" and\n";
+                std::cout << "line \"" << str2 << "\" are\n";
+                std::cout << "anagrams of each other in terms of characters\n";
+                std::cout << "and number of characters.\n";
+            }
+            else {
+                if (are_weak_anagrams(input, str2)) {
+                    std::cout << "Line \"" << str2 << "\" consists of the letters of\n";
+                    std::cout << "line \"" << input << "\".\n";
+                }
+                else {
+                    std::cout << "The strings are not anagrams.\n";
+                }
+            }
+        }
     }
 
     return 0;
