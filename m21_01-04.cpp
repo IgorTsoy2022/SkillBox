@@ -618,8 +618,10 @@ double vector_length(const VEC2D& a) {
 VEC2D vector_normalize(const VEC2D& a) {
     VEC2D result;
     auto length = vector_length(a);
-    result.x = a.x / length;
-    result.y = a.y / length;
+    if (length > 0) {
+        result.x = a.x / length;
+        result.y = a.y / length;
+    }
     return result;
 }
 
