@@ -21,7 +21,7 @@ void tiger_shoot(int count) {
     for (int i = 0; i < count; ++i) {
         std::cout << "SHOOT!\n";
     }
-}
+	}
 
 #define SWAP(a, b) ({ decltype(a) tmp = a; a = b; b = tmp; })
 
@@ -91,14 +91,9 @@ void print_weekday(int number) {
 
 // Task 3. Analysis of car occupancy in a train.
 
-#define LOOP(element, container) for (auto & element : container)
+#define PRINT(container) for (auto & [key, value] : container)  \
+    std::cout << "coach #" << key << " : " << value << "\n";
 #define LOOP_INPUT(function, source, destination) while (function(source, destination)) 
-
-#define PRINT(function, what) { function(what); }
-
-void print(const std::string & str) {
-    std::cout << str << ENDL;
-}
 
 int main() {
 
@@ -107,7 +102,8 @@ int main() {
     TANK(tiger, weight) = 60;
     std::cout << TANK(tiger, weight) << ENDL;
 
-    TANK(tiger, shoot)(5);
+    int n = 5;
+    TANK(tiger, shoot)(n);
 
 /*
     std::cout << "Task 1. Days of week.\n";
@@ -165,8 +161,10 @@ int main() {
     std::cout << "\nTask 3. Analysis of car occupancy in a train.\n";
     {
         const int number_of_coaches = 10;
+        const int number_of_seats = 20;
         std::vector<int> passengers(number_of_coaches, 0);
-        std::map<int, int> overloaded_passengers;
+        std::map<int, int> overcrowded_coaches;
+        std::map<int, int> underfilled_coaches;
         std::string input = "";
         int coach_id = 1;
         int total_number_of_passengers = 0;
@@ -177,7 +175,13 @@ int main() {
             }
             if (is_number(input)) {
                 int number = std::stod(input);
-                passengers[coach_id - 1] = number;
+
+                if (number > number_of_seats) {
+                    overcrowded_coaches[coach_id] = number;
+                }
+                else if (number < number_of_seats) {
+                    underfilled_coaches[coach_id] = number;
+                }
                 total_number_of_passengers += number;
                 if (coach_id == number_of_coaches) {
                     break;
@@ -190,9 +194,11 @@ int main() {
             std::cout << "Enter the number of passengers in " << coach_id << " car: ";
         }
 
-        LOOP(element, passengers) {
-            std::cout << element << "\n";
-        }
+        std::cout << "Overcrowded coaches with passengers over " << number_of_seats << ":\n";
+        PRINT(overcrowded_coaches);
+        std::cout << "Underfilled coaches with passengers under " << number_of_seats << ":\n";
+        PRINT(underfilled_coaches);
+        std::cout << "Total passengers:" << total_number_of_passengers << "\n";
     }
 
     return 0;
