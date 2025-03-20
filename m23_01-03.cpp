@@ -6,25 +6,8 @@
 #include <map>
 #include <set>
 
-#define UP (1 << 0)                 // 1
-#define DOWN (1 << 1)               // 2
-#define LEFT (1 << 2)               // 4
-#define RIGHT (1 << 3)              // 8
-#define UP_LEFT (UP | LEFT)         // 5
-#define UP_RIGHT (UP | RIGHT)       // 9
-#define DOWN_LEFT (DOWN | LEFT)     // 6
-#define DOWN_RIGHT (DOWN | RIGHT)   // 10
-
-#define TANK(model, name) model ## _ ## name
-
-void tiger_shoot(int count) {
-    for (int i = 0; i < count; ++i) {
-        std::cout << "SHOOT!\n";
-    }
-	}
 
 #define SWAP(a, b) ({ decltype(a) tmp = a; a = b; b = tmp; })
-
 
 bool is_number(const std::string str) {
     if (str.size() < 1) {
@@ -91,21 +74,13 @@ void print_weekday(int number) {
 
 // Task 3. Analysis of car occupancy in a train.
 
+#define LOOP_INPUT(function, source, destination) while (function(source, destination)) 
+
 #define PRINT(container) for (auto & [key, value] : container)  \
     std::cout << "coach #" << key << " : " << value << "\n";
-#define LOOP_INPUT(function, source, destination) while (function(source, destination)) 
 
 int main() {
 
-    double tiger_weight = 55.0;
-    std::cout << TANK(tiger, weight) << ENDL;
-    TANK(tiger, weight) = 60;
-    std::cout << TANK(tiger, weight) << ENDL;
-
-    int n = 5;
-    TANK(tiger, shoot)(n);
-
-/*
     std::cout << "Task 1. Days of week.\n";
     {
         std::string input = "";
@@ -143,7 +118,6 @@ int main() {
             }
         }
     }
-*/
 
     std::cout << "\nTask 2. Seasons.\n";
     {
@@ -162,7 +136,6 @@ int main() {
     {
         const int number_of_coaches = 10;
         const int number_of_seats = 20;
-        std::vector<int> passengers(number_of_coaches, 0);
         std::map<int, int> overcrowded_coaches;
         std::map<int, int> underfilled_coaches;
         std::string input = "";
@@ -176,17 +149,23 @@ int main() {
             if (is_number(input)) {
                 int number = std::stod(input);
 
-                if (number > number_of_seats) {
-                    overcrowded_coaches[coach_id] = number;
+                if (number < 0) {
+                    std::cout << "Negative value!\n";
                 }
-                else if (number < number_of_seats) {
-                    underfilled_coaches[coach_id] = number;
+                else {
+                    if (number > number_of_seats) {
+                        overcrowded_coaches[coach_id] = number;
+                    }
+                    else if (number < number_of_seats) {
+                        underfilled_coaches[coach_id] = number;
+                    }
+                    total_number_of_passengers += number;
+
+                    if (coach_id == number_of_coaches) {
+                        break;
+                    }
+                    ++coach_id;
                 }
-                total_number_of_passengers += number;
-                if (coach_id == number_of_coaches) {
-                    break;
-                }
-                ++coach_id;
             }
             else {
                 std::cout << "Incorrect number!\n";
