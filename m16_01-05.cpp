@@ -285,7 +285,7 @@ bool getNumber(const std::string & prompt, T & number) {
 
 template<typename T, std::size_t N>
 bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums,
-                      const char delimeter = ' ') {
+                      const char delimiter = ' ') {
     bool result = true;
     int maxDigits = 0;
     double maxMantissa = 0;
@@ -293,7 +293,7 @@ bool splitIntoNumbers(const std::string & sentence, std::array<T, N> & nums,
     T number;
     std::string word = "";
     for (const char & c : sentence) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 if (!isNumber(word, number, maxDigits, maxMantissa)) {
                     result = false;
@@ -356,7 +356,7 @@ bool getRowNumbers(const std::string & prompt, std::array<T, N> & arr) {
 
 template<typename T>
 bool splitIntoNumbers(const std::string& sentence, std::vector<T>& nums,
-    const char delimeter = ' ') {
+    const char delimiter = ' ') {
     bool result = true;
     auto size = nums.size();
     int maxDigits = 0;
@@ -365,7 +365,7 @@ bool splitIntoNumbers(const std::string& sentence, std::vector<T>& nums,
     T number;
     std::string word = "";
     for (const char& c : sentence) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 if (!isNumber(word, number, maxDigits, maxMantissa)) {
                     result = false;
@@ -506,11 +506,11 @@ enum switches {
     CONDITIONER = 64
 };
 
-std::vector<std::string> split(const std::string & str, const char delimeter = ' ') {
+std::vector<std::string> split(const std::string & str, const char delimiter = ' ') {
 	std::vector<std::string> result;
 	std::string word = "";
 	for (const auto & c : str) {
-	    if (c == delimeter) {
+	    if (c == delimiter) {
 	        if (word.size() > 0) {
 	            result.push_back(word);
 	            word.clear();

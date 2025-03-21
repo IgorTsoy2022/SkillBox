@@ -92,11 +92,11 @@ bool getTimeMinutes(const std::string& prompt, int& minutes) {
     return true;
 }
 
-std::vector<std::string> split(const std::string& sentence, const char delimeter = ' ') {
+std::vector<std::string> split(const std::string& sentence, const char delimiter = ' ') {
     std::vector<std::string> result;
     std::string word = "";
     for (const char & c : sentence) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 result.push_back(word);
                 word.clear();
@@ -112,11 +112,11 @@ std::vector<std::string> split(const std::string& sentence, const char delimeter
     return result;
 }
 
-int countWords(const std::string & sentence, const char delimeter = ' ') {
+int countWords(const std::string & sentence, const char delimiter = ' ') {
     int result = 0;
     bool isWord = false;
     for (const char & c : sentence) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (isWord) {
                 ++result;
                 isWord = false;

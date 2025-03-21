@@ -106,11 +106,11 @@ bool is_date(int year, int month, int day) {
 }
 
 std::vector<std::string> 
-split(const std::string& str, const char delimeter = ' ') {
+split(const std::string& str, const char delimiter = ' ') {
     std::vector<std::string> result;
     std::string word = "";
     for (const auto& c : str) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 result.push_back(word);
                 word.clear();

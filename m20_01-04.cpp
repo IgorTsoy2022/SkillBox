@@ -98,11 +98,11 @@ bool is_date(const date & d) {
 }
 
 std::vector<std::string> 
-split(const std::string& str, const char delimeter = ' ') {
+split(const std::string& str, const char delimiter = ' ') {
     std::vector<std::string> result;
     std::string word = "";
     for (const auto& c : str) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 result.push_back(word);
                 word.clear();
@@ -118,13 +118,13 @@ split(const std::string& str, const char delimeter = ' ') {
     return result;
 }
 
-bool is_ddmmyyyy(const std::string& ddmmyyyy, const char delimeter,
+bool is_ddmmyyyy(const std::string& ddmmyyyy, const char delimiter,
                  date & d) {
     auto size = ddmmyyyy.size();
     if (size < 6) {
         return false;
     }
-    auto nums = split(ddmmyyyy, delimeter);
+    auto nums = split(ddmmyyyy, delimiter);
     if (nums.size() != 3) {
         return false;
     }
@@ -425,7 +425,7 @@ int main() {
                 if (is_ddmmyyyy(dt, '.', d)) {
                     if (is_number(amount)) {
                         file << fname << gap << lname << gap
-                            << dt << gap << amount << "\n";
+                             << dt << gap << amount << "\n";
                     }
                     else {
                         std::cout << "Incorrect amount!\n";

@@ -6,7 +6,6 @@
 #include <map>
 #include <set>
 
-
 #define SWAP(a, b) ({ decltype(a) tmp = a; a = b; b = tmp; })
 
 bool is_number(const std::string str) {

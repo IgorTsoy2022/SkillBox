@@ -106,11 +106,11 @@ bool is_date(const CURRDATE& date) {
 }
 
 std::vector<std::string> 
-split(const std::string& str, const char delimeter = ' ') {
+split(const std::string& str, const char delimiter = ' ') {
     std::vector<std::string> result;
     std::string word = "";
     for (const auto& c : str) {
-        if (c == delimeter) {
+        if (c == delimiter) {
             if (word.size() > 0) {
                 result.push_back(word);
                 word.clear();
@@ -127,12 +127,12 @@ split(const std::string& str, const char delimeter = ' ') {
 }
 
 bool ddmmyyyy_to_date(const std::string& ddmmyyyy,
-                      const char delimeter, CURRDATE& date) {
+                      const char delimiter, CURRDATE& date) {
     auto size = ddmmyyyy.size();
     if (size < 6) {
         return false;
     }
-    auto nums = split(ddmmyyyy, delimeter);
+    auto nums = split(ddmmyyyy, delimiter);
     if (nums.size() != 3) {
         return false;
     }
@@ -154,17 +154,17 @@ bool ddmmyyyy_to_date(const std::string& ddmmyyyy,
 }
 
 std::string date_to_ddmmyyyy(const CURRDATE& date,
-                             const char delimeter = '.') {
+                             const char delimiter = '.') {
     std::string ddmmyyyy = "";
 
     if (date.day < 10) {
         ddmmyyyy = "0";
     }
-    ddmmyyyy += std::to_string(date.day) + delimeter;
+    ddmmyyyy += std::to_string(date.day) + delimiter;
     if (date.month < 10) {
         ddmmyyyy += "0";
     }
-    ddmmyyyy += std::to_string(date.month) + delimeter;
+    ddmmyyyy += std::to_string(date.month) + delimiter;
     ddmmyyyy += std::to_string(date.year);
 
     return ddmmyyyy;
