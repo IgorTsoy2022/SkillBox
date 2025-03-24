@@ -230,82 +230,29 @@ void show_time(SHORT col, SHORT row, std::tm & tm) {
 }
 
 void change_time(std::tm& tm, int seconds) {
-    int s = tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec + seconds;
+    double s = tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec + seconds;
     if (s < 0) {
         tm.tm_hour = 0;
         tm.tm_min = 0;
         tm.tm_sec = 0;
         return;
     }
-    std::cout << "prev-now=" << seconds << "s=" << s << "\n";
+
+    int h = 0, m = 0;
     if (s >= 3600) {
-        tm.tm_hour = s / 3600;
-        s -= tm.tm_hour * 3600;
+        h = s / 3600;
+        s -= h * 3600;
     }
+    tm.tm_hour = h;
     if (s >= 60) {
-        tm.tm_min = s / 60;
-        s -= tm.tm_min * 60;
+        m = s / 60;
+        s -= m * 60;
     }
+    tm.tm_min = m;
     tm.tm_sec = s;
-    std::cout << "m=" << tm.tm_min << " s=" << tm.tm_sec << "\n";
 }
 
 int main() {
-
-/*
-
-        std::time_t t = std::time(nullptr);
-        std::tm local = *std::localtime(&t);
-        std::string inputstr = "";
-        std::cin >> inputstr;
-        std::istringstream iss(inputstr);
-        std::cout << std::asctime(&local) << std::endl;
-        iss >> std::get_time(&local, "%H:%M");
-        std::cout << std::asctime(&local) << std::endl;
-
-
-    return 0;
-*/
-
-
-
-/*
-    {
-        std::time_t t = std::time(nullptr);
-        std::tm* local = std::localtime(&t);
-
-        std::cout << local->tm_hour << std::endl;
-        std::cout << std::asctime(local) << std::endl;
-        std::cout << std::put_time(local, "%Y/%B/%d %H:%M:%S") << std::endl;
-    }
-
-    {
-        std::time_t t = std::time(nullptr);
-        std::tm local = *std::localtime(&t);
-        std::cin >> std::get_time(&local, "%H:%M");
-        std::cout << std::asctime(&local) << std::endl;
-    }
-
-    {
-// #pragma warning(suppress : 4996)
-        std::time_t t1 = std::time(nullptr);
-        int hold = 0;
-        std::cin >> hold;
-        std::time_t t2 = std::time(nullptr);
-
-        double d = std::difftime(t1, t2);
-        std::time_t f = t2 + (std::time_t)d;
-
-        std::tm* local_future = std::localtime(&f);
-        std::cout << std::asctime(local_future) << std::endl;
-
-        local_future->tm_sec += 10;
-
-        std::cout << std::asctime(local_future) << std::endl;
-    }
-*/   
-
-/*
     std::cout << "Task 1. Time tracking.\n";
     {
         std::time_t current_task_time = 0;
@@ -349,14 +296,18 @@ int main() {
             else if (input == "status") {
                 for (const auto& [key, task] : tasks) {
                     std::cout << std::put_time(std::localtime(&key), "%Y.%m.%d %H:%M:%S");
-                    std::cout << " " << task.first << ", duration: ";
-                    std::cout << to_time(task.second) << "\n";
+                    std::cout << " " << task.first;
+                    if (task.second > 0) {
+                        std::cout << ", duration: " << to_time(task.second) << "\n";
+                    }
+                    else {
+                        std::cout << " in progress...\n";
+                    }
                 }
             }
             std::cout << "Command > "; 
         }
     }
-//*/
 
     std::cout << "\nTask 2. Birthday reminder.\n";
     {
@@ -593,10 +544,12 @@ int main() {
             goto_xy(0, command_row);
             std::cout << "Command > ";
         } while (std::getline(std::cin, input));
+
         std::cout << blank80;
         std::cout << blank80;
         std::cout << blank80;
         std::cout << blank80;
+        goto_xy(11, command_row);
     }
 
     return 0;
