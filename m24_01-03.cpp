@@ -1,8 +1,10 @@
 #include <iostream>
-#include <fstream>
 #include <sstream>
+
+#include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <thread>
 
 #include <string>
 #include <vector>
@@ -11,6 +13,7 @@
 #include <set>
 
 #include <windows.h>
+
 #pragma warning(disable : 4996)
 
 bool is_number(const std::string str) {
@@ -186,13 +189,12 @@ std::tm make_tm(const int year, const int month, const int day) {
     return tm;
 }
 
-std::time_t find_nearest(const std::time_t date, const std::map<std::time_t, std::unordered_map<std::string, std::time_t>> & birthdays) {
+std::time_t find_nearest(std::tm & tm,
+    const std::map<std::time_t, std::unordered_map<std::string, std::time_t>> & birthdays) {
     if (birthdays.empty()) {
         return -1;
     }
-    std::tm local = *std::localtime(&date);
-    int year = local.tm_year;
-    auto tm = make_tm(0, local.tm_mon - 1, local.tm_mday);
+
     std::time_t current_day = std::mktime(&tm);
     for (const auto& [date, _] : birthdays) {
         if (date >= current_day) {
@@ -204,10 +206,10 @@ std::time_t find_nearest(const std::time_t date, const std::map<std::time_t, std
 
 template<typename C>
 void print(const C & list, const int indent) {
-    std::string blank(indent, ' ');
     for (const auto& [name, date] : list) {
         std::tm local = *localtime(&date);
-        std::cout << blank << name << " " << std::put_time(&local, "%B %d, %Y") << "\n";
+        std::cout << std::setfill(' ') << std::setw(indent) << "" << name;
+        std::cout << " " << std::put_time(&local, "%B %d, %Y") << "\n";
     }
 }
 
@@ -219,66 +221,53 @@ void goto_xy(SHORT x, SHORT y) {
     ::SetConsoleCursorPosition(hStdOut, position);
 }
 
-void show_time(short col, short row, int min, int sec) {
+void show_time(SHORT col, SHORT row, std::tm & tm) {
     goto_xy(col, row);
-    
+    std::cout << "Time Remaining : ";
+    std::cout << std::setfill('0') << std::setw(2) << tm.tm_hour << ":"
+              << std::setfill('0') << std::setw(2) << tm.tm_min << ":"
+              << std::setfill('0') << std::setw(2) << tm.tm_sec << "\n";
+}
+
+void change_time(std::tm& tm, int seconds) {
+    int s = tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec + seconds;
+    if (s < 0) {
+        tm.tm_hour = 0;
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        return;
+    }
+    std::cout << "prev-now=" << seconds << "s=" << s << "\n";
+    if (s >= 3600) {
+        tm.tm_hour = s / 3600;
+        s -= tm.tm_hour * 3600;
+    }
+    if (s >= 60) {
+        tm.tm_min = s / 60;
+        s -= tm.tm_min * 60;
+    }
+    tm.tm_sec = s;
+    std::cout << "m=" << tm.tm_min << " s=" << tm.tm_sec << "\n";
 }
 
 int main() {
-        
-   //     std::cout << std::setfill('0') << std::setw(5) << 42;
-        
-       std::time_t t = std::time(nullptr);
+
+/*
+
+        std::time_t t = std::time(nullptr);
         std::tm local = *std::localtime(&t);
         std::string inputstr = "";
         std::cin >> inputstr;
         std::istringstream iss(inputstr);
+        std::cout << std::asctime(&local) << std::endl;
         iss >> std::get_time(&local, "%H:%M");
         std::cout << std::asctime(&local) << std::endl;
-        
-        
-    return 0;    
-        std::cout << "Commands for timer.\n";
-	    std::cout << "\"new\"   - Set new time.\n";
-	    std::cout << "\"run\"   - Start timer.\n";
-	    std::cout << "\"stop\"  - Stop timer.\n";
-        std::cout << "\"exit\"  - Quit.\n";
-        std::string input = "";
-        do {
-            if (input == "exit") {
-                break;
-            }
 
-            if (input == "new") {
-                input.clear();
-                do {
-                    if (input == "exit") {
-                        break;
-                    }
 
-                    if (input.size() > 0) {
-                        auto nums = split_into_numbers(input, ':');
+    return 0;
+*/
 
-                        if (nums.size() > 1) {
-                            if (nums[1] >= 0 && nums[1] < 60) {
-                                std::istringstream iss(input);
-                                
-                                break;
-                            }
-                            else {
-                                std::cout << "Seconds must be in the range 0 - 59.\n";
-                            }
-                        }
-                        else {
-                            std::cout << "Incorrect time!\n";
-                        }
-                    }
-                    std::cout << "    Enter the time: mm:ss > ";
-                } while (std::getline(std::cin, input));
-            }
 
-            std::cout << "Command > ";
-        } while (std::getline(std::cin, input));
 
 /*
     {
@@ -315,14 +304,6 @@ int main() {
         std::cout << std::asctime(local_future) << std::endl;
     }
 */   
-
-/*
-    std::time_t t = std::time(nullptr);
-    std::tm local = *std::localtime(&t);
-    std::cin >> std::get_time(&local, "%H:%M");
-    std::cout << std::asctime(&local) << std::endl;
-    return 0;
-*/
 
 /*
     std::cout << "Task 1. Time tracking.\n";
@@ -375,7 +356,8 @@ int main() {
             std::cout << "Command > "; 
         }
     }
- 
+//*/
+
     std::cout << "\nTask 2. Birthday reminder.\n";
     {
         std::map<std::time_t, std::unordered_map<std::string, std::time_t>> birthdays;
@@ -415,7 +397,7 @@ int main() {
                                     auto tm = make_tm(0, nums[1], nums[2]);
                                     auto key = std::mktime(&tm);
                                     tm.tm_year += nums[0];
-                                  birthdays[key][input] = std::mktime(&tm);
+                                    birthdays[key][input] = std::mktime(&tm);
                                     break;
                                 }
                                 else {
@@ -454,7 +436,7 @@ int main() {
                             auto tm = make_tm(0, nums[1], nums[2]);
                             auto time = std::mktime(&tm);
 
-                            auto ftime = find_nearest(time, birthdays);
+                            auto ftime = find_nearest(tm, birthdays);
 
                             if (birthdays.count(ftime) > 0) {
                                 if (ftime == time) {
@@ -490,10 +472,131 @@ int main() {
         }
 
     }
-*/
 
-    std::cout << "\nTask 3. Timer.\n";
     {
+        ::system("cls");
+        std::cout << "Task 3. Timer.\n";
+
+        std::cout << "Commands for timer.\n";
+        std::cout << "\"new\"   - Set new time.\n";
+        std::cout << "\"run\"   - Start timer.\n";
+        std::cout << "\"exit\"  - Quit.\n";
+        const int command_row = 5;
+        std::string blank80(80, ' ');
+        std::string input = "";
+        std::tm saved_tm{};
+        do {
+            if (input == "exit") {
+                break;
+            }
+
+            if (input == "new") {
+                input.clear();
+                std::cout << blank80;
+                std::cout << blank80;
+                std::cout << blank80;
+                std::cout << blank80;
+                do {
+                    if (input == "exit") {
+                        break;
+                    }
+
+                    if (input.size() > 0) {
+                        int hours = 0, minutes = 0, seconds = 0;
+                        auto nums = split_into_numbers(input, ':');
+
+                        auto size = nums.size();
+                        if (size > 2) {
+                            hours = nums[0];
+                            minutes = nums[1];
+                            seconds = nums[2];
+                        }
+                        else if (size > 1) {
+                            minutes = nums[0];
+                            seconds = nums[1];
+                        }
+                        else if (size > 0) {
+                            seconds = nums[0];
+                        }
+
+                        if (minutes >= 0 && minutes <= 60) {
+                            if (seconds >= 0 && seconds <= 60) {
+                                goto_xy(0, command_row + 1);
+                                std::cout << blank80 << "\n";
+                                std::cout << blank80 << "\n";
+                                std::cout << blank80 << "\n";
+                                goto_xy(0, command_row + 1);
+
+                                if (seconds > 59) {
+                                    ++minutes;
+                                    seconds -= 60;
+                                }
+                                if (minutes > 59) {
+                                    ++hours;
+                                    minutes -= 60;
+                                }
+
+                                saved_tm.tm_hour = hours;
+                                saved_tm.tm_min = minutes;
+                                saved_tm.tm_sec = seconds;
+                                show_time(4, command_row + 2, saved_tm);
+                                break;
+                            }
+                            else {
+                                std::cout << "Seconds must be in the range 0 - 60.\n";
+                            }
+                        }
+                        else {
+                            std::cout << "Minutes must be in the range 0 - 60.\n";
+                        }
+                    }
+                    goto_xy(0, command_row + 1);
+                    std::cout << blank80 << "\n";
+                    std::cout << blank80 << "\n";
+                    goto_xy(0, command_row + 1);
+                    std::cout << "    Enter the timer time in seconds (s), minutes and secods (mm:ss),\n";
+                    std::cout << "    or hours, minutes and secods (hh:mm:ss) > ";
+                } while (std::getline(std::cin, input));
+            }
+
+            if (input == "run") {
+                input.clear();
+                double seconds = saved_tm.tm_hour * 3600 + saved_tm.tm_min * 60 + saved_tm.tm_sec;
+                std::tm tm{};
+                tm.tm_hour = saved_tm.tm_hour;
+                tm.tm_min = saved_tm.tm_min;
+                tm.tm_sec = saved_tm.tm_sec;
+
+                std::time_t prev = std::time(nullptr);
+                std::time_t now = prev;
+                std::time_t end = prev + (std::time_t)seconds;
+                while (end >= now) {
+                    show_time(4, command_row + 2, tm);
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    now = std::time(nullptr);
+                    change_time(tm, prev - now);
+                    prev = now;
+                }
+/*
+                while (seconds >= 0) {
+                    show_time(4, command_row + 2, tm);
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    --seconds;
+                    change_time(tm, -1);
+                }
+*/
+                std::cout << "\a" << "    Ding! Ding! Ding!\n";
+            }
+
+            goto_xy(0, command_row);
+            std::cout << blank80;
+            goto_xy(0, command_row);
+            std::cout << "Command > ";
+        } while (std::getline(std::cin, input));
+        std::cout << blank80;
+        std::cout << blank80;
+        std::cout << blank80;
+        std::cout << blank80;
     }
 
     return 0;
