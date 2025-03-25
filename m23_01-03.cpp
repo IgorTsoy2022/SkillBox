@@ -75,8 +75,9 @@ void print_weekday(int number) {
 
 #define LOOP_INPUT(function, source, destination) while (function(source, destination)) 
 
-#define PRINT(container) for (auto & [key, value] : container)  \
-    std::cout << "coach #" << key << " : " << value << "\n";
+#define PRINT(container) for (auto & [key, value] : container)  { \
+    std::cout << "coach #" << key << " : " << value << "\n"; \
+    }
 
 int main() {
 
