@@ -226,6 +226,8 @@ std::string int_to_date(int decdate) {
         break;
     }
 
+    out += std::to_string(day);
+    return out;
 }
 
 std::tm make_tm(const int year, const int month, const int day) {
@@ -411,9 +413,9 @@ int main() {
             }
 
             if (input == "list") {
-                for (const auto& [key, person] : birthdays) {
-                    std::cout << std::put_time(std::localtime(&key), "%B %d") << "\n";
-                    print(person, 4);
+                for (const auto& [key, persons] : birthdays) {
+                    std::cout << int_to_date(key) << "\n";
+                    print(persons, 4);
                 }
             }
 
@@ -427,26 +429,26 @@ int main() {
                     auto nums = split_into_numbers(input, '.');
                     if (nums.size() > 2) {
                         if (is_valid_date(nums[0], nums[1], nums[2])) {
-                            auto tm = make_tm(0, nums[1], nums[2]);
-                            auto time = std::mktime(&tm);
+                            auto decdate = nums[1] * 100 + nums[2];
 
-                            auto ftime = find_nearest(tm, birthdays);
+                            auto nearest = find_nearest(decdate, birthdays);
 
-                            if (birthdays.count(ftime) > 0) {
-                                if (ftime == time) {
-                                    if (birthdays.at(ftime).size() > 1) {
+                            if (birthdays.count(nearest) > 0) {
+                                auto persons = birthdays.at(nearest);
+                                if (nearest == decdate) {
+                                    if (persons.size() > 1) {
                                          std::cout << "Today is the birthday of the following people:\n";
-                                         print(birthdays.at(ftime), 4);
-                                    } 
+                                         print(persons, 4);
+                                    }
                                     else {
-                                        auto it = birthdays.at(ftime).begin();
+                                        auto it = persons.begin();
                                         std::tm loc = *std::localtime(&it->second);
                                         std::cout << "Today is " << it->first << "'s birthday!\n";
                                         std::cout  << "He was born on " << std::put_time(&loc, "%B %d, %Y") << "\n";
                                     }
                                 }
                                 else {
-                                    print(birthdays.at(ftime), 4);
+                                    print(persons, 4);
                                 }
 
                             }
