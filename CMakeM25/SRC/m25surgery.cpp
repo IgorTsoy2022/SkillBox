@@ -1,4 +1,4 @@
-﻿#include "CMakeM25.h"
+﻿#include "m25surgery.h"
 
 void greeting(const std::string& txt) {
 	std::cout << txt << std::endl;
