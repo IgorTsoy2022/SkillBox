@@ -2,18 +2,22 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 struct COORD {
 	double x = 0;
 	double y = 0;
 };
 
-void greeting(const std::string& txt);
+bool is_number(const std::string str);
 
-void incision([[maybe_unused]] const COORD& begin, [[maybe_unused]] const COORD& end);
+void incision(const COORD& begin, const COORD& end);
 
-void haemostat([[maybe_unused]] const COORD& point);
+void hemostat(const COORD& point);
 
-void tweezers([[maybe_unused]] const COORD& point);
+void tweezers(const COORD& point);
 
-void suture([[maybe_unused]] const COORD& begin, [[maybe_unused]] const COORD& end);
+bool suture(const COORD& incision_begin, const COORD& incision_end,
+	        const COORD& suture_begin, const COORD& suture_end);
+
+void surgery();

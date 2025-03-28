@@ -10,14 +10,9 @@ project ("CMakeM25" VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# set(SOURCES SRC/CMakeM25main.cpp SRC/CMakeM25.cpp)
-
-# include_directories("include/")
-
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
 add_subdirectory(SRC)
-
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
    set_property(TARGET CMakeM25 PROPERTY CXX_STANDARD 20)
