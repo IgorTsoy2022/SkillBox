@@ -14,7 +14,7 @@
 
 #include <windows.h>
 
-#pragma warning(disable : 4996)
+//#pragma warning(disable : 4996)
 
 bool is_number(const std::string str) {
     if (str.size() < 1) {
@@ -181,6 +181,53 @@ bool is_valid_date(const int year, const int month, const int day) {
     }
 }
 
+std::string int_to_date(int decdate) {
+    int month = decdate / 100;
+    int day = decdate - month * 100;
+    std::string out = "";
+    switch (month) {
+    case 1:
+        out = "January ";
+        break;
+    case 2:
+        out = "February ";
+        break;
+    case 3:
+        out = "March ";
+        break;
+    case 4:
+        out = "April ";
+        break;
+    case 5:
+        out = "May ";
+        break;
+    case 6:
+        out = "June ";
+        break;
+    case 7:
+        out = "July ";
+        break;
+    case 8:
+        out = "August ";
+        break;
+    case 9:
+        out = "September ";
+        break;
+    case 10:
+        out = "October ";
+        break;
+    case 11:
+        out = "November ";
+        break;
+    case 12:
+        out = "December ";
+        break;
+    default:
+        break;
+    }
+
+}
+
 std::tm make_tm(const int year, const int month, const int day) {
     std::tm tm{};
     tm.tm_year = year - 1900;
@@ -189,16 +236,15 @@ std::tm make_tm(const int year, const int month, const int day) {
     return tm;
 }
 
-std::time_t find_nearest(std::tm & tm,
-    const std::map<std::time_t, std::unordered_map<std::string, std::time_t>> & birthdays) {
+int find_nearest(const int current_decdate,
+    const std::map<int, std::unordered_map<std::string, std::time_t>> & birthdays) {
     if (birthdays.empty()) {
         return -1;
     }
 
-    std::time_t current_day = std::mktime(&tm);
-    for (const auto& [date, _] : birthdays) {
-        if (date >= current_day) {
-            return date;
+    for (const auto& [decdate, _] : birthdays) {
+        if (decdate >= current_decdate) {
+            return decdate;
         }
     }
     return birthdays.begin()->first;
@@ -311,7 +357,7 @@ int main() {
 
     std::cout << "\nTask 2. Birthday reminder.\n";
     {
-        std::map<std::time_t, std::unordered_map<std::string, std::time_t>> birthdays;
+        std::map<int, std::unordered_map<std::string, std::time_t>> birthdays;
         std::cout << "List of date birth.\n";
         std::cout << "Commands for birtgdays tracking:\n";
         std::cout << "\"add\"   - Add a new person.\n";
@@ -343,11 +389,10 @@ int main() {
 
                             auto nums = split_into_numbers(date, '.');
                             if (nums.size() > 2) {
-                    	        auto is_valid = is_valid_date(nums[0], nums[1], nums[2]);
-                                if (is_valid) {
-                                    auto tm = make_tm(0, nums[1], nums[2]);
-                                    auto key = std::mktime(&tm);
-                                    tm.tm_year += nums[0];
+                                if (is_valid_date(nums[0], nums[1], nums[2])) {
+                                    auto tm = make_tm(nums[0], nums[1], nums[2]);
+                                    auto key = nums[1] * 100 + nums[2];
+
                                     birthdays[key][input] = std::mktime(&tm);
                                     break;
                                 }
@@ -366,10 +411,9 @@ int main() {
             }
 
             if (input == "list") {
-                for (const auto& [key, persone] : birthdays) {
-//                    std::tm local = *localtime(&key);
-//                    std::cout << std::put_time(&local, "%B %d") << "\n";
-                    print(persone, 4);
+                for (const auto& [key, person] : birthdays) {
+                    std::cout << std::put_time(std::localtime(&key), "%B %d") << "\n";
+                    print(person, 4);
                 }
             }
 
@@ -382,8 +426,7 @@ int main() {
 
                     auto nums = split_into_numbers(input, '.');
                     if (nums.size() > 2) {
-                        auto is_valid = is_valid_date(nums[0], nums[1], nums[2]);
-                        if (is_valid) {
+                        if (is_valid_date(nums[0], nums[1], nums[2])) {
                             auto tm = make_tm(0, nums[1], nums[2]);
                             auto time = std::mktime(&tm);
 
@@ -421,7 +464,6 @@ int main() {
         
             std::cout << "Command > ";
         }
-
     }
 
     {
