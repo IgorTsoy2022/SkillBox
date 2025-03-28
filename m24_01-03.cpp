@@ -207,9 +207,9 @@ std::time_t find_nearest(std::tm & tm,
 template<typename C>
 void print(const C & list, const int indent) {
     for (const auto& [name, date] : list) {
-        std::tm local = *localtime(&date);
-        std::cout << std::setfill(' ') << std::setw(indent) << "" << name;
-        std::cout << " " << std::put_time(&local, "%B %d, %Y") << "\n";
+        std::cout << std::setfill(' ') << std::setw(indent) << "" << name
+                  << " " << std::put_time(std::localtime(&date), "%B %d, %Y")
+                  << "\n";
     }
 }
 
@@ -367,8 +367,8 @@ int main() {
 
             if (input == "list") {
                 for (const auto& [key, persone] : birthdays) {
-                    std::tm local = *localtime(&key);
-                    std::cout << std::put_time(&local, "%B %d") << "\n";
+//                    std::tm local = *localtime(&key);
+//                    std::cout << std::put_time(&local, "%B %d") << "\n";
                     print(persone, 4);
                 }
             }
