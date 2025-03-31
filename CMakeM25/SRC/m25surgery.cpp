@@ -1,21 +1,5 @@
 ﻿#include "m25surgery.h"
 
-bool is_number(const std::string str) {
-    if (str.size() < 1) {
-        return false;
-    }
-    for (const auto& c : str) {
-        if (c >= '0' && c <= '9') {
-            continue;
-        }
-        if (c == '.') {
-            continue;
-        }
-        return false;
-    }
-    return true;
-}
-
 void incision(const COORD& begin, const COORD& end) {
 	std::cout << "The incision is made." << std::endl;
 	std::cout << "Start coordinates: x = " << begin.x
@@ -157,7 +141,7 @@ void surgery() {
                     if (is_number(str1) && is_number(str2)) {
                         point.x = std::stod(str1);
                         point.y = std::stod(str2);
-                        hemostat(point);
+                        tweezers(point);
                         break;
                     }
                     else {

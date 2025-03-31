@@ -4,12 +4,12 @@
 #include <string>
 #include <sstream>
 
+#include "m25common.h"
+
 struct COORD {
 	double x = 0;
 	double y = 0;
 };
-
-bool is_number(const std::string str);
 
 void incision(const COORD& begin, const COORD& end);
 

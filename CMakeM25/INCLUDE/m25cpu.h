@@ -1,5 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <sstream>
+#include "m25ram.h"
+
+namespace cpu {
+    int compute(const int nums);
+}
