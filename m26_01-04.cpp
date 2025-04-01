@@ -47,11 +47,36 @@ std::tm make_tm(const int year, const int month, const int day) {
     return tm;
 }
 
+std::string date_str(const std::tm& tm) {
+    std::string out = std::to_string(tm.tm_year + 1900) + ".";
+    if (tm.tm_mon < 9) {
+        out += "0";
+    }
+    out += std::to_string(tm.tm_mon + 1) + ".";
+    if (tm.tm_mday < 10) {
+        out += "0";
+    }
+    out += std::to_string(tm.tm_mday);
+    return out;
+}
+
+enum class mode {
+    single = 1,
+    seriatim = 2,
+    shuffle = 3
+};
+
+enum class status {
+    stopped = 0,
+    on_play = 1,
+    paused = 2
+};
+
 class Track {
 public:
     Track() {}
 
-    Track(const std::string name, const std::tm date, const int duration)
+    Track(const std::string& name, const std::tm& date, const int duration)
         : name_(name)
         , date_(date)
         , duration_(duration) {}
@@ -63,7 +88,7 @@ public:
         return name_;
     }
 
-    void set_date(const std::tm date) {
+    void set_date(const std::tm& date) {
         date_.tm_year = date.tm_year;
         date_.tm_mon = date.tm_mon;
         date_.tm_mday = date.tm_mday;
@@ -104,7 +129,70 @@ public:
 
     void add_track(const Track& track) {
         tracks_.push_back(track);
-        track_order_.push_back(tracks_.size()  - 1);
+        tracks_order_.push_back(tracks_.size() - 1);
+    }
+
+    std::vector<Track> get_tracks() const {
+        return tracks_;
+    }
+    void set_tracks(const std::vector<Track>& tracks) {
+        tracks_ = tracks;
+        build_order();
+        if (mode_ == mode::shuffle) {
+            shuffle_tracks();
+        }
+    }
+
+    mode get_mode() const {
+        return mode_;
+    }
+    void set_mode(const mode& player_mode) {
+        if (mode_ == player_mode) {
+            return;
+        }
+
+        mode_ = player_mode;
+        if (mode_ == mode::shuffle) {
+            shuffle_tracks();
+        }
+        else {
+            build_order();
+        }
+    }
+
+    status get_status() const {
+        return status_;
+    }
+
+    void play() {
+        if (status_ == status::on_play) {
+            return;
+        }
+
+    }
+
+    void stop() {
+        if (status_ == status::stopped) {
+            return;
+        }
+    }
+
+    void pause() {
+        if (status_ == status::paused) {
+            return;
+        }
+    }
+
+    void fast_forward() {
+
+    }
+
+    void rewind() {
+
+    }
+
+    void repeat() {
+
     }
 
     Track get_current_track() {
@@ -114,35 +202,51 @@ public:
         return {};
     }
 
-     void next() {
-         current_track_ = std::rand() % (tracks_.size() + 1);
-     }
+    void next() {
+        current_track_ = std::rand() % (tracks_.size() + 1);
+    }
 
     ~Player() {}
 
 private:
     std::vector<Track> tracks_;
-    std::vector<int> track_order_;
+    std::vector<int> tracks_order_;
+    std::time_t start_time_{};
     int current_track_ = 0;
     int duration_ = 0;
-    std::time_t start_time_{};
-    enum class mode {
-        single = 1,
-        seriatim = 2,
-        shuffle = 3
-    } mode_ = mode::single;
+
+    mode mode_ = mode::single;
+    status status_ = status::stopped;
+
+    void print_status() {
+        auto now = std::time(nullptr);
+        if (status_ == status::stopped) {
+            std::cout << "Player stopped.\n";
+            return;
+        }
+        if (status_ == status::paused) {
+            std::cout << "Player paused.\n";
+            if (current_track_ > -1) {
+                auto track = &tracks_[tracks_order_[current_track_]];
+                std::cout << "Current track: \"" << track->get_name()
+                          << "\" " << date_str(track->get_date())
+                          << " \n";
+            }
+            return;
+        }
+    }
 
     void build_order() {
-        track_order_.resize(tracks_.size(), 0);
+        tracks_order_.resize(tracks_.size(), 0);
         for (int i = 0; i < tracks_.size(); ++i) {
-            track_order_[i] = i;
+            tracks_order_[i] = i;
         }
     }
 
     void shuffle_tracks() {
         std::random_device rd;
         std::mt19937 g(rd());
-        std::shuffle(track_order_.begin(), track_order_.end(), g);
+        std::shuffle(tracks_order_.begin(), tracks_order_.end(), g);
     }
 };
 
@@ -163,14 +267,19 @@ int main() {
 	    },
 	    { "How deep is your love",
 	      make_tm(1977, 9, 6), 230
-	    }
+	    },
+        { "fff", make_tm(1977, 9, 9), 9 },
+        { "sss", make_tm(1977, 10, 10), 9 }
 	 };
-	
-	for (auto& t : soundtracks) {
-	    std::cout << t.get_name() << " " << t.get_date().tm_year + 1900 << "." << t.get_date().tm_mon + 1  << "." << t.get_date().tm_mday << "\n";
-	}
 
-    Player player(soundtracks);
+    Player player;
+    player = soundtracks;
+    for (const auto& t : player.get_tracks()) {
+        std::cout << t.get_name() << " " << date_str(t.get_date()) << "\n";
+    }
+
+
+    player.set_mode(mode::shuffle);
 
     std::vector<int> nums = {
         1, 2, 3 ,4, 5, 6, 7, 8 };
