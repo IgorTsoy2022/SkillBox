@@ -108,7 +108,7 @@ public:
         return date_;
     }
 
-    void set_duration(int seconds) {
+    void set_duration(const int seconds) {
         duration_ = seconds;
     }
     int get_duration() const {
@@ -133,8 +133,7 @@ public:
     Player() {}
 
     Player(std::vector<Track>& tracks)
-        : tracks_(std::move(tracks))
-        , current_track_(0) {
+        : tracks_(std::move(tracks)) {
         if (tracks_.size() < 1) {
             current_track_ = -1;
         }
@@ -148,9 +147,6 @@ public:
         tracks_order_.push_back(tracks_.size() - 1);
     }
 
-    std::vector<Track> get_tracks() const {
-        return tracks_;
-    }
     void set_tracks(const std::vector<Track>& tracks) {
         tracks_ = tracks;
         build_order();
@@ -158,10 +154,17 @@ public:
             shuffle_tracks();
         }
     }
-
-    mode get_mode() const {
-        return mode_;
+    std::vector<Track> get_tracks() const {
+        return tracks_;
     }
+
+    void set_track_break(const int seconds) {
+        track_break_ = seconds;
+    }
+    int get_track_break() const {
+        return track_break_;
+    }
+
     void set_mode(const mode& player_mode) {
         if (mode_ == player_mode) {
             return;
@@ -174,6 +177,9 @@ public:
         else {
             build_order();
         }
+    }
+    mode get_mode() const {
+        return mode_;
     }
 
     status get_status() const {
@@ -236,14 +242,45 @@ private:
 
     std::time_t start_time_{};
     int current_track_ = 0;
-    int duration_ = 0;
+    int track_break_ = 3;
+    int track_duration_ = 0;
 
     mode mode_ = mode::single;
     status status_ = status::stopped;
 
     void check_status() {
-        if (status_ == status::on_play) {
+        if (status_ != status::on_play) {
             return;
+        }
+
+        auto elapsed_time = std::time(nullptr) - start_time_;
+        if (mode_ == mode::single) {
+            if (elapsed_time >= tracks_[tracks_order_[current_track_]].get_duration()) {
+                status_ = status::stopped;
+                if (current_track_ == tracks_.size() - 1) {
+                    current_track_ = 0;
+                }
+                else {
+                    ++current_track_;
+                }
+            }
+        }
+        else {
+            for (; current_track_ < tracks_.size(); ++current_track_) {
+                auto track_duration = tracks_[tracks_order_[current_track_]].get_duration();
+                if (elapsed_time >= track_duration) {
+                    elapsed_time -= track_duration;
+                    elapsed_time -= track_break_;
+                }
+                else {
+                    elapsed_time = 0;
+                    break;
+                }
+            }
+            if (elapsed_time > 0) {
+                status_ = status::stopped;
+                current_track_ = 0;
+            }
         }
     }
 
