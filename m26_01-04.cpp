@@ -138,6 +138,7 @@ public:
             current_track_ = -1;
         }
         else {
+            current_track_ = 0;
             build_order();
         }
     }
@@ -145,13 +146,22 @@ public:
     void add_track(const Track& track) {
         tracks_.push_back(track);
         tracks_order_.push_back(tracks_.size() - 1);
+        if (current_track_ < 0) {
+            current_track = 0;
+        }
     }
 
     void set_tracks(const std::vector<Track>& tracks) {
         tracks_ = tracks;
-        build_order();
-        if (mode_ == mode::shuffle) {
-            shuffle_tracks();
+        if (tracks_.size() < 1) {
+            current_track_ = -1;
+        }
+        else {
+            current_track_ = 0;
+            build_order();
+            if (mode_ == mode::shuffle) {
+                shuffle_tracks();
+            }
         }
     }
     std::vector<Track> get_tracks() const {
@@ -187,20 +197,34 @@ public:
     }
 
     void play() {
+        if (tracks_.size() < 1) {
+            return;
+        }
+        check_status();
         if (status_ == status::on_play) {
             return;
         }
-
+        status_ = status::on_play;
+        start_time_ = std::time(nullptr);
     }
 
-    void select(int track_no) {
+    void play(int track_no) {
+        if (tracks_.size() < 1) {
+            return;
+        }
+        check_status();
         if (track_no < 1 || track_no > tracks_.size()) {
             return;
         }
-    }
-
-    void repeat() {
-
+        track_no -= 1;
+        status_ = status::on_play;
+        for (int i = 0; i < tracks_order_.size(); ++i) {
+            if (tracks_order_[i] == track_no) {
+                current_track = i;
+                break;
+            }
+        }
+        start_time_ = std::time(nullptr);
     }
 
     void stop() {
@@ -273,6 +297,7 @@ private:
                     elapsed_time -= track_break_;
                 }
                 else {
+                    start_time_ = std::time(nullptr) - elapsed_time;
                     elapsed_time = 0;
                     break;
                 }
