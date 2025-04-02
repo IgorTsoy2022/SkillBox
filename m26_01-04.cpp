@@ -60,6 +60,17 @@ std::string date_str(const std::tm& tm) {
     return out;
 }
 
+std::string time_str(int seconds) {
+    int minutes = seconds / 60;
+    seconds -= minutes * 60;
+    std::string out = std::to_string(minutes) + ":";
+    if (seconds < 10) {
+        out += "0";
+    }
+    out += std::to_string(seconds);
+    return out;
+}
+
 enum class mode {
     single = 1,
     seriatim = 2,
@@ -102,6 +113,11 @@ public:
     }
     int get_duration() const {
         return duration_;
+    }
+
+    void print() const {
+        std::cout << name_ << " " << date_str(date_) 
+            << " " << time_str(duration_) << "\n";
     }
 
     ~Track() {}
@@ -171,6 +187,16 @@ public:
 
     }
 
+    void select(int track_no) {
+        if (track_no < 1 || track_no > tracks_.size()) {
+            return;
+        }
+    }
+
+    void repeat() {
+
+    }
+
     void stop() {
         if (status_ == status::stopped) {
             return;
@@ -191,10 +217,6 @@ public:
 
     }
 
-    void repeat() {
-
-    }
-
     Track get_current_track() {
         if (tracks_.size() > 0) {
             return tracks_[current_track_];
@@ -211,12 +233,19 @@ public:
 private:
     std::vector<Track> tracks_;
     std::vector<int> tracks_order_;
+
     std::time_t start_time_{};
     int current_track_ = 0;
     int duration_ = 0;
 
     mode mode_ = mode::single;
     status status_ = status::stopped;
+
+    void check_status() {
+        if (status_ == status::on_play) {
+            return;
+        }
+    }
 
     void print_status() {
         auto now = std::time(nullptr);
@@ -227,10 +256,8 @@ private:
         if (status_ == status::paused) {
             std::cout << "Player paused.\n";
             if (current_track_ > -1) {
-                auto track = &tracks_[tracks_order_[current_track_]];
-                std::cout << "Current track: \"" << track->get_name()
-                          << "\" " << date_str(track->get_date())
-                          << " \n";
+                std::cout << "Current track: ";
+                tracks_[tracks_order_[current_track_]].print();
             }
             return;
         }
@@ -275,7 +302,7 @@ int main() {
     Player player;
     player = soundtracks;
     for (const auto& t : player.get_tracks()) {
-        std::cout << t.get_name() << " " << date_str(t.get_date()) << "\n";
+        t.print();
     }
 
 
