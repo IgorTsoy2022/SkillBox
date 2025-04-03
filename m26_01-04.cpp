@@ -197,13 +197,15 @@ public:
             return;
         }
 
-        mode_ = player_mode;
-        if (mode_ == mode::shuffle) {
-            shuffle_tracks();
-        }
-        else {
+        if (player_mode == mode::seriatim &&
+             mode_ != mode::seriatim ) {
             build_order();
         }
+        else if (player_mode == mode::shuffle) {
+            shuffle_tracks();
+        }
+
+        mode_ = player_mode;
 
         switch (mode_) {
         case mode::single:
@@ -304,8 +306,20 @@ public:
         if (status_ != status::on_play) {
             return;
         }
-        auto now = std::time(nullptr);
-
+        auto max_seconds = tracks_[tracks_order_[current_track_]].get_duration() - track_elapsed_;
+        if (seconds >= max_seconds) {
+             if (current_track_ == tracks_.size() - 1) {
+                 current_track_ = 0;
+             }
+             else {
+                 ++current_track_;
+             }
+             track_elapsed_ = 0;
+             status_ = status::stopped;
+             return;
+        }
+        track_elapsed_ += seconds;
+        start_time_ -= seconds;
     }
 
     void rewind(const int seconds) {
@@ -313,7 +327,13 @@ public:
         if (status_ != status::on_play) {
             return;
         }
-
+        if (seconds >= track_elapsed_) {
+            track_elapsed_ = 0;
+            status_ = status::stopped;
+            return;
+        }
+        track_elapsed_ -= seconds;
+        start_time_ += seconds;
     }
 
     void print_status() {
@@ -333,6 +353,11 @@ public:
 
         if (status_ == status::stopped) {
             std::cout << "Player stopped.\n";
+             if (current_track_ > -1) {
+                std::cout << "Current track: ";
+                tracks_[tracks_order_[current_track_]].print();
+                std::cout << "Elapsed time: " << time_str(track_elapsed_) << "\n";
+            }
             return;
         }
         if (status_ == status::paused) {
@@ -383,10 +408,10 @@ private:
             if (elapsed_time >= tracks_[tracks_order_[current_track_]].get_duration()) {
                 status_ = status::stopped;
                 if (current_track_ == tracks_.size() - 1) {
-//                    current_track_ = 0;
+                    current_track_ = 0;
                 }
                 else {
-//                    ++current_track_;
+                    ++current_track_;
                 }
                 track_elapsed_ = 0;
             }
@@ -434,22 +459,20 @@ int main() {
 	
 	std::vector<Track> soundtracks = {
 	    { "The lonely shepherd",
-	      make_tm(1977, 06, 06), 30//260
+	      make_tm(1977, 06, 06), 260
 	    },
 	    { "Comfortably numb",
-	       make_tm(1979, 12, 06), 50//383
+	       make_tm(1979, 12, 06), 383
 	    },
 	    { "Nothing else matters",
-	      make_tm(1991, 8, 12), 2//388
+	      make_tm(1991, 8, 12), 388
 	    },
 	    { "Across the Universe",
-	      make_tm(1969, 12, 6), 3//229
+	      make_tm(1969, 12, 6), 229
 	    },
 	    { "How deep is your love",
-	      make_tm(1977, 9, 6), 3//230
-	    },
-        { "fff", make_tm(1977, 9, 9), 9 },
-        { "sss", make_tm(1977, 10, 10), 9 }
+	      make_tm(1977, 9, 6), 230
+	    }
 	 };
 
     Player player;
@@ -458,12 +481,16 @@ int main() {
     std::cout << "Task 1. Audio player.\n";
 
     std::cout << "Commands for audio player:\n";
-    std::cout << "\"mode\"    - Set mode (1 - single / 2 - seriatim / 3 - shuffle).\n";
-    std::cout << "\"play\"    - Play current / (Track_No) track.\n";
-    std::cout << "\"pause\"   - Pause.\n";
-    std::cout << "\"next\"    - Go to next (random) track.\n";
-    std::cout << "\"stop\"    - Stop.\n";
-    std::cout << "\"exit\"    - Exit.\n";
+    std::cout << "\"mode n\" - Set mode (1 - single / 2 - seriatim / 3 - shuffle).\n";
+    std::cout << "\"play\"   - Play current track.\n";
+    std::cout << "\"play n\" - Play track n.\n";
+    std::cout << "\"ff n\"   - Fast forward n seconds.\n";
+    std::cout << "\"rw n\"   - Rewind n seconds.\n";
+    std::cout << "\"pause\"  - Pause.\n";
+    std::cout << "\"next\"   - Next track.\n";
+    std::cout << "\"stop\"   - Stop.\n";
+    std::cout << "\"status\" - Show status.\n";
+    std::cout << "\"exit\"   - Exit.\n";
 
     std::string input = "";
     std::string number = "";
@@ -472,6 +499,7 @@ int main() {
             break;
         }
 
+        number.clear();
         std::stringstream input_stream(input);
         input_stream >> input >> number;
         if (input == "mode" && number.size() > 0) {
@@ -496,8 +524,36 @@ int main() {
             player.print_status();
         }
 
+        if (input == "ff") {
+        	if (is_number(number)) {
+                player.fast_forward(std::stod(number));
+                player.print_status();
+            }
+        }
+
+        if (input == "rw") {
+        	if (is_number(number)) {
+                player.rewind(std::stod(number));
+                player.print_status();
+            }
+        }
+
         if (input == "pause") {
             player.pause();
+            player.print_status();
+        }
+
+        if (input == "next") {
+            player.next();
+            player.print_status();
+        }
+
+        if (input == "stop") {
+        	player.stop();
+        	player.print_status();
+        }
+
+        if (input == "status") {
             player.print_status();
         }
 
