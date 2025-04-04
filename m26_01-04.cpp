@@ -357,7 +357,7 @@ public:
                 std::cout << "Current track: ";
                 tracks_[tracks_order_[current_track_]].print();
                 std::cout << "Elapsed time: " << time_str(track_elapsed_) << "\n";
-            }
+             }
             return;
         }
         if (status_ == status::paused) {
@@ -496,6 +496,8 @@ int main() {
     std::string number = "";
     while (true) {
         if (input == "exit") {
+            player.stop();
+            player.print_status();
             break;
         }
 
