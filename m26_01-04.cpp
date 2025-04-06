@@ -1,9 +1,13 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <ctime>
 #include <random>
+#include <map>
+#include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 bool is_number(const std::string str) {
@@ -87,6 +91,8 @@ std::string time_str(int seconds) {
     out += std::to_string(seconds);
     return out;
 }
+
+// Task 1. Audio player
 
 enum class mode {
     single = 1,
@@ -455,8 +461,181 @@ private:
     }
 };
 
+// Task 2. Mobile phone.
+
+std::string toupper(const std::string& text) {
+    std::string result = "";
+    for (const auto& c : text) {
+        if (c >= 'a' && c <= 'z') {
+            result += (c - 32);
+        }
+        else {
+            result += c;
+        }
+    }
+    return result;
+}
+
+class Phone {
+public:
+    Phone() {};
+
+    Phone(const std::vector<std::pair<std::string, std::string>>& phones) {
+        for (const auto& p : phones) {
+            auto number = phone_to_ll(p.second);
+            numbers_[number] = p.first;
+            max_length_ = max_length_ > p.first.size() ? max_length_ : p.first.size();
+            names_[numbers_[number]].insert(number);
+        }
+    }
+
+    void add(const std::string& name,
+                     const std::string& phone) {
+        auto number = phone_to_ll(phone);
+        if (numbers_.count(number) > 0) {
+            std::cout << "There is a contact with this number in the phone book:\n";
+            std::cout << ll_to_phone(number, "+# (###) ###-####") << " " << numbers_[number] << "\n";
+            if (numbers_[number] != name) {
+                std::cout << "Rewrite to " << name << "? (y/n): ";
+                std::string input = "";
+                std::getline(std::cin, input);
+                if (input.size() > 0) {
+                    if (input[0] == 'y') {
+                    	std::string old = numbers_[number];
+                    	auto handler = names_.extract(old);
+                    	numbers_[number] = name;
+                    	handler.key() = numbers_[number];
+                    	names_.insert(std::move(handler));
+                    	if (name.size() > max_length_) {
+                            max_length_ = name.size();
+                    	}
+                    	else if (old.size() == max_length_) {
+                            recalc_max_length();
+                    	}
+                    }
+                }
+            }
+        }
+        else {
+            numbers_[number] = name;
+            max_length_ = max_length_ > name.size() ? max_length_ : name.size();
+            names_[numbers_[number]].insert(number);
+        }
+    }
+
+    void list_numbers(const std::string& format) {
+        for (const auto& [key, name] : numbers_) {
+            std::cout << ll_to_phone(key, format) << " " << name << "\n";
+        }
+    }
+    
+    void list_names(const std::string& format) {
+        for (const auto& [key, numbers] : names_) {
+            bool padding = false;
+            for (const auto& num : numbers) {
+                std::cout << std::left << std::setw(max_length_ + 1);
+
+                if (!padding) {
+                    std::cout << key;
+                }
+                else {
+                    std::cout << " ";
+                }
+
+                std::cout << ll_to_phone(num, format) << "\n";
+                padding = true;
+            }
+        }
+    }
+
+    ~Phone() {};
+
+private:
+    std::map<long long, std::string> numbers_;
+    std::map<std::string_view, std::set<long long>> names_;
+    int max_length_ = 0;
+
+    void recalc_max_length() {
+        max_length_ = 0;
+        for (const auto& [key, _] : names_) {
+            max_length_ = max_length_ > key.size() ? max_length_ : key.size();
+        }
+    }
+
+    long long phone_to_ll(const std::string & input) {
+        long long number = 0;
+        for (const char & c : input) {
+            if (c >= '0' && c <= '9') {
+                number *= 10;
+                number += c - 48;
+            }
+        }
+    
+        return number;
+    }
+
+    std::string ll_to_phone(long long number, const std::string format) {
+        std::string out = "";
+        long long divisor = 0;
+        for (const auto & c : format) {
+            if (c == '#') {
+                if (divisor == 0) {
+            	    divisor = 1;
+                }
+                else {
+                    divisor *= 10;
+                }
+            }
+        }
+    
+        for (const auto & c : format) {
+            if (c == '#') {
+                auto curnum = number / divisor;
+                out += std::to_string(curnum);
+                number -= curnum * divisor;
+                divisor /= 10;
+            }
+            else {
+                out += c;
+            }
+        }
+
+        return out;
+    }
+
+};
+
+// Task 3. Desktop window.
+
 int main() {
-	
+
+    std::vector<std::pair<std::string, std::string>> phones = {
+        { "Jhon Travolta", "+7 (965) 123-3556" },
+        { "Sandra Bulloc", "79321457888" },
+        { "Tom Hanks", "+7(555)223-45-67" },
+        { "Bob Dilan", "+79651233566" },
+        { "Jhon Travolta", "+78775678900"},
+        { "Sigourney Weaver", "+78985678908" },
+        { "sig", "+79991234567" }
+    };
+
+    for (const auto& p : phones) {
+        std::cout << p.first << " " << p.second << "\n";
+    }
+    
+    Phone p = phones;
+    phones.clear();
+    
+    p.list_numbers("+# (###) ###-####");
+    p.list_names("+# (###) ###-####");
+
+    p.add("sigourney weaverttttt", "+79991234567");
+    
+    p.list_numbers("+# (###) ###-####");
+    p.list_names("+# (###) ###-####");
+
+return 0;
+
 	std::vector<Track> soundtracks = {
 	    { "The lonely shepherd",
 	      make_tm(1977, 06, 06), 260
@@ -562,6 +741,10 @@ int main() {
         std::cout << "Command > ";
         std::getline(std::cin, input);
     }
+
+    std::cout << "Task 2. Mobile phone.\n";
+
+    std::cout << "Task 3. Desktop window.\n";
 
     return 0;
 }
