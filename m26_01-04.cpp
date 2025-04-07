@@ -312,7 +312,9 @@ public:
         if (status_ != status::on_play) {
             return;
         }
-        auto max_seconds = tracks_[tracks_order_[current_track_]].get_duration() - track_elapsed_;
+        auto max_seconds = 
+             tracks_[tracks_order_[current_track_]].get_duration() -
+             track_elapsed_;
         if (seconds >= max_seconds) {
              if (current_track_ == tracks_.size() - 1) {
                  current_track_ = 0;
@@ -362,7 +364,8 @@ public:
              if (current_track_ > -1) {
                 std::cout << "Current track: ";
                 tracks_[tracks_order_[current_track_]].print();
-                std::cout << "Elapsed time: " << time_str(track_elapsed_) << "\n";
+                std::cout << "Elapsed time: "
+                          << time_str(track_elapsed_) << "\n";
              }
             return;
         }
@@ -371,7 +374,8 @@ public:
             if (current_track_ > -1) {
                 std::cout << "Current track: ";
                 tracks_[tracks_order_[current_track_]].print();
-                std::cout << "Elapsed time: " << time_str(track_elapsed_) << "\n";
+                std::cout << "Elapsed time: "
+                          << time_str(track_elapsed_) << "\n";
             }
             return;
         }
@@ -379,7 +383,8 @@ public:
         if (current_track_ > -1) {
             std::cout << "Current track: ";
             tracks_[tracks_order_[current_track_]].print();
-            std::cout << "Elapsed time: " << time_str(std::time(nullptr) - start_time_) << "\n";
+            std::cout << "Elapsed time: "
+                      << time_str(std::time(nullptr) - start_time_) << "\n";
             std::cout << "track_elapsed_ : " << time_str(track_elapsed_) << "\n";
         }
     }
@@ -484,18 +489,19 @@ public:
         for (const auto& p : phones) {
             auto number = phone_to_ll(p.second);
             numbers_[number] = p.first;
-            max_length_ = max_length_ > p.first.size() ? max_length_ : p.first.size();
+            max_length_ = max_length_ > p.first.size() ?
+                          max_length_ : p.first.size();
             names_[numbers_[number]].insert(number);
         }
     }
 
-    void add(const std::string& name,
-                     const std::string& phone) {
+    void add(const std::string& name, const std::string& phone) {
         auto number = phone_to_ll(phone);
         if (numbers_.count(number) > 0) {
             std::cout << "There is a contact with this number in the phone book:\n";
-            std::cout << ll_to_phone(number, "+# (###) ###-####") << " " << numbers_[number] << "\n";
-            if (numbers_[number] != name) {
+            std::cout << ll_to_phone(number) << " "
+                      << numbers_[number] << "\n";
+            if (toupper(numbers_[number]) != toupper(name)) {
                 std::cout << "Rewrite to " << name << "? (y/n): ";
                 std::string input = "";
                 std::getline(std::cin, input);
@@ -518,18 +524,40 @@ public:
         }
         else {
             numbers_[number] = name;
-            max_length_ = max_length_ > name.size() ? max_length_ : name.size();
+            max_length_ = max_length_ > name.size() ?
+                          max_length_ : name.size();
             names_[numbers_[number]].insert(number);
         }
     }
 
-    void list_numbers(const std::string& format) {
+    void call(const std::string& subscriber) {
+        if (subscriber.size() < 1) {
+            return;
+        }
+
+        if (subscriber[0] == '+' ||
+            subscriber[0] >= '0' && subscriber[0] <= '9') {
+            auto number = phone_to_ll(subscriber);
+            if (numbers_.count(number) > 0) {
+                std::cout << "Call " << ll_to_phone(number) << " "
+                          << numbers_[number] << "\n";
+            }
+        }
+    }
+
+    void list_numbers(const std::string_view format = "+# (###) ###-####") {
         for (const auto& [key, name] : numbers_) {
             std::cout << ll_to_phone(key, format) << " " << name << "\n";
+//            std::cout << get_number(key, name, format) << "\n";
         }
     }
     
-    void list_names(const std::string& format) {
+    std::string get_number(long long number, const std::string& name,
+                           const std::string_view format = "+# (###) ###-####") {
+        return ll_to_phone(number, format) + " " + name;
+    }
+
+    void list_names(const std::string_view format = "+# (###) ###-####") {
         for (const auto& [key, numbers] : names_) {
             bool padding = false;
             for (const auto& num : numbers) {
@@ -558,11 +586,12 @@ private:
     void recalc_max_length() {
         max_length_ = 0;
         for (const auto& [key, _] : names_) {
-            max_length_ = max_length_ > key.size() ? max_length_ : key.size();
+            max_length_ = max_length_ > key.size() ? 
+                          max_length_ : key.size();
         }
     }
 
-    long long phone_to_ll(const std::string & input) {
+    long long phone_to_ll(const std::string_view input) {
         long long number = 0;
         for (const char & c : input) {
             if (c >= '0' && c <= '9') {
@@ -574,7 +603,8 @@ private:
         return number;
     }
 
-    std::string ll_to_phone(long long number, const std::string format) {
+    std::string ll_to_phone(long long number,
+                            const std::string_view format = "+# (###) ###-####") {
         std::string out = "";
         long long divisor = 0;
         for (const auto & c : format) {
@@ -631,8 +661,8 @@ int main() {
 
     p.add("sigourney weaverttttt", "+79991234567");
     
-    p.list_numbers("+# (###) ###-####");
-    p.list_names("+# (###) ###-####");
+    p.list_numbers();
+    p.list_names();
 
 return 0;
 
