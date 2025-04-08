@@ -487,35 +487,55 @@ public:
 
     Phone(const std::vector<std::pair<std::string, std::string>>& phones) {
         for (const auto& p : phones) {
-            auto number = phone_to_ll(p.second);
-            numbers_[number] = p.first;
             max_length_ = max_length_ > p.first.size() ?
                           max_length_ : p.first.size();
-            names_[numbers_[number]].insert(number);
+            auto key_name = toupper(p.first);
+            auto key_number = phone_to_ll(p.second);
+
+            origin_[key_name] = p.first;
+            auto it = origin_.find(key_name);
+
+            names_[it->first].insert(key_number);
+
+            numbers_[key_number] = it->first;
         }
     }
 
     void add(const std::string& name, const std::string& phone) {
-        auto number = phone_to_ll(phone);
-        if (numbers_.count(number) > 0) {
+        auto key_name = toupper(name);
+        auto key_number = phone_to_ll(phone);
+        if (numbers_.count(key_number) > 0) {
             std::cout << "There is a contact with this number in the phone book:\n";
-            std::cout << ll_to_phone(number) << " "
-                      << numbers_[number] << "\n";
-            if (toupper(numbers_[number]) != toupper(name)) {
+            std::cout << ll_to_phone(key_number) << " "
+                      << get_origin_name(numbers_[key_number]) << "\n";
+            if (numbers_[key_number] != key_name) {
                 std::cout << "Rewrite to " << name << "? (y/n): ";
                 std::string input = "";
                 std::getline(std::cin, input);
                 if (input.size() > 0) {
                     if (input[0] == 'y') {
-                    	std::string old = numbers_[number];
-                    	auto handler = names_.extract(old);
-                    	numbers_[number] = name;
-                    	handler.key() = numbers_[number];
-                    	names_.insert(std::move(handler));
+                        auto old_key_name_size = numbers_[key_number].size();
+
+                        std::string old_key_name = std::string(numbers_[key_number]);
+
+                        auto handler_names = names_.extract(old_key_name);
+                        auto handler_origin = origin_.extract(old_key_name);
+
+                        handler_origin.key() = key_name;
+                        origin_.insert(std::move(handler_origin));
+                        origin_.at(key_name) = name;
+
+                        auto it = origin_.find(key_name);
+
+                        handler_names.key() = it->first;
+                        names_.insert(std::move(handler_names));
+
+                        numbers_[key_number] = it->first;
+
                     	if (name.size() > max_length_) {
                             max_length_ = name.size();
                     	}
-                    	else if (old.size() == max_length_) {
+                    	else if (old_key_name_size == max_length_) {
                             recalc_max_length();
                     	}
                     }
@@ -523,10 +543,15 @@ public:
             }
         }
         else {
-            numbers_[number] = name;
             max_length_ = max_length_ > name.size() ?
                           max_length_ : name.size();
-            names_[numbers_[number]].insert(number);
+
+            origin_[key_name] = name;
+            auto it = origin_.find(key_name);
+
+            names_[it->first].insert(key_number);
+
+            numbers_[key_number] = it->first;
         }
     }
 
@@ -537,34 +562,91 @@ public:
 
         if (subscriber[0] == '+' ||
             subscriber[0] >= '0' && subscriber[0] <= '9') {
-            auto number = phone_to_ll(subscriber);
-            if (numbers_.count(number) > 0) {
-                std::cout << "Call " << ll_to_phone(number) << " "
-                          << numbers_[number] << "\n";
+            auto key_number = phone_to_ll(subscriber);
+            std::cout << "Call " << ll_to_phone(key_number) << " ";
+            if (numbers_.count(key_number) > 0) {
+                std::cout << get_origin_name(numbers_[key_number]) << "\n";
+                return;
             }
+            else {
+                std::cout << "\nThere is no record with that number in the book.\n";
+            }
+
+            std::cout << "Put a phone number in the book? (y/n): ";
+            std::string input = "";
+            std::getline(std::cin, input);
+            if (input.size() > 0) {
+                if (input[0] == 'y') {
+                    std::cout << "Enter the subscriber's name: ";
+                    input.clear();
+                    std::getline(std::cin, input);
+                    if (input.size() > 0) {
+                        max_length_ = max_length_ > input.size() ?
+                                      max_length_ : input.size();
+                        auto key_name = toupper(input);
+
+                        origin_[key_name] = input;
+                        auto it = origin_.find(key_name);
+
+                        names_[it->first].insert(key_number);
+
+                        numbers_[key_number] = it->first;
+                    }
+                }
+            }
+            return;
         }
+
+        auto key_name = toupper(subscriber);
+        if (names_.count(key_name) > 0) {
+            auto it = names_.at(key_name).begin();
+
+            if (names_.at(key_name).size() > 1) {
+                std::cout << subscriber << " has the following phone numbers:\n";
+                int id = 0;
+                for (const auto& num : names_.at(key_name)) {
+                    std::cout << ++id << ". " << ll_to_phone(num) << "\n";
+                }
+
+                std::cout << "Select the number (1 - " << id << "): ";
+                std::string input = "";
+                std::getline(std::cin, input);
+                if (is_number(input)) {
+                    int count = std::stod(input);
+                    if (count > 0 && count <= id) {
+                        std::advance(it, count - 1);
+                        std::cout << "Call " << subscriber << " "
+                                  << ll_to_phone(*it) << "\n";
+                    }
+                }
+                return;
+            }
+            
+            if (it != names_.at(key_name).end()) {
+                std::cout << "Call " << subscriber << " " << ll_to_phone(*it) << "\n";
+            }
+            return;
+        }
+
+        std::cout << "There is no record with subscriber's name: " 
+                  << subscriber << " in the book.\n";
     }
 
     void list_numbers(const std::string_view format = "+# (###) ###-####") {
-        for (const auto& [key, name] : numbers_) {
-            std::cout << ll_to_phone(key, format) << " " << name << "\n";
-//            std::cout << get_number(key, name, format) << "\n";
+        for (const auto& [key_number, name] : numbers_) {
+            std::cout << ll_to_phone(key_number, format) << " "
+                      << get_origin_name(name) << "\n";
         }
-    }
-    
-    std::string get_number(long long number, const std::string& name,
-                           const std::string_view format = "+# (###) ###-####") {
-        return ll_to_phone(number, format) + " " + name;
     }
 
     void list_names(const std::string_view format = "+# (###) ###-####") {
-        for (const auto& [key, numbers] : names_) {
+        for (const auto& [key_name, numbers] : names_) {
             bool padding = false;
             for (const auto& num : numbers) {
                 std::cout << std::left << std::setw(max_length_ + 1);
 
                 if (!padding) {
-                    std::cout << key;
+                    std::cout << get_origin_name(key_name);
                 }
                 else {
                     std::cout << " ";
@@ -579,7 +661,8 @@ public:
     ~Phone() {};
 
 private:
-    std::map<long long, std::string> numbers_;
+    std::map<std::string, std::string> origin_;
+    std::map<long long, std::string_view> numbers_;
     std::map<std::string_view, std::set<long long>> names_;
     int max_length_ = 0;
 
@@ -591,12 +674,26 @@ private:
         }
     }
 
+    std::string_view get_origin_name(const std::string_view key_name) {
+        std::string key(key_name);
+        if (origin_.count(key) > 0) {
+            return origin_.at(key);
+        }
+        return "";
+    }
+
     long long phone_to_ll(const std::string_view input) {
+        int MAX_DIGITS = 11;
         long long number = 0;
+        int digits = 0;
         for (const char & c : input) {
             if (c >= '0' && c <= '9') {
+                ++digits;
                 number *= 10;
                 number += c - 48;
+                if (digits == MAX_DIGITS) {
+                    return number;
+                }
             }
         }
     
@@ -638,143 +735,175 @@ private:
 // Task 3. Desktop window.
 
 int main() {
+    {
+        std::vector<std::pair<std::string, std::string>> phones = {
+            { "Jhon Travolta", "+7 (965) 123-3556" },
+            { "Sandra Bulloc", "79321457888" },
+            { "Tom Hanks", "+7(555)223-45-67" },
+            { "Bob Dilan", "+79651233566" },
+            { "Jhon Travolta", "+78775678900"},
+            { "Sigourney Weaver", "+78985678908" }
+        };
 
-    std::vector<std::pair<std::string, std::string>> phones = {
-        { "Jhon Travolta", "+7 (965) 123-3556" },
-        { "Sandra Bulloc", "79321457888" },
-        { "Tom Hanks", "+7(555)223-45-67" },
-        { "Bob Dilan", "+79651233566" },
-        { "Jhon Travolta", "+78775678900"},
-        { "Sigourney Weaver", "+78985678908" },
-        { "sig", "+79991234567" }
-    };
+        Phone p = phones;
+        phones.clear();
 
-    for (const auto& p : phones) {
-        std::cout << p.first << " " << p.second << "\n";
+        std::cout << "Commands for mobile phone:\n";
+        std::cout << "\"add\"  - Enroll a caller in the address book.\n";
+        std::cout << "           For a phone number, the first 11 digits are relevant.\n";
+        std::cout << "\"call\" - Ñall a subscriber.\n";
+        std::cout << "\"sms\"  - Send sms.\n";
+        std::cout << "\"list\" - Show subscribers.\n";
+        std::cout << "\"exit\" - Exit.\n";
+
+        std::string input = "";
+        while (true) {
+            if (input == "exit") {
+                break;
+            }
+
+            if (input == "add") {
+
+            }
+
+            /*
+            std::stringstream input_stream(input);
+            input_stream >> input >> number;
+
+            if (input == "add") {
+                if (is_number(number)) {
+                    player.play(std::stod(number));
+                }
+                else {
+                    player.play();
+                }
+                player.print_status();
+            }
+            */
+            std::cout << "Command > ";
+            std::getline(std::cin, input);
+        }
     }
-    
-    Phone p = phones;
-    phones.clear();
-    
-    p.list_numbers("+# (###) ###-####");
-    p.list_names("+# (###) ###-####");
 
-    p.add("sigourney weaverttttt", "+79991234567");
-    
-    p.list_numbers();
-    p.list_names();
 
 return 0;
 
-	std::vector<Track> soundtracks = {
-	    { "The lonely shepherd",
-	      make_tm(1977, 06, 06), 260
-	    },
-	    { "Comfortably numb",
-	       make_tm(1979, 12, 06), 383
-	    },
-	    { "Nothing else matters",
-	      make_tm(1991, 8, 12), 388
-	    },
-	    { "Across the Universe",
-	      make_tm(1969, 12, 6), 229
-	    },
-	    { "How deep is your love",
-	      make_tm(1977, 9, 6), 230
-	    }
-	 };
-
-    Player player;
-    player = soundtracks;
-
     std::cout << "Task 1. Audio player.\n";
-
-    std::cout << "Commands for audio player:\n";
-    std::cout << "\"mode n\" - Set mode (1 - single / 2 - seriatim / 3 - shuffle).\n";
-    std::cout << "\"play\"   - Play current track.\n";
-    std::cout << "\"play n\" - Play track n.\n";
-    std::cout << "\"ff n\"   - Fast forward n seconds.\n";
-    std::cout << "\"rw n\"   - Rewind n seconds.\n";
-    std::cout << "\"pause\"  - Pause.\n";
-    std::cout << "\"next\"   - Next track.\n";
-    std::cout << "\"stop\"   - Stop.\n";
-    std::cout << "\"status\" - Show status.\n";
-    std::cout << "\"exit\"   - Exit.\n";
-
-    std::string input = "";
-    std::string number = "";
-    while (true) {
-        if (input == "exit") {
-            player.stop();
-            player.print_status();
-            break;
-        }
-
-        number.clear();
-        std::stringstream input_stream(input);
-        input_stream >> input >> number;
-        if (input == "mode" && number.size() > 0) {
-            if (number == "1" || number == "single") {
-                player.set_mode(mode::single);
+    {
+        std::vector<Track> soundtracks = {
+            { "The lonely shepherd",
+              make_tm(1977, 06, 06), 260
+            },
+            { "Comfortably numb",
+              make_tm(1979, 12, 06), 383
+            },
+            { "Nothing else matters",
+              make_tm(1991, 8, 12), 388
+            },
+            { "Across the Universe",
+              make_tm(1969, 12, 6), 229
+            },
+            { "How deep is your love",
+              make_tm(1977, 9, 6), 230
             }
-            else if (number == "2" || number == "seriatim") {
-                player.set_mode(mode::seriatim);
-            }
-            else if (number == "3" || number == "shuffle") {
-                player.set_mode(mode::shuffle);
-            }
-        }
+        };
 
-        if (input == "play") {
-            if (is_number(number)) {
-                player.play(std::stod(number));
-            }
-            else {
-                player.play();
-            }
-            player.print_status();
-        }
+        Player player;
+        player = soundtracks;
 
-        if (input == "ff") {
-        	if (is_number(number)) {
-                player.fast_forward(std::stod(number));
+        std::cout << "Commands for audio player:\n";
+        std::cout << "\"mode n\" - Set mode (1 - single / 2 - seriatim / 3 - shuffle).\n";
+        std::cout << "\"play\"   - Play current track.\n";
+        std::cout << "\"play n\" - Play track n.\n";
+        std::cout << "\"ff n\"   - Fast forward n seconds.\n";
+        std::cout << "\"rw n\"   - Rewind n seconds.\n";
+        std::cout << "\"pause\"  - Pause.\n";
+        std::cout << "\"next\"   - Next track.\n";
+        std::cout << "\"stop\"   - Stop.\n";
+        std::cout << "\"status\" - Show status.\n";
+        std::cout << "\"exit\"   - Exit.\n";
+
+        std::string input = "";
+        std::string number = "";
+        while (true) {
+            if (input == "exit") {
+                player.stop();
+                player.print_status();
+                break;
+            }
+
+            number.clear();
+            std::stringstream input_stream(input);
+            input_stream >> input >> number;
+            if (input == "mode" && number.size() > 0) {
+                if (number == "1" || number == "single") {
+                    player.set_mode(mode::single);
+                }
+                else if (number == "2" || number == "seriatim") {
+                    player.set_mode(mode::seriatim);
+                }
+                else if (number == "3" || number == "shuffle") {
+                    player.set_mode(mode::shuffle);
+                }
+            }
+
+            if (input == "play") {
+                if (is_number(number)) {
+                    player.play(std::stod(number));
+                }
+                else {
+                    player.play();
+                }
                 player.print_status();
             }
-        }
 
-        if (input == "rw") {
-        	if (is_number(number)) {
-                player.rewind(std::stod(number));
+            if (input == "ff") {
+                if (is_number(number)) {
+                    player.fast_forward(std::stod(number));
+                    player.print_status();
+                }
+            }
+
+            if (input == "rw") {
+                if (is_number(number)) {
+                    player.rewind(std::stod(number));
+                    player.print_status();
+                }
+            }
+
+            if (input == "pause") {
+                player.pause();
                 player.print_status();
             }
-        }
 
-        if (input == "pause") {
-            player.pause();
-            player.print_status();
-        }
+            if (input == "next") {
+                player.next();
+                player.print_status();
+            }
 
-        if (input == "next") {
-            player.next();
-            player.print_status();
-        }
+            if (input == "stop") {
+                player.stop();
+                player.print_status();
+            }
 
-        if (input == "stop") {
-        	player.stop();
-        	player.print_status();
-        }
+            if (input == "status") {
+                player.print_status();
+            }
 
-        if (input == "status") {
-            player.print_status();
+            std::cout << "Command > ";
+            std::getline(std::cin, input);
         }
-
-        std::cout << "Command > ";
-        std::getline(std::cin, input);
     }
 
     std::cout << "Task 2. Mobile phone.\n";
+    {
+
+    }
 
     std::cout << "Task 3. Desktop window.\n";
+    {
+
+    }
 
     return 0;
 }
