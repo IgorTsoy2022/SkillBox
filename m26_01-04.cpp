@@ -602,7 +602,8 @@ public:
             auto it = names_.at(key_name).begin();
 
             if (names_.at(key_name).size() > 1) {
-                std::cout << subscriber << " has the following phone numbers:\n";
+                std::cout << get_origin_name(key_name)
+                          << " has the following phone numbers:\n";
                 int id = 0;
                 for (const auto& num : names_.at(key_name)) {
                     std::cout << ++id << ". " << ll_to_phone(num) << "\n";
@@ -615,20 +616,110 @@ public:
                     int count = std::stod(input);
                     if (count > 0 && count <= id) {
                         std::advance(it, count - 1);
-                        std::cout << "Call " << subscriber << " "
+                        std::cout << "Call " << get_origin_name(key_name) << " "
                                   << ll_to_phone(*it) << "\n";
                     }
                 }
                 return;
             }
-            
+
             if (it != names_.at(key_name).end()) {
-                std::cout << "Call " << subscriber << " " << ll_to_phone(*it) << "\n";
+                std::cout << "Call " << get_origin_name(key_name) << " "
+                          << ll_to_phone(*it) << "\n";
             }
             return;
         }
 
         std::cout << "There is no record with subscriber's name: " 
+                  << subscriber << " in the book.\n";
+    }
+
+    void sms(const std::string& subscriber) {
+        if (subscriber.size() < 1) {
+            return;
+        }
+
+        if (subscriber[0] == '+' ||
+            subscriber[0] >= '0' && subscriber[0] <= '9') {
+            auto key_number = phone_to_ll(subscriber);
+            std::cout << "sms text message to " << ll_to_phone(key_number) << " ";
+            if (numbers_.count(key_number) > 0) {
+                std::cout << get_origin_name(numbers_[key_number]) << "\n";
+                std::cout << "Enter text message to send:\n";
+                std::string text = "";
+                std::getline(std::cin, text);
+                return;
+            }
+            else {
+                std::cout << "\nThere is no record with that number in the book.\n";
+            }
+
+            std::cout << "Put a phone number in the book? (y/n): ";
+            std::string input = "";
+            std::getline(std::cin, input);
+            if (input.size() > 0) {
+                if (input[0] == 'y') {
+                    std::cout << "Enter the subscriber's name: ";
+                    input.clear();
+                    std::getline(std::cin, input);
+                    if (input.size() > 0) {
+                        max_length_ = max_length_ > input.size() ?
+                            max_length_ : input.size();
+                        auto key_name = toupper(input);
+
+                        origin_[key_name] = input;
+                        auto it = origin_.find(key_name);
+
+                        names_[it->first].insert(key_number);
+
+                        numbers_[key_number] = it->first;
+                    }
+                }
+            }
+            return;
+        }
+
+        auto key_name = toupper(subscriber);
+        if (names_.count(key_name) > 0) {
+            auto it = names_.at(key_name).begin();
+            if (names_.at(key_name).size() > 1) {
+                std::cout << get_origin_name(key_name)
+                          << " has the following phone numbers:\n";
+                int id = 0;
+                for (const auto& num : names_.at(key_name)) {
+                    std::cout << ++id << ". " << ll_to_phone(num) << "\n";
+                }
+
+                std::cout << "Select the number (1 - " << id << "): ";
+                std::string input = "";
+                std::getline(std::cin, input);
+                if (is_number(input)) {
+                    int count = std::stod(input);
+                    if (count > 0 && count <= id) {
+                        std::advance(it, count - 1);
+                        std::cout << "sms text message to "
+                                  << get_origin_name(key_name) << " "
+                                  << ll_to_phone(*it) << "\n";
+                        std::cout << "Enter text message to send:\n";
+                        std::string text = "";
+                        std::getline(std::cin, text);
+                    }
+                }
+                return;
+            }
+
+            if (it != names_.at(key_name).end()) {
+                std::cout << "sms text message to "
+                          << get_origin_name(key_name) << " "
+                          << ll_to_phone(*it) << "\n";
+                std::cout << "Enter text message to send:\n";
+                std::string text = "";
+                std::getline(std::cin, text);
+            }
+            return;
+        }
+
+        std::cout << "There is no record with subscriber's name: "
                   << subscriber << " in the book.\n";
     }
 
@@ -734,57 +825,161 @@ private:
 
 // Task 3. Desktop window.
 
-int main() {
-    {
-        std::vector<std::pair<std::string, std::string>> phones = {
-            { "Jhon Travolta", "+7 (965) 123-3556" },
-            { "Sandra Bulloc", "79321457888" },
-            { "Tom Hanks", "+7(555)223-45-67" },
-            { "Bob Dilan", "+79651233566" },
-            { "Jhon Travolta", "+78775678900"},
-            { "Sigourney Weaver", "+78985678908" }
-        };
+class Vector {
+public:
+    Vector() {};
 
-        Phone p = phones;
-        phones.clear();
+    Vector(const double x, const double y)
+        : x_(x)
+        , y_(y)
+    {};
 
-        std::cout << "Commands for mobile phone:\n";
-        std::cout << "\"add\"  - Enroll a caller in the address book.\n";
-        std::cout << "           For a phone number, the first 11 digits are relevant.\n";
-        std::cout << "\"call\" - Ñall a subscriber.\n";
-        std::cout << "\"sms\"  - Send sms.\n";
-        std::cout << "\"list\" - Show subscribers.\n";
-        std::cout << "\"exit\" - Exit.\n";
+    Vector(const Vector& v)
+        : x_(v.x_)
+        , y_(v.y_)
+    {};
 
-        std::string input = "";
-        while (true) {
-            if (input == "exit") {
-                break;
-            }
-
-            if (input == "add") {
-
-            }
-
-            /*
-            std::stringstream input_stream(input);
-            input_stream >> input >> number;
-
-            if (input == "add") {
-                if (is_number(number)) {
-                    player.play(std::stod(number));
-                }
-                else {
-                    player.play();
-                }
-                player.print_status();
-            }
-            */
-            std::cout << "Command > ";
-            std::getline(std::cin, input);
-        }
+    double get_x() const {
+        return x_;
     }
 
+    double get_y() const {
+        return y_;
+    }
+
+    void set_x(const double value) {
+        x_ = value;
+    }
+
+    void set_y(const double value) {
+        y_ = value;
+    }
+
+    double length() const {
+        return std::sqrt(x_ * x_ + y_ * y_);
+    }
+
+    Vector& operator=(const Vector& right) {
+        if (this == &right) {
+            return *this;
+        }
+
+        x_ = right.x_;
+        y_ = right.y_;
+
+        return *this;
+    }
+
+    const Vector& operator-() {
+        return Vector(-x_, -y_);
+    }
+
+    friend Vector operator+(const Vector& a, const Vector& b) {
+        return Vector(a.x_ + b.x_, a.y_ + b.y_);
+    }
+
+    friend Vector operator-(const Vector& a, const Vector& b) {
+        return Vector(a.x_ - b.x_, a.y_ - b.y_);
+    }
+
+    friend Vector operator*(const Vector& a, const double c) {
+        return Vector(a.x_ * c, a.y_ * c);
+    }
+
+    friend Vector operator*(const double c, const Vector& a) {
+        return Vector(a.x_ * c, a.y_ * c);
+    }
+
+    ~Vector() {};
+
+private:
+    double x_ = 0;
+    double y_ = 0;
+};
+
+Vector normalize(const Vector& v) {
+    auto length = v.length();
+    if (length > 0) {
+        return Vector(v.get_x() / length, v.get_y() / length);
+    }
+    return {};
+}
+
+class Window {
+public:
+    Window() {};
+
+    Window(const int size_x, const int size_y)
+        : size_x_(size_x)
+        , size_y_(size_y)
+    {};
+
+    Window(const Window& wnd)
+        : size_x_(wnd.size_x_)
+        , size_y_(wnd.size_y_)
+    {};
+
+
+    ~Window() {};
+
+private:
+    int size_x_ = 0;
+    int size_y_ = 0;
+};
+
+class Screen {
+public:
+    Screen() {};
+
+    Screen(const int size_x, const int size_y)
+       : size_x_(size_x)
+       , size_y_(size_y)
+    {};
+
+    void set_window(const Window& wnd) {
+        wnd_ = wnd;
+    }
+
+    ~Screen() {};
+
+private:
+    int size_x_ = 0;
+    int size_y_ = 0;
+    Window wnd_{};
+};
+
+int main() {
+
+    Vector v1( 1, 2 );
+
+    Vector v2(v1);
+
+    std::cout << v2.get_x() << " " << v2.get_y() << "\n";
+
+    Vector v3;
+    v3 = -v2;
+
+    std::cout << v3.get_x() << " " << v3.get_y() << "\n";
+
+    auto v4 = v2 + v3;
+    std::cout << v4.get_x() << " " << v4.get_y() << "\n";
+
+    std::cout << "Commands for window:\n";
+    std::cout << "\"move\"    - Move the window.\n";
+    std::cout << "\"resize\"  - Resize the window.\n";
+    std::cout << "\"display\" - Display the window.\n";
+    std::cout << "\"close\"   - Close the window and exit.\n";
+
+    std::string input = "";
+    while (true) {
+        if (input == "close") {
+            break;
+        }
+
+
+        std::cout << "Command > ";
+        std::getline(std::cin, input);
+    }
 
 return 0;
 
@@ -897,7 +1092,71 @@ return 0;
 
     std::cout << "Task 2. Mobile phone.\n";
     {
+        std::vector<std::pair<std::string, std::string>> phones = {
+            { "Jhon Travolta", "+7 (965) 123-3556" },
+            { "Sandra Bulloc", "79321457888" },
+            { "Tom Hanks", "+7(555)223-45-67" },
+            { "Bob Dilan", "+79651233566" },
+            { "Jhon Travolta", "+78775678900"},
+            { "Sigourney Weaver", "+78985678908" }
+        };
 
+        Phone p = phones;
+        phones.clear();
+
+        std::cout << "Commands for mobile phone:\n";
+        std::cout << "\"add\"  - Enroll a caller in the address book.\n";
+        std::cout << "           For a phone number, the first 11 digits are relevant.\n";
+        std::cout << "\"call\" - Call a subscriber.\n";
+        std::cout << "\"sms\"  - Send sms.\n";
+        std::cout << "\"list\" - Show subscribers.\n";
+        std::cout << "\"exit\" - Exit.\n";
+
+        std::string input = "";
+        while (true) {
+            if (input == "exit") {
+                break;
+            }
+
+            if (input == "add") {
+                std::string name = "Unknown";
+                std::string phone = "";
+                std::cout << "Enter the name of the subscriber: ";
+                std::getline(std::cin, name);
+                std::cout << "Enter an 11-digit phone number in any format: ";
+                std::getline(std::cin, phone);
+                if (phone.size() > 0) {
+                    p.add(name, phone);
+                }
+            }
+
+            if (input == "call") {
+                std::string subscriber = "";
+                std::cout << "Enter the name or phone number of the subscriber.\n";
+                std::cout << "The number can be entered in any format and must contain 11 digits:\n";
+                std::getline(std::cin, subscriber);
+                if (subscriber.size() > 0) {
+                    p.call(subscriber);
+                }
+            }
+
+            if (input == "sms") {
+                std::string subscriber = "";
+                std::cout << "Enter the name or phone number of the subscriber.\n";
+                std::cout << "The number can be entered in any format and must contain 11 digits:\n";
+                std::getline(std::cin, subscriber);
+                if (subscriber.size() > 0) {
+                    p.sms(subscriber);
+                }
+            }
+
+            if (input == "list") {
+                p.list_names();
+            }
+
+            std::cout << "Command > ";
+            std::getline(std::cin, input);
+        }
     }
 
     std::cout << "Task 3. Desktop window.\n";
