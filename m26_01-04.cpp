@@ -10,6 +10,8 @@
 #include <string_view>
 #include <vector>
 
+#include <windows.h>
+
 bool is_number(const std::string str) {
     if (str.size() < 1) {
         return false;
@@ -108,12 +110,13 @@ enum class status {
 
 class Track {
 public:
-    Track() {}
+    Track() {};
 
     Track(const std::string& name, const std::tm& date, const int duration)
         : name_(name)
         , date_(date)
-        , duration_(duration) {}
+        , duration_(duration)
+    {};
 
     void set_name(const std::string& name) {
         name_ = name;
@@ -143,7 +146,7 @@ public:
             << " " << time_str(duration_) << "\n";
     }
 
-    ~Track() {}
+    ~Track() {};
 
 private:
     std::string name_ = "";
@@ -153,7 +156,7 @@ private:
 
 class Player {
 public:
-    Player() {}
+    Player() {};
 
     Player(std::vector<Track>& tracks)
         : tracks_(std::move(tracks)) {
@@ -164,7 +167,7 @@ public:
             current_track_ = 0;
             build_order();
         }
-    }
+    };
 
     void add_track(const Track& track) {
         tracks_.push_back(track);
@@ -395,7 +398,7 @@ public:
         }
     }
 
-    ~Player() {}
+    ~Player() {};
 
 private:
     std::vector<Track> tracks_;
@@ -488,7 +491,7 @@ public:
     Phone(const std::vector<std::pair<std::string, std::string>>& phones) {
         for (const auto& p : phones) {
             max_length_ = max_length_ > p.first.size() ?
-                          max_length_ : p.first.size();
+                max_length_ : p.first.size();
             auto key_name = toupper(p.first);
             auto key_number = phone_to_ll(p.second);
 
@@ -499,7 +502,7 @@ public:
 
             numbers_[key_number] = it->first;
         }
-    }
+    };
 
     void add(const std::string& name, const std::string& phone) {
         auto key_name = toupper(name);
@@ -905,6 +908,97 @@ Vector normalize(const Vector& v) {
     return {};
 }
 
+
+void goto_xy(SHORT x, SHORT y) {
+    HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position = { x, y };
+    ::SetConsoleCursorPosition(hStdOut, position);
+}
+
+class Coord {
+public:
+    Coord() {};
+
+    Coord(const int x, const int y)
+        : x_(x)
+        , y_(y)
+    {};
+
+    Coord(const Coord& v)
+        : x_(v.x_)
+        , y_(v.y_)
+    {};
+
+    int get_x() const {
+        return x_;
+    }
+
+    int get_y() const {
+        return y_;
+    }
+
+    void set_x(const int value) {
+        x_ = value;
+    }
+
+    void set_y(const int value) {
+        y_ = value;
+    }
+
+    Coord& operator=(const Coord& right) {
+        if (this == &right) {
+            return *this;
+        }
+
+        x_ = right.x_;
+        y_ = right.y_;
+
+        return *this;
+    }
+
+    const Coord& operator-() {
+        return Coord(-x_, -y_);
+    }
+
+    friend Coord operator+(const Coord& a, const Coord& b) {
+        return Coord(a.x_ + b.x_, a.y_ + b.y_);
+    }
+
+    friend Coord operator+=(Coord& left, const Coord& right) {
+        left.x_ += right.x_;
+        left.y_ += right.y_;
+        return left;
+    }
+
+    friend Coord operator-(const Coord& a, const Coord& b) {
+        return Coord(a.x_ - b.x_, a.y_ - b.y_);
+    }
+
+    friend Coord operator-=(Coord& left, const Coord& right) {
+        left.x_ -= right.x_;
+        left.y_ -= right.y_;
+        return left;
+    }
+
+    friend Coord operator*(const Coord& a, const double c) {
+        return Coord(a.x_ * c, a.y_ * c);
+    }
+
+    friend Coord operator*(const double c, const Coord& a) {
+        return Coord(a.x_ * c, a.y_ * c);
+    }
+
+    friend bool operator==(const Coord& left, const Coord& right) {
+        return ((left.x_ == right.x_) && (left.y_ == right.y_));
+    }
+
+    ~Coord() {};
+
+private:
+    int x_ = 0;
+    int y_ = 0;
+};
+
 class Window {
 public:
     Window() {};
@@ -915,25 +1009,99 @@ public:
     {};
 
     Window(const int size_x, const int size_y,
-                    const int pos_x, const int pos_y)
+           const int pos_x, const int pos_y)
         : size_x_(size_x)
         , size_y_(size_y)
         , pos_x_(pos_x)
         , pos_y_(pos_y)
-    {};
+    {
+        std::cout << "size_x_=" << size_x_ << " size_y_=" << size_y_ << " pos_x_=" << pos_x_ << " pos_y_=" << pos_y_ << "\n";
+    };
 
     Window(const Window& wnd)
         : size_x_(wnd.size_x_)
         , size_y_(wnd.size_y_)
+        , pos_x_(wnd.pos_x_)
+        , pos_y_(wnd.pos_y_)
     {};
 
-    int get_size_x() const {
-        return size_x_;
+    Window(const Coord& size, const Coord& pos)
+        : size_x_(size.get_x())
+        , size_y_(size.get_y())
+        , pos_x_(pos.get_x())
+        , pos_y_(pos.get_y())
+    {};
+
+    Window& operator=(const Window& right) {
+        if (this == &right) {
+            return *this;
+        }
+
+        size_x_ = right.size_x_;
+        size_y_ = right.size_y_;
+        pos_x_ = right.pos_x_;
+        pos_y_ = right.pos_y_;
+        hide_ = right.hide_;
+
+        return *this;
+    }
+
+    Window& operator=(Window&& right) noexcept {
+        if (this == &right) {
+            return *this;
+        }
+
+        size_x_ = right.size_x_;
+        size_y_ = right.size_y_;
+        pos_x_ = right.pos_x_;
+        pos_y_ = right.pos_y_;
+        hide_ = right.hide_;
+
+        right.hide_ = true;
+        right.size_x_ = 0;
+        right.size_y_ = 0;
+        right.pos_x_ = 0;
+        right.pos_y_ = 0;
+
+        return *this;
+    }
+
+    Coord get_size() const {
+        return { size_x_, size_y_ };
+    }
+    void set_size(const Coord& size) {
+        size_x_ = size.get_x();
+        size_y_ = size.get_y();
+    }
+    void set_size(const int width, const int height) {
+        size_x_ = width;
+        size_y_ = height;
+    }
+
+    Coord get_pos() const {
+        return { pos_x_, pos_y_ };
+    }
+    void set_pos(const Coord& pos) {
+        size_x_ = pos.get_x();
+        size_y_ = pos.get_y();
+    }
+    void set_pos(const int x, const int y) {
+        size_x_ = x;
+        size_y_ = y;
+    }
+
+    void hide_window(const bool hide) {
+        hide_ = hide;
+    }
+
+    bool visible() {
+        return !hide_;
     }
 
     ~Window() {};
 
 private:
+    bool hide_ = true;
     int size_x_ = 0;
     int size_y_ = 0;
     int pos_x_ = 0;
@@ -949,8 +1117,99 @@ public:
        , size_y_(size_y)
     {};
 
-    void set_window(const Window& wnd) {
-        wnd_ = wnd;
+    Screen(const int size_x, const int size_y,
+           const int pos_x, const int pos_y)
+        : size_x_(size_x)
+        , size_y_(size_y)
+        , pos_x_(pos_x)
+        , pos_y_(pos_y)
+    {};
+
+    Screen(const Coord& size, const Coord& pos)
+        : size_x_(size.get_x())
+        , size_y_(size.get_y())
+        , pos_x_(pos.get_x())
+        , pos_y_(pos.get_y())
+    {};
+
+    void set_window(int width, int height, int x, int y) {
+        if (x < pos_x_) {
+            x = pos_x_;
+            if (width > size_x_) {
+                width = size_x_;
+            }
+        }
+        else if (x > pos_x_ + size_x_) {
+            x = pos_x_ + size_x_;
+            width = 0;
+        }
+        if (y < pos_y_) {
+            y = pos_y_;
+            if (height > size_y_) {
+                height = size_y_;
+            }
+        }
+        else if (y > pos_y_ + size_y_) {
+            y = pos_y_ + size_y_;
+            height = 0;
+        }
+        wnd_ = { width, height, x, y };
+        std::cout << wnd_.get_pos().get_x() << " " << wnd_.get_pos().get_y() << "\n";
+        
+    }
+
+    Window get_window() {
+        return wnd_;
+    }
+
+    void hide_window(const bool hide) {
+        wnd_.hide_window(hide);
+        draw_window();
+    }
+
+    void draw_window() {
+        char c = wnd_.visible() ? '1' : '0';
+        auto row = wnd_.get_pos().get_y();
+        auto max_row = row + wnd_.get_size().get_y();
+        auto col = wnd_.get_pos().get_x();
+        auto max_col = col + wnd_.get_size().get_x();
+        for (; row < max_row; ++row) {
+            goto_xy(col, row);
+            for (auto i = col; i < max_col; ++i) {
+                std::cout << c;
+            }
+            std::cout << "\n";
+        }
+    }
+
+    void draw_screen() {
+        
+        char c = wnd_.visible() ? '1' : '0';
+        auto wnd_pos = wnd_.get_pos();
+        auto wnd_size = wnd_.get_size();
+        auto left = wnd_pos.get_x();
+        auto right = left + wnd_size.get_x();
+        auto top = wnd_pos.get_y();
+        auto bottom = top + wnd_size.get_y();
+        for (auto row = pos_y_; row < pos_y_ + size_y_; ++row) {
+            goto_xy(pos_x_, row);
+            for (auto col = pos_x_; col < pos_x_ + size_x_; ++col) {
+                if (row >= top && row <= bottom &&
+                    col >= left && col <= right) {
+                    std::cout << c;
+                }
+                else {
+                    std::cout << '0';
+                }
+            }
+//            std::cout << "\n";
+        }
+    }
+
+    void close_window() {
+        wnd_.hide_window(true);
+        draw_window();
+        wnd_ = {};
     }
 
     ~Screen() {};
@@ -958,38 +1217,79 @@ public:
 private:
     int size_x_ = 0;
     int size_y_ = 0;
+    int pos_x_ = 0;
+    int pos_y_ = 0;
     Window wnd_{};
 };
 
 int main() {
 
-    Vector v1( 1, 2 );
+    const int SCREEN_WIDTH = 10; // 80;
+    const int SCREEN_HEIGHT = 10; //50;
 
-    Vector v2(v1);
-
-    std::cout << v2.get_x() << " " << v2.get_y() << "\n";
-
-    Vector v3;
-    v3 = -v2;
-
-    std::cout << v3.get_x() << " " << v3.get_y() << "\n";
-
-    auto v4 = v2 + v3;
-    std::cout << v4.get_x() << " " << v4.get_y() << "\n";
+    int prompt_row = 8;
+    int screen_row = 10;
+    ::system("cls");
 
     std::cout << "Commands for window:\n";
+    std::cout << "\"window\"  - Make window.\n";
     std::cout << "\"move\"    - Move the window.\n";
     std::cout << "\"resize\"  - Resize the window.\n";
     std::cout << "\"display\" - Display the window.\n";
+    std::cout << "\"hide\"    - Hide the window.\n";
     std::cout << "\"close\"   - Close the window and exit.\n";
 
+    Screen scr(SCREEN_WIDTH, SCREEN_HEIGHT, 0, screen_row);
+    goto_xy(0, screen_row);
+//    scr.draw_screen();
+
+    std::string blank90(90, ' ');
     std::string input = "";
     while (true) {
         if (input == "close") {
+            scr.close_window();
+            goto_xy(0, screen_row + SCREEN_HEIGHT);
             break;
         }
 
+        if (input == "window") {
+            goto_xy(0, prompt_row);
+            std::cout << blank90 << "\n";
+            std::cout << blank90 << "\n";
+            goto_xy(0, prompt_row);
+            std::cout << "Enter the dimensions and coordinates of the window: width, height, x, y:\n";
+            std::cout << "> ";
+            std::getline(std::cin, input);
+            std::string str1 = "";
+            std::string str2 = "";
+            std::string str3 = "";
+            std::string str4 = "";
+            std::stringstream input_stream(input);
+            input_stream >> str1 >> str2 >> str3 >> str4;
+            int width = 0, height = 0, x = 0, y = 0;
+            if (is_number(str1)) {
+                width = std::stod(str1);
+            }
+            if (is_number(str2)) {
+                height = std::stod(str2);
+            }
+            if (is_number(str3)) {
+                x = std::stod(str3);
+            }
+            if (is_number(str4)) {
+                y = std::stod(str4);
+            }
+            if (width > 0 && height > 0) {
+                scr.set_window(width, height, x, y);
+            //    scr.hide_window(false);
 
+            }
+        }
+
+        goto_xy(0, prompt_row);
+        std::cout << blank90 << "\n";
+        std::cout << blank90 << "\n";
+        goto_xy(0, prompt_row);
         std::cout << "Command > ";
         std::getline(std::cin, input);
     }
