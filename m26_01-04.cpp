@@ -774,7 +774,7 @@ private:
     }
 
     long long phone_to_ll(const std::string_view input) {
-        int MAX_DIGITS = 11;
+        const int MAX_DIGITS = 11;
         long long number = 0;
         int digits = 0;
         for (const char & c : input) {
@@ -914,17 +914,30 @@ public:
         , size_y_(size_y)
     {};
 
+    Window(const int size_x, const int size_y,
+                    const int pos_x, const int pos_y)
+        : size_x_(size_x)
+        , size_y_(size_y)
+        , pos_x_(pos_x)
+        , pos_y_(pos_y)
+    {};
+
     Window(const Window& wnd)
         : size_x_(wnd.size_x_)
         , size_y_(wnd.size_y_)
     {};
 
+    int get_size_x() const {
+        return size_x_;
+    }
 
     ~Window() {};
 
 private:
     int size_x_ = 0;
     int size_y_ = 0;
+    int pos_x_ = 0;
+    int pos_y_ = 0;
 };
 
 class Screen {
