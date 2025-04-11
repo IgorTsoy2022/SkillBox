@@ -1014,9 +1014,7 @@ public:
         , size_y_(size_y)
         , pos_x_(pos_x)
         , pos_y_(pos_y)
-    {
-        std::cout << "size_x_=" << size_x_ << " size_y_=" << size_y_ << " pos_x_=" << pos_x_ << " pos_y_=" << pos_y_ << "\n";
-    };
+    {};
 
     Window(const Window& wnd)
         : size_x_(wnd.size_x_)
@@ -1094,7 +1092,7 @@ public:
         hide_ = hide;
     }
 
-    bool visible() {
+    bool visible() const {
         return !hide_;
     }
 
@@ -1132,30 +1130,18 @@ public:
         , pos_y_(pos.get_y())
     {};
 
-    void set_window(int width, int height, int x, int y) {
-        if (x < pos_x_) {
-            x = pos_x_;
+    void set_window(int width, int height) {
+        if (width > 0 && height > 0) {
             if (width > size_x_) {
                 width = size_x_;
             }
-        }
-        else if (x > pos_x_ + size_x_) {
-            x = pos_x_ + size_x_;
-            width = 0;
-        }
-        if (y < pos_y_) {
-            y = pos_y_;
+
             if (height > size_y_) {
                 height = size_y_;
             }
+
+            wnd_ = { width, height, pos_x_, pos_y_ };
         }
-        else if (y > pos_y_ + size_y_) {
-            y = pos_y_ + size_y_;
-            height = 0;
-        }
-        wnd_ = { width, height, x, y };
-        std::cout << wnd_.get_pos().get_x() << " " << wnd_.get_pos().get_y() << "\n";
-        
     }
 
     Window get_window() {
@@ -1179,6 +1165,40 @@ public:
                 std::cout << c;
             }
             std::cout << "\n";
+        }
+    }
+
+    void move_window(int dx, int dy) {
+        bool visible = wnd_.visible();
+        if (visible) {
+            hide_window(true);
+        }
+        int x = wnd_.get_pos().get_x();
+        if (x + dx < pos_x_) {
+            x = pos_x_;
+        }
+        else if (x + dx + wnd_.get_size().get_x() > pos_x_ + size_x_) {
+            x = pos_x_ + size_x_ - wnd_.get_size().get_x();
+        }
+        else {
+            x += dx;
+        }
+
+        int y = wnd_.get_pos().get_y();
+        if (y + dy < pos_y_) {
+            y = pos_y_;
+        }
+        else if (y + dy + wnd_.get_size().get_y() > pos_y_ + size_y_) {
+            y = pos_y_ + size_y_ - wnd_.get_size().get_y();
+        }
+        else {
+            y += dy;
+        }
+
+        wnd_.set_pos(x, y);
+
+        if (visible) {
+            hide_window(false);
         }
     }
 
@@ -1224,11 +1244,12 @@ private:
 
 int main() {
 
-    const int SCREEN_WIDTH = 10; // 80;
+    const int SCREEN_WIDTH = 20; // 80;
     const int SCREEN_HEIGHT = 10; //50;
 
     int prompt_row = 8;
     int screen_row = 10;
+    int screen_col = 5;
     ::system("cls");
 
     std::cout << "Commands for window:\n";
@@ -1239,9 +1260,8 @@ int main() {
     std::cout << "\"hide\"    - Hide the window.\n";
     std::cout << "\"close\"   - Close the window and exit.\n";
 
-    Screen scr(SCREEN_WIDTH, SCREEN_HEIGHT, 0, screen_row);
-    goto_xy(0, screen_row);
-//    scr.draw_screen();
+    Screen scr(SCREEN_WIDTH, SCREEN_HEIGHT, screen_col, screen_row);
+    scr.draw_screen();
 
     std::string blank90(90, ' ');
     std::string input = "";
@@ -1255,9 +1275,9 @@ int main() {
         if (input == "window") {
             goto_xy(0, prompt_row);
             std::cout << blank90 << "\n";
-            std::cout << blank90 << "\n";
             goto_xy(0, prompt_row);
-            std::cout << "Enter the dimensions and coordinates of the window: width, height, x, y:\n";
+   //         std::cout << "Enter the dimensions and coordinates of the window: width, height, x, y:\n";
+            std::cout << "width, height:\n";
             std::cout << "> ";
             std::getline(std::cin, input);
             std::string str1 = "";
@@ -1280,15 +1300,28 @@ int main() {
                 y = std::stod(str4);
             }
             if (width > 0 && height > 0) {
-                scr.set_window(width, height, x, y);
-            //    scr.hide_window(false);
+                scr.set_window(width, height);
+	                scr.hide_window(false);
 
             }
         }
 
+        if (input == "display") {
+            scr.hide_window(false);
+        }
+
+        if (input == "hide") {
+            scr.hide_window(true);
+        }
+
+        if (input == "move") {
+            goto_xy(0, prompt_row);
+            std::cout << blank90 << "\n";
+            goto_xy(0, prompt_row);
+        }
+
         goto_xy(0, prompt_row);
-        std::cout << blank90 << "\n";
-        std::cout << blank90 << "\n";
+        std::cout << blank90;
         goto_xy(0, prompt_row);
         std::cout << "Command > ";
         std::getline(std::cin, input);
