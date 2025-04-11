@@ -20,7 +20,7 @@ bool is_number(const std::string str) {
         if (c >= '0' && c <= '9') {
             continue;
         }
-        if (c == '.') {
+        if (c == '.' || c == '-' || c == '+') {
             continue;
         }
         return false;
@@ -1080,12 +1080,12 @@ public:
         return { pos_x_, pos_y_ };
     }
     void set_pos(const Coord& pos) {
-        size_x_ = pos.get_x();
-        size_y_ = pos.get_y();
+        pos_x_ = pos.get_x();
+        pos_y_ = pos.get_y();
     }
     void set_pos(const int x, const int y) {
-        size_x_ = x;
-        size_y_ = y;
+        pos_x_ = x;
+        pos_y_ = y;
     }
 
     void hide_window(const bool hide) {
@@ -1202,8 +1202,28 @@ public:
         }
     }
 
+    void resize_window(int width, int height) {
+        bool visible = wnd_.visible();
+        if (visible) {
+            hide_window(true);
+        }
+
+        if (width + wnd_.get_pos().get_x() > pos_x_ + size_x_) {
+            width = pos_x_ + size_x_ - wnd_.get_pos().get_x();
+        }
+
+        if (height + wnd_.get_pos().get_y() > pos_y_ + size_y_) {
+            height = pos_y_ + size_y_ - wnd_.get_pos().get_y();
+        }
+
+        wnd_.set_size(width, height);
+
+        if (visible) {
+            hide_window(false);
+        }
+    }
+
     void draw_screen() {
-        
         char c = wnd_.visible() ? '1' : '0';
         auto wnd_pos = wnd_.get_pos();
         auto wnd_size = wnd_.get_size();
@@ -1214,15 +1234,14 @@ public:
         for (auto row = pos_y_; row < pos_y_ + size_y_; ++row) {
             goto_xy(pos_x_, row);
             for (auto col = pos_x_; col < pos_x_ + size_x_; ++col) {
-                if (row >= top && row <= bottom &&
-                    col >= left && col <= right) {
+                if (row >= top && row < bottom &&
+                    col >= left && col < right) {
                     std::cout << c;
                 }
                 else {
                     std::cout << '0';
                 }
             }
-//            std::cout << "\n";
         }
     }
 
@@ -1244,93 +1263,8 @@ private:
 
 int main() {
 
-    const int SCREEN_WIDTH = 20; // 80;
-    const int SCREEN_HEIGHT = 10; //50;
-
-    int prompt_row = 8;
-    int screen_row = 10;
-    int screen_col = 5;
-    ::system("cls");
-
-    std::cout << "Commands for window:\n";
-    std::cout << "\"window\"  - Make window.\n";
-    std::cout << "\"move\"    - Move the window.\n";
-    std::cout << "\"resize\"  - Resize the window.\n";
-    std::cout << "\"display\" - Display the window.\n";
-    std::cout << "\"hide\"    - Hide the window.\n";
-    std::cout << "\"close\"   - Close the window and exit.\n";
-
-    Screen scr(SCREEN_WIDTH, SCREEN_HEIGHT, screen_col, screen_row);
-    scr.draw_screen();
-
-    std::string blank90(90, ' ');
-    std::string input = "";
-    while (true) {
-        if (input == "close") {
-            scr.close_window();
-            goto_xy(0, screen_row + SCREEN_HEIGHT);
-            break;
-        }
-
-        if (input == "window") {
-            goto_xy(0, prompt_row);
-            std::cout << blank90 << "\n";
-            goto_xy(0, prompt_row);
-   //         std::cout << "Enter the dimensions and coordinates of the window: width, height, x, y:\n";
-            std::cout << "width, height:\n";
-            std::cout << "> ";
-            std::getline(std::cin, input);
-            std::string str1 = "";
-            std::string str2 = "";
-            std::string str3 = "";
-            std::string str4 = "";
-            std::stringstream input_stream(input);
-            input_stream >> str1 >> str2 >> str3 >> str4;
-            int width = 0, height = 0, x = 0, y = 0;
-            if (is_number(str1)) {
-                width = std::stod(str1);
-            }
-            if (is_number(str2)) {
-                height = std::stod(str2);
-            }
-            if (is_number(str3)) {
-                x = std::stod(str3);
-            }
-            if (is_number(str4)) {
-                y = std::stod(str4);
-            }
-            if (width > 0 && height > 0) {
-                scr.set_window(width, height);
-	                scr.hide_window(false);
-
-            }
-        }
-
-        if (input == "display") {
-            scr.hide_window(false);
-        }
-
-        if (input == "hide") {
-            scr.hide_window(true);
-        }
-
-        if (input == "move") {
-            goto_xy(0, prompt_row);
-            std::cout << blank90 << "\n";
-            goto_xy(0, prompt_row);
-        }
-
-        goto_xy(0, prompt_row);
-        std::cout << blank90;
-        goto_xy(0, prompt_row);
-        std::cout << "Command > ";
-        std::getline(std::cin, input);
-    }
-
-return 0;
-
-    std::cout << "Task 1. Audio player.\n";
     {
+        std::cout << "Task 1. Audio player.\n";
         std::vector<Track> soundtracks = {
             { "The lonely shepherd",
               make_tm(1977, 06, 06), 260
@@ -1436,8 +1370,8 @@ return 0;
         }
     }
 
-    std::cout << "Task 2. Mobile phone.\n";
     {
+        std::cout << "\nTask 2. Mobile phone.\n";
         std::vector<std::pair<std::string, std::string>> phones = {
             { "Jhon Travolta", "+7 (965) 123-3556" },
             { "Sandra Bulloc", "79321457888" },
@@ -1505,9 +1439,147 @@ return 0;
         }
     }
 
-    std::cout << "Task 3. Desktop window.\n";
     {
+        const int SCREEN_WIDTH = 80;
+        const int SCREEN_HEIGHT = 30;
 
+        int screen_row = 12;
+        int screen_col = 3;
+        int prompt_row = 10;
+
+        ::system("cls");
+
+        std::cout << "Task 3. Desktop window.\n";
+        std::cout << "Commands for window:\n";
+        std::cout << "\"window w h\" - Make window, where w-width, h-height are optional.\n";
+        std::cout << "\"move dx dy\" - Move the window, where dx and dy are x-axis and y-axis\n";
+        std::cout << "               offset and are optional.\n";
+        std::cout << "\"resize w h\" - Resize the window, where w-width, h-height are optional.\n";
+        std::cout << "\"display\"    - Display the window.\n";
+        std::cout << "\"hide\"       - Hide the window.\n";
+        std::cout << "\"screen\"     - Display the screen.\n";
+        std::cout << "\"close\"      - Close the window and exit.\n";
+
+        Screen scr(SCREEN_WIDTH, SCREEN_HEIGHT, screen_col, screen_row);
+        scr.draw_screen();
+
+        std::string blank90(90, ' ');
+        std::string input = "";
+        while (true) {
+            std::string str1 = "";
+            std::string str2 = "";
+            std::stringstream input_stream(input);
+            input_stream >> input >> str1 >> str2;
+
+            if (input == "close") {
+                scr.close_window();
+                goto_xy(0, screen_row + SCREEN_HEIGHT);
+                break;
+            }
+
+            if (input == "window") {
+                int width = 0, height = 0;
+                if (str1.empty() || str2.empty()) {
+                    goto_xy(0, prompt_row);
+                    std::cout << blank90 << "\n";
+                    goto_xy(0, prompt_row);
+                    std::cout << "Enter the dimensions of the window (width, height): > ";
+                    std::getline(std::cin, input);
+                    std::stringstream input_stream(input);
+                    input_stream >> str1 >> str2;
+                }
+                if (is_number(str1)) {
+                    width = std::stod(str1);
+                }
+                if (is_number(str2)) {
+                    height = std::stod(str2);
+                }
+                if (width > 0 && height > 0) {
+                    bool visible = scr.get_window().visible();
+                    scr.close_window();
+                    scr.set_window(width, height);
+                    if (visible) {
+                        scr.hide_window(false);
+                    }
+                }
+                else {
+                    goto_xy(0, prompt_row);
+                    std::cout << "Incorrect window size values have been entered."
+                        << "Press \"Enter\" to continue.\n";
+                    std::cin.get();
+                }
+            }
+
+            if (input == "display") {
+                scr.hide_window(false);
+            }
+
+            if (input == "hide") {
+                scr.hide_window(true);
+            }
+
+            if (input == "move") {
+                int dx = 0, dy = 0;
+                if (str1.empty() || str2.empty()) {
+                    goto_xy(0, prompt_row);
+                    std::cout << blank90 << "\n";
+                    goto_xy(0, prompt_row);
+                    std::cout << "Enter the x-axis and y-axis offset: > ";
+                    std::getline(std::cin, input);
+                    std::stringstream input_stream(input);
+                    input_stream >> str1 >> str2;
+                }
+                if (is_number(str1) && is_number(str2)) {
+                    dx = std::stod(str1);
+                    dy = std::stod(str2);
+                    scr.move_window(dx, dy);
+                }
+                else {
+                    goto_xy(0, prompt_row);
+                    std::cout << "Incorrect offset values have been entered."
+                        << "Press \"Enter\" to continue.";
+                    std::cin.get();
+                }
+            }
+
+            if (input == "resize") {
+                int width = 0, height = 0;
+                if (str1.empty() || str2.empty()) {
+                    goto_xy(0, prompt_row);
+                    std::cout << blank90 << "\n";
+                    goto_xy(0, prompt_row);
+                    std::cout << "Enter the dimensions of the window (width, height): > ";
+                    std::getline(std::cin, input);
+                    std::stringstream input_stream(input);
+                    input_stream >> str1 >> str2;
+                }
+                if (is_number(str1)) {
+                    width = std::stod(str1);
+                }
+                if (is_number(str2)) {
+                    height = std::stod(str2);
+                }
+                if (width > 0 && height > 0) {
+                    scr.resize_window(width, height);
+                }
+                else {
+                    goto_xy(0, prompt_row);
+                    std::cout << "Incorrect window size values have been entered."
+                        << "Press \"Enter\" to continue.\n";
+                    std::cin.get();
+                }
+            }
+
+            if (input == "screen") {
+                scr.draw_screen();
+            }
+
+            goto_xy(0, prompt_row);
+            std::cout << blank90;
+            goto_xy(0, prompt_row);
+            std::cout << "Command > ";
+            std::getline(std::cin, input);
+        }
     }
 
     return 0;
