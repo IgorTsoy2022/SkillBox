@@ -76,21 +76,20 @@ class Branch {
 public:
     Branch() {};
 
-    Branch(const std::string& name, const int children_count, Branch* parent = nullptr)
+    Branch(const std::string& name, const int branches_count, Branch* parent = nullptr)
         : name_(name)
-        , children_count_(children_count)
+        , branches_count_(branches_count)
         , parent_(parent)
     {
         std::cout << "Ctor " << name_ << "\n";
-        children_ = new Branch* [children_count_] {};
-        for (int i = 0; i < children_count_; ++i) {
- //           children_[i] = new Branch;
+        if (branches_count_ > 0) {
+            branches_ = new Branch * [branches_count_] {};
         }
     };
 
-    void add_branch(const std::string name, const int children_count) {
-        if (children_init_ < children_count_) {
-            children_[children_init_++] = new Branch(name, children_count, this);
+    void add_branch(const std::string name, const int branches_count) {
+        if (branches_init_ < branches_count_) {
+            branches_[branches_init_++] = new Branch(name, branches_count, this);
         }
     }
 
@@ -102,47 +101,73 @@ public:
         return parent_;
     }
 
-    Branch** get_children() {
-        return children_;
+    Branch** get_branches() {
+        return branches_;
     }
 
-    Branch* get_child(int id) {
-        if (id < 0 || id >= children_count_) {
+    Branch* get_branch(int id) {
+        if (id < 0 || id >= branches_count_) {
             return nullptr;
         }
-        return children_[id];
+        return branches_[id];
+    }
+
+    void print_branches(Branch* current) {
+        if (current == nullptr) {
+            std::cout << "RETURN\n";
+            return;
+        }
+        for (int i = 0; i < current->branches_count_; ++i) {
+            if (current->branches_[i] != nullptr) {
+                std::cout << current->branches_[i]->branches_count_ << " " << current->branches_[i]->name_ << "\n";
+                
+            }
+            print_branches(current->branches_[i]);
+        }
+
     }
 
     ~Branch() {
 
-        for (int i = 0; i < children_count_; ++i) {
-  //          std::cout << "destruct child " << i << " "  << children_[i]->get_name() << "\n";
-   //         children_[i]->~Branch();
-//            delete children_[i];
-        }
-        delete_branch(this);
-        delete[] children_;
+        delete_branches(this);
+        delete[] branches_;
         std::cout << "Dtor " << name_ << "\n";
     };
 
 private:
     std::string name_ = "unknown";
-    int children_init_ = 0;
-    int children_count_ = 0;
+    int branches_init_ = 0;
+    int branches_count_ = 0;
     Branch* parent_ = nullptr;
-    Branch** children_ = nullptr;
+    Branch** branches_ = nullptr;
 
-    void delete_branch(Branch* current) {
+    void delete_branches(Branch* current) {
         if (current == nullptr) {
+            std::cout << "NULLPTR\n";
             return;
         }
-        for (int i = 0; i < current->children_count_; ++i) {
-            if (current->children_[i] != nullptr) {
-                delete_branch(current->children_[i]);
+        int branches_count = current->branches_count_;
+        for (int i = 0; i < branches_count; ++i) {
+            if (current->branches_[i] != nullptr) {
+//                std::cout << current->branches_[i]->branches_count_ << " " << current->branches_[i]->name_ << "\n";
+                delete_branches(current->branches_[i]);
+                if (current->branches_[i]->branches_count_ == 0) {
+//                    std::cout << "Deleting " << " " << current->branches_[i]->name_ << "\n";
+                    delete current->branches_[i];
+                    current->branches_[i] = nullptr;
+                }
             }
-            
+            if (i == branches_count - 1 && current != nullptr && current->parent_ != nullptr) {
+                std::cout << "!!!Deleting " << " " << current->name_ << "\n";
+ //               delete current;
+            }
+
         }
-//        delete current;
+//        std::cout << "current " << current->branches_count_ << " " << current->name_ << "\n";
+        if (current->branches_count_ == 0) {
+//            std::cout << "!!!!!!!!Deleting " << " " << current->name_ << "\n";
+//            delete current;
+        }
     }
 };
 
@@ -153,6 +178,7 @@ int main() {
         const int number_of_levels = 3;
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
+
         std::vector<std::string> names = {
             "Alfaboo", "Bippity Bop",
             "Candy Cane", "Dingleberry",
@@ -172,31 +198,37 @@ int main() {
         shuffle(names);
  //       print(names);
 
-        int level0 = 5;
-        int level1 = 3;
+        Branch** trees = new Branch* [number_of_trees];
 
-        Branch* tree = 
-        new Branch{ "tree1", 3 };
-        tree->add_branch("branch1", 5);
-        tree->add_branch("branch2", 3);
-        tree->add_branch("branch3", 2);
-
-        tree->get_child(0)->add_branch("branch11", 0);
-        tree->get_child(0)->add_branch("branch12", 0);
-        tree->get_child(0)->add_branch("branch13", 0);
-        tree->get_child(0)->add_branch("branch14", 0);
-
-
-        auto p = tree->get_child(0);
-        std::cout << p->get_name() << "\n";
+        for (int id = 0; id < number_of_trees; ++id) {
+            int number_of_big_branches = std::rand() % (5 - 3 + 1) + 3;
+            std::string tree_name = "Tree_" + std::to_string(id + 1);
+            trees[id] = new Branch{ tree_name, number_of_big_branches };
+            for (int i = 0; i < number_of_big_branches; ++i) {
+                int number_of_middle_branches = std::rand() % (3 - 2 + 1) + 2;
+                std::string big_branch_name = tree_name + " BigBranch_" + std::to_string(i + 1);
+                trees[id]->add_branch(big_branch_name, number_of_middle_branches);
+                for (int j = 0; j < number_of_middle_branches; ++j) {
+                    int number_of_little_branches = 3;
+                    std::string middle_branch_name = big_branch_name + " MiddleBranch_" + std::to_string(j + 1);
+                    trees[id]->get_branch(i)->add_branch(middle_branch_name, number_of_little_branches);
+                    for (int k = 0; k < number_of_little_branches; ++k) {
+                        std::string little_branch_name = middle_branch_name + " LittleBranch_" + std::to_string(k + 1);
+                        trees[id]->get_branch(i)->get_branch(j)->add_branch(little_branch_name, 0);
+                    }
+                }
+            }
+        }
         
-        std::cout << tree->get_child(0)->get_parent()->get_name() << "\n";
+        delete trees[0];
+//        delete trees[1];
+//        delete trees[2];
+//        delete trees[3];
+//        delete trees[4];
 
-   //     std::cout << tree->get_children()[0]->get_name() << "\n";
-
-        delete tree;
-        
-        std::cout << p->get_name() << "\n";
+        for (int i = 0; i < number_of_trees; ++i) {
+            trees[i]->print_branches(trees[i]);
+        }
     }
 
     return 0;
