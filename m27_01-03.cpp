@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <ctime>
 #include <random>
 #include <map>
 #include <set>
@@ -23,6 +24,20 @@ bool is_number(const std::string str) {
     return true;
 }
 
+template <typename C>
+void shuffle(C& container) {
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(container.begin(), container.end(), g);
+}
+
+template<typename C>
+void print(const C& container) {
+    for (const auto& value : container) {
+        std::cout << value << "\n";
+    }
+//    std::cout << "\n";
+}
 
 // Task 1. Hierarchy of geometric shapes
 
@@ -61,20 +76,34 @@ class Branch {
 public:
     Branch() {};
 
-    Branch(const int number, const int children_count, Branch* parent = nullptr)
-        : number_(number)
+    Branch(const std::string& name, const int children_count, Branch* parent = nullptr)
+        : name_(name)
         , children_count_(children_count)
         , parent_(parent)
     {
-        std::cout << "Ctor " << number_ << "\n";
+        std::cout << "Ctor " << name_ << "\n";
         children_ = new Branch* [children_count_] {};
         for (int i = 0; i < children_count_; ++i) {
-            children_[i] = new Branch{};
+ //           children_[i] = new Branch;
         }
     };
 
-    Branch* get_children() {
-        return *children_;
+    void add_branch(const std::string name, const int children_count) {
+        if (children_init_ < children_count_) {
+            children_[children_init_++] = new Branch(name, children_count, this);
+        }
+    }
+
+    std::string_view get_name() const {
+        return name_;
+    }
+
+    Branch* get_parent() {
+        return parent_;
+    }
+
+    Branch** get_children() {
+        return children_;
     }
 
     Branch* get_child(int id) {
@@ -85,36 +114,89 @@ public:
     }
 
     ~Branch() {
-        std::cout << "Dtor " << number_ << "\n";
+
         for (int i = 0; i < children_count_; ++i) {
-            delete[] children_[i];
-            std::cout << "destruct child " << i << "\n";
+  //          std::cout << "destruct child " << i << " "  << children_[i]->get_name() << "\n";
+   //         children_[i]->~Branch();
+//            delete children_[i];
         }
+        delete_branch(this);
         delete[] children_;
-        if (parent_ != nullptr) {
-            for (int i = 0; i < parent_->children_count_; ++i) {
-                if (this == parent_->children_[i]) {
-                    parent_->children_[i] = nullptr;
-                    std::cout << "selfdestruct from parent.\n";
-                }
-            }
-        }
+        std::cout << "Dtor " << name_ << "\n";
     };
 
 private:
-    int number_ = 0;
+    std::string name_ = "unknown";
+    int children_init_ = 0;
     int children_count_ = 0;
     Branch* parent_ = nullptr;
     Branch** children_ = nullptr;
+
+    void delete_branch(Branch* current) {
+        if (current == nullptr) {
+            return;
+        }
+        for (int i = 0; i < current->children_count_; ++i) {
+            if (current->children_[i] != nullptr) {
+                delete_branch(current->children_[i]);
+            }
+            
+        }
+//        delete current;
+    }
 };
 
 int main() {
 
     {
-        Branch* tree = new Branch{ 1, 3 };
+        const int number_of_trees = 5;
+        const int number_of_levels = 3;
+        std::srand(std::time(nullptr));
+//        std::rand() % (max - min + 1) + min;
+        std::vector<std::string> names = {
+            "Alfaboo", "Bippity Bop",
+            "Candy Cane", "Dingleberry",
+            "Elfo", "Fizzgig", "Gingersnap",
+            "Hula-Hooper", "Isengrin",
+            "Jolly Jingle", "Kookie Kringle",
+            "Lollypop", "Mr. Mistletoe",
+            "Nutmeg", "Oreo",
+            "Peppermint Patti", "Quirky Quince",
+            "Roscoe", "Snickerdoodle",
+            "Twinkle Toes", "Umpa Lumpa",
+            "Vixen", "Whirly Twirly",
+            "Xander Sparklebottom",
+            "Yoyo"
+        };
 
-        delete tree->get_child(2);
-//        delete tree;
+        shuffle(names);
+ //       print(names);
+
+        int level0 = 5;
+        int level1 = 3;
+
+        Branch* tree = 
+        new Branch{ "tree1", 3 };
+        tree->add_branch("branch1", 5);
+        tree->add_branch("branch2", 3);
+        tree->add_branch("branch3", 2);
+
+        tree->get_child(0)->add_branch("branch11", 0);
+        tree->get_child(0)->add_branch("branch12", 0);
+        tree->get_child(0)->add_branch("branch13", 0);
+        tree->get_child(0)->add_branch("branch14", 0);
+
+
+        auto p = tree->get_child(0);
+        std::cout << p->get_name() << "\n";
+        
+        std::cout << tree->get_child(0)->get_parent()->get_name() << "\n";
+
+   //     std::cout << tree->get_children()[0]->get_name() << "\n";
+
+        delete tree;
+        
+        std::cout << p->get_name() << "\n";
     }
 
     return 0;
