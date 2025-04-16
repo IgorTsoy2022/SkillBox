@@ -72,11 +72,19 @@ std::string toupper(const std::string& text) {
 
 // Task 3. Elf Village.
 
+enum class type {
+    trunk = 0,
+    big_branch = 1,
+    middle_branch = 2,
+    leaf = 3
+};
+
 class Branch {
 public:
     Branch() {};
 
-    Branch(const std::string& name, const int branches_count, Branch* parent = nullptr)
+    Branch(const std::string& name, const int branches_count,
+           Branch* parent = nullptr)
         : name_(name)
         , branches_count_(branches_count)
         , parent_(parent)
@@ -93,42 +101,80 @@ public:
         }
     }
 
+    void add_resident(const std::string name) {
+        if (name.size() > 0) {
+            residents_.insert(name);
+        }
+    }
+
     std::string_view get_name() const {
         return name_;
     }
 
-    Branch* get_parent() {
+    Branch* get_parent() const {
         return parent_;
     }
 
-    Branch** get_branches() {
+    Branch** get_branches() const {
         return branches_;
     }
 
-    Branch* get_branch(int id) {
+    Branch* get_branch(int id) const {
         if (id < 0 || id >= branches_count_) {
             return nullptr;
         }
         return branches_[id];
     }
 
+    std::set<std::string> get_residents() const {
+        return residents_;
+    }
+
     void print_branches(Branch* current) {
         if (current == nullptr) {
-            std::cout << "RETURN\n";
             return;
         }
-        for (int i = 0; i < current->branches_count_; ++i) {
-            if (current->branches_[i] != nullptr) {
-                std::cout << current->branches_[i]->branches_count_ << " " << current->branches_[i]->name_ << "\n";
-                
+
+        int residents_count = current->residents_.size();
+
+        if (current->parent_ == nullptr) {
+            std::cout << "House on trunk ";
+        }
+        else if (current->parent_->parent_ == nullptr) {
+            std::cout << "House on big branch ";
+        }
+        else if (current->parent_->parent_->parent_ == nullptr) {
+            std::cout << "House on middle branch ";
+        }
+        else {
+            residents_count = -1;
+        }
+
+        std::cout << "\"" << current->name_ << "\"\n";
+
+        if (residents_count > 0) {
+            if (residents_count == 1) {
+                std::cout << "   There is 1 elf living in the house:\n";
             }
+            else {
+                std::cout << "   There are " << residents_count
+                          << " elves living in the house :\n";
+            }
+            for (const auto& name : current->residents_) {
+                std::cout << "      " << name << "\n";
+            }
+        }
+        else if (residents_count == 0) {
+            std::cout << "   Empty house.\n";
+        }
+
+        for (int i = 0; i < current->branches_count_; ++i) {
             print_branches(current->branches_[i]);
         }
 
     }
 
     ~Branch() {
-
         delete_branches(this);
         delete[] branches_;
         std::cout << "Dtor " << name_ << "\n";
@@ -140,33 +186,22 @@ private:
     int branches_count_ = 0;
     Branch* parent_ = nullptr;
     Branch** branches_ = nullptr;
+    std::set<std::string> residents_;
 
     void delete_branches(Branch* current) {
         if (current == nullptr) {
-            std::cout << "NULLPTR\n";
             return;
         }
         int branches_count = current->branches_count_;
         for (int i = 0; i < branches_count; ++i) {
             if (current->branches_[i] != nullptr) {
-//                std::cout << current->branches_[i]->branches_count_ << " " << current->branches_[i]->name_ << "\n";
                 delete_branches(current->branches_[i]);
-                if (current->branches_[i]->branches_count_ == 0) {
-//                    std::cout << "Deleting " << " " << current->branches_[i]->name_ << "\n";
+                if (current->branches_[i]->branches_count_ < 1 ) {
+                    --current->branches_[i]->parent_->branches_count_;
                     delete current->branches_[i];
                     current->branches_[i] = nullptr;
                 }
             }
-            if (i == branches_count - 1 && current != nullptr && current->parent_ != nullptr) {
-                std::cout << "!!!Deleting " << " " << current->name_ << "\n";
- //               delete current;
-            }
-
-        }
-//        std::cout << "current " << current->branches_count_ << " " << current->name_ << "\n";
-        if (current->branches_count_ == 0) {
-//            std::cout << "!!!!!!!!Deleting " << " " << current->name_ << "\n";
-//            delete current;
         }
     }
 };
@@ -174,59 +209,230 @@ private:
 int main() {
 
     {
-        const int number_of_trees = 5;
-        const int number_of_levels = 3;
+        const int trees_count = 5;
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
         std::vector<std::string> names = {
-            "Alfaboo", "Bippity Bop",
-            "Candy Cane", "Dingleberry",
-            "Elfo", "Fizzgig", "Gingersnap",
-            "Hula-Hooper", "Isengrin",
-            "Jolly Jingle", "Kookie Kringle",
-            "Lollypop", "Mr. Mistletoe",
-            "Nutmeg", "Oreo",
-            "Peppermint Patti", "Quirky Quince",
-            "Roscoe", "Snickerdoodle",
-            "Twinkle Toes", "Umpa Lumpa",
-            "Vixen", "Whirly Twirly",
-            "Xander Sparklebottom",
-            "Yoyo"
+"Adceran Biphidrossel",
+"Aelara",
+"Aelinor",
+"Aerendir",
+"Aerinwe",
+"Aerisil",
+"Alandur",
+"Alara Maplewood",
+"Alariel",
+"Alaris",
+"Aldariel",
+"Alfaboo",
+"Aranathor",
+"Arannis",
+"Arwenya",
+"Astra Timberwing",
+"Athannon Darknessblight",
+"Aylia Seaspray",
+"Baldithas Aspengaze",
+"Bibella Shadowkind",
+"Bippity Bop",
+"Branwyn Willowthorn",
+"Breana Birchwood",
+"Bryn Starfrost",
+"Caelaria",
+"Caelendir",
+"Caladwen",
+"Calindra",
+"Calithra",
+"Candy Cane",
+"Celeborn",
+"Celestia",
+"Cloudweaver",
+"Cordelia Maplewood",
+"Cullucai Runecaster",
+"Dingleberry",
+"Draelin Oakenshield",
+"Eilsys Stonesmile",
+"Elandra",
+"Elenara",
+"Elendriel",
+"Elenweyr",
+"Elfo",
+"Elindor",
+"Elondir",
+"Elowen",
+"Elquinal Starcrown",
+"Enqirelle Dolie",
+"Eranos Deathbringer",
+"Evaine Cloudjumper",
+"Faefina Wooddreamer",
+"Faelanor",
+"Faelanwe",
+"Faelenor",
+"Faelindra",
+"Falindor",
+"Finrodan",
+"Fizzgig",
+"Galadhel",
+"Galadra",
+"Galadriel",
+"Galanwe",
+"Galathia",
+"Galathil",
+"Garron Weirwatcher",
+"Gingersnap",
+"Grannok Skullcrusher",
+"Grin Willowthorn",
+"Gwendolyn Birchwood",
+"Hula-Hooper",
+"Iarthana Shildrirrish",
+"Iselle Stormchaser",
+"Isengrin",
+"Jolly Jingle",
+"Jorani Oakenshield",
+"Keelie Oakenshield",
+"Kookie Kringle",
+"Laurana Willowthorn",
+"Lila Silverfrost",
+"Lirin Snowbreeze",
+"Lollypop",
+"Magvyre Larirre",
+"Miavyre Vurnoveviash",
+"Miri Moonfire",
+"Mr. Mistletoe",
+"Naren Riverwind",
+"Nathalie Darknessblight",
+"Nenithra",
+"Nenriel",
+"Nerigella Fallmane",
+"Nirelindil",
+"Nutmeg",
+"Oakenbreeze",
+"Omacan Nusonn",
+"Oreo",
+"Orgulo Pinebranch",
+"Oriana Deathbringer",
+"Peppermint Patti",
+"Qivalur Flenescath",
+"Qivalur Lightflight",
+"Qixidor Windbreeze",
+"Quirky Quince",
+"Raena Willowthorn",
+"Ralokas Dawnbrook",
+"Ralolamin Drultahe",
+"Riverbend",
+"Roscoe",
+"Rowan Riverwind",
+"Saren Seaspray",
+"Seacutter",
+"Serafina Skullcrusher",
+"Silmara",
+"Silmariel",
+"Silvermoon",
+"Snickerdoodle",
+"Starburst",
+"Sylva Silverfrost",
+"Talia Bloodmoon",
+"Taren Starfrost",
+"Thalara",
+"Thalarel",
+"Thalindra",
+"Thalionwen",
+"Thandoria",
+"Thanduril",
+"Thiriana",
+"Thiriandil",
+"Thiriandur",
+"Thirianna",
+"Thornfrade Windrider",
+"Twinkle Toes",
+"Umpa Lumpa",
+"Uthanon Bloodmoon",
+"Valandril",
+"Valanya",
+"Valeria",
+"Varen Cloudjumper",
+"Vixen",
+"Whirly Twirly",
+"Willowfire",
+"Wrantumal Lunint",
+"Wysaphine Galdelenthrash",
+"Xander Sparklebottom",
+"Xandros Soulreaper",
+"Xaviera Soulreaper",
+"Yarik Stormchaser",
+"Yarilani Maplethorn",
+"Yesstina Elderspark",
+"Yoyo",
+"Zoraida Birchshield",
+"Zoren Elmwood",
+"Zorrin Cloudjumper",
+"Zyren Stormchaser",
+"Zyron Starfrost"
         };
 
+        std::sort(names.begin(), names.end());
+        std::set<std::string> ordered;
+        for (const auto& n : names) {
+            ordered.insert(n);
+        }
+
+        for (const auto& n : ordered) {
+//            std::cout << "\"" << n << "\", \n";
+        }
+
+//        return 0;
         shuffle(names);
- //       print(names);
+        auto names_size = names.size();
+        std::cout << names_size << "\n";
 
-        Branch** trees = new Branch* [number_of_trees];
+        Branch** trees = new Branch* [trees_count];
 
-        for (int id = 0; id < number_of_trees; ++id) {
-            int number_of_big_branches = std::rand() % (5 - 3 + 1) + 3;
+        int name_id = 0;
+        for (int id = 0; id < trees_count; ++id) {
+            int big_branches_count = std::rand() % (5 - 3 + 1) + 3;
             std::string tree_name = "Tree_" + std::to_string(id + 1);
-            trees[id] = new Branch{ tree_name, number_of_big_branches };
-            for (int i = 0; i < number_of_big_branches; ++i) {
-                int number_of_middle_branches = std::rand() % (3 - 2 + 1) + 2;
-                std::string big_branch_name = tree_name + " BigBranch_" + std::to_string(i + 1);
-                trees[id]->add_branch(big_branch_name, number_of_middle_branches);
-                for (int j = 0; j < number_of_middle_branches; ++j) {
-                    int number_of_little_branches = 3;
-                    std::string middle_branch_name = big_branch_name + " MiddleBranch_" + std::to_string(j + 1);
-                    trees[id]->get_branch(i)->add_branch(middle_branch_name, number_of_little_branches);
-                    for (int k = 0; k < number_of_little_branches; ++k) {
-                        std::string little_branch_name = middle_branch_name + " LittleBranch_" + std::to_string(k + 1);
-                        trees[id]->get_branch(i)->get_branch(j)->add_branch(little_branch_name, 0);
+            trees[id] = new Branch{ tree_name, big_branches_count };
+
+            if (name_id < names_size) {
+                trees[id]->add_resident(names[name_id++]);
+            }
+
+            for (int i = 0; i < big_branches_count; ++i) {
+                int middle_branches_count = std::rand() % (3 - 2 + 1) + 2;
+                std::string big_branch_name = 
+                    tree_name + " BigBranch_" + std::to_string(i + 1);
+                trees[id]->add_branch(big_branch_name, middle_branches_count);
+
+                if (name_id < names_size) {
+                    trees[id]->get_branch(i)->add_resident(names[name_id++]);
+                }
+
+                for (int j = 0; j < middle_branches_count; ++j) {
+                    int little_branches_count = std::rand() % (3 - 0 + 1) + 0;
+                    std::string middle_branch_name = 
+                        big_branch_name + " MiddleBranch_" + 
+                        std::to_string(j + 1);
+                    trees[id]->get_branch(i)->add_branch(middle_branch_name,
+                        little_branches_count);
+
+                    if (name_id < names_size) {
+                        trees[id]->get_branch(i)->get_branch(j)->add_resident(names[name_id++]);
+                    }
+
+                    for (int k = 0; k < little_branches_count; ++k) {
+                        std::string leaf_name = 
+                            middle_branch_name + " Leaf_" +
+                            std::to_string(k + 1);
+                        trees[id]->get_branch(i)->get_branch(j)->add_branch(
+                            leaf_name, 0);
                     }
                 }
             }
         }
-        
-        delete trees[0];
-//        delete trees[1];
-//        delete trees[2];
-//        delete trees[3];
-//        delete trees[4];
 
-        for (int i = 0; i < number_of_trees; ++i) {
+        std::cout << "\n";
+
+        for (int i = 0; i < trees_count; ++i) {
             trees[i]->print_branches(trees[i]);
         }
     }
