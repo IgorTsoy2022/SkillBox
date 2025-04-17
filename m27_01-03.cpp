@@ -72,7 +72,7 @@ std::string toupper(const std::string& text) {
 
 // Task 3. Elf Village.
 
-enum class type {
+enum class btype {
     trunk = 0,
     big_branch = 1,
     middle_branch = 2,
@@ -119,18 +119,47 @@ public:
         return branches_;
     }
 
-    Branch* get_branch(int id) const {
+    Branch* get_branch(const int id) const {
         if (id < 0 || id >= branches_count_) {
             return nullptr;
         }
         return branches_[id];
     }
 
+    const Branch* get_branch(const std::string_view name, const Branch* current) {
+        if (name.size() == 0 || 
+             current == nullptr) {
+            return nullptr;
+        }
+
+        for (const auto& elem : current->residents_) {
+            if (elem == name) {
+                return current;
+            }
+        }
+
+/*
+        if (current->residents_.size() > 0) {
+            if (current->residents_.count(name) >0) {
+                return current;
+            }
+        }
+*/
+
+        for (int i = 0; i < current->branches_count_; ++i) {
+            auto result = get_branch(name, current->branches_[i]);
+            if (result != nullptr) {
+                return result;
+            }
+        }
+        return nullptr;
+    }
+
     std::set<std::string> get_residents() const {
         return residents_;
     }
 
-    void print_branches(Branch* current) {
+    void print_branches(const Branch* current) const {
         if (current == nullptr) {
             return;
         }
@@ -214,101 +243,54 @@ int main() {
 //        std::rand() % (max - min + 1) + min;
 
         std::vector<std::string> names = {
-"Adceran Biphidrossel",
-"Aelara",
-"Aelinor",
-"Aerendir",
-"Aerinwe",
-"Aerisil",
-"Alandur",
-"Alara Maplewood",
-"Alariel",
-"Alaris",
-"Aldariel",
-"Alfaboo",
-"Aranathor",
-"Arannis",
-"Arwenya",
-"Astra Timberwing",
+"Adceran Biphidrossel", "Aelara",
+"Aelinor", "Aerendir", "Aerinwe",
+"Aerisil", "Alandur", "Alara Maplewood",
+"Alariel", "Alaris", "Aldariel",
+"Alfaboo", "Aranathor", "Arannis",
+"Arwenya", "Astra Timberwing",
 "Athannon Darknessblight",
-"Aylia Seaspray",
-"Baldithas Aspengaze",
-"Bibella Shadowkind",
-"Bippity Bop",
+"Aylia Seaspray", "Baldithas Aspengaze",
+"Bibella Shadowkind", "Bippity Bop",
 "Branwyn Willowthorn",
 "Breana Birchwood",
-"Bryn Starfrost",
-"Caelaria",
-"Caelendir",
-"Caladwen",
-"Calindra",
-"Calithra",
-"Candy Cane",
-"Celeborn",
-"Celestia",
-"Cloudweaver",
-"Cordelia Maplewood",
-"Cullucai Runecaster",
-"Dingleberry",
-"Draelin Oakenshield",
-"Eilsys Stonesmile",
-"Elandra",
-"Elenara",
-"Elendriel",
-"Elenweyr",
-"Elfo",
-"Elindor",
-"Elondir",
-"Elowen",
-"Elquinal Starcrown",
-"Enqirelle Dolie",
+"Bryn Starfrost", "Caelaria",
+"Caelendir", "Caladwen", "Calindra",
+"Calithra", "Candy Cane", "Celeborn",
+"Celestia", "Cloudweaver",
+"Cordelia Maplewood", "Cullucai Runecaster",
+"Dingleberry", "Draelin Oakenshield",
+"Eilsys Stonesmile", "Elandra",
+"Elenara", "Elendriel", "Elenweyr",
+"Elfo", "Elindor", "Elondir", "Elowen",
+"Elquinal Starcrown", "Enqirelle Dolie",
 "Eranos Deathbringer",
 "Evaine Cloudjumper",
 "Faefina Wooddreamer",
-"Faelanor",
-"Faelanwe",
-"Faelenor",
-"Faelindra",
-"Falindor",
-"Finrodan",
-"Fizzgig",
-"Galadhel",
-"Galadra",
-"Galadriel",
-"Galanwe",
-"Galathia",
-"Galathil",
-"Garron Weirwatcher",
-"Gingersnap",
-"Grannok Skullcrusher",
+"Faelanor", "Faelanwe", "Faelenor",
+"Faelindra", "Falindor", "Finrodan",
+"Fizzgig", "Galadhel", "Galadra",
+"Galadriel", "Galanwe", "Galathia",
+"Galathil", "Garron Weirwatcher",
+"Gingersnap", "Grannok Skullcrusher",
 "Grin Willowthorn",
 "Gwendolyn Birchwood",
 "Hula-Hooper",
 "Iarthana Shildrirrish",
 "Iselle Stormchaser",
-"Isengrin",
-"Jolly Jingle",
-"Jorani Oakenshield",
-"Keelie Oakenshield",
-"Kookie Kringle",
+"Isengrin", "Jolly Jingle", "Jorani Oakenshield",
+"Keelie Oakenshield", "Kookie Kringle",
 "Laurana Willowthorn",
 "Lila Silverfrost",
 "Lirin Snowbreeze",
-"Lollypop",
-"Magvyre Larirre",
-"Miavyre Vurnoveviash",
-"Miri Moonfire",
-"Mr. Mistletoe",
-"Naren Riverwind",
+"Lollypop", "Magvyre Larirre",
+"Miavyre Vurnoveviash", "Miri Moonfire",
+"Mr. Mistletoe", "Naren Riverwind",
 "Nathalie Darknessblight",
-"Nenithra",
-"Nenriel",
-"Nerigella Fallmane",
-"Nirelindil",
-"Nutmeg",
-"Oakenbreeze",
-"Omacan Nusonn",
-"Oreo",
+"Nenithra", "Nenriel",
+"Nerigella Fallmane", "Nirelindil",
+"Nutmeg", "Oakenbreeze",
+"Omacan Nusonn", "Oreo",
 "Orgulo Pinebranch",
 "Oriana Deathbringer",
 "Peppermint Patti",
@@ -319,41 +301,23 @@ int main() {
 "Raena Willowthorn",
 "Ralokas Dawnbrook",
 "Ralolamin Drultahe",
-"Riverbend",
-"Roscoe",
+"Riverbend", "Roscoe",
 "Rowan Riverwind",
 "Saren Seaspray",
-"Seacutter",
-"Serafina Skullcrusher",
-"Silmara",
-"Silmariel",
-"Silvermoon",
+"Seacutter", "Serafina Skullcrusher",
+"Silmara", "Silmariel", "Silvermoon",
 "Snickerdoodle",
 "Starburst",
-"Sylva Silverfrost",
-"Talia Bloodmoon",
-"Taren Starfrost",
-"Thalara",
-"Thalarel",
-"Thalindra",
-"Thalionwen",
-"Thandoria",
-"Thanduril",
-"Thiriana",
-"Thiriandil",
-"Thiriandur",
-"Thirianna",
+"Sylva Silverfrost", "Talia Bloodmoon",
+"Taren Starfrost", "Thalara", "Thalarel",
+"Thalindra", "Thalionwen", "Thandoria",
+"Thanduril", "Thiriana", "Thiriandil",
+"Thiriandur", "Thirianna",
 "Thornfrade Windrider",
-"Twinkle Toes",
-"Umpa Lumpa",
-"Uthanon Bloodmoon",
-"Valandril",
-"Valanya",
-"Valeria",
-"Varen Cloudjumper",
-"Vixen",
-"Whirly Twirly",
-"Willowfire",
+"Twinkle Toes", "Umpa Lumpa",
+"Uthanon Bloodmoon", "Valandril",
+"Valanya", "Valeria", "Varen Cloudjumper",
+"Vixen", "Whirly Twirly", "Willowfire",
 "Wrantumal Lunint",
 "Wysaphine Galdelenthrash",
 "Xander Sparklebottom",
@@ -362,14 +326,14 @@ int main() {
 "Yarik Stormchaser",
 "Yarilani Maplethorn",
 "Yesstina Elderspark",
-"Yoyo",
-"Zoraida Birchshield",
+"Yoyo", "Zoraida Birchshield",
 "Zoren Elmwood",
 "Zorrin Cloudjumper",
 "Zyren Stormchaser",
 "Zyron Starfrost"
         };
 
+/*
         std::sort(names.begin(), names.end());
         std::set<std::string> ordered;
         for (const auto& n : names) {
@@ -381,7 +345,8 @@ int main() {
         }
 
 //        return 0;
-        shuffle(names);
+*/
+ //       shuffle(names);
         auto names_size = names.size();
         std::cout << names_size << "\n";
 
@@ -394,7 +359,14 @@ int main() {
             trees[id] = new Branch{ tree_name, big_branches_count };
 
             if (name_id < names_size) {
-                trees[id]->add_resident(names[name_id++]);
+                int residents_count =
+                name_id + std::rand() % (3 - 0 + 1) + 0;
+                if (residents_count > names_size) {
+                	residents_count = names_size;
+                }
+                for (; name_id < residents_count; ++name_id) {
+                    trees[id]->add_resident(names[name_id]);
+                }
             }
 
             for (int i = 0; i < big_branches_count; ++i) {
@@ -404,7 +376,14 @@ int main() {
                 trees[id]->add_branch(big_branch_name, middle_branches_count);
 
                 if (name_id < names_size) {
-                    trees[id]->get_branch(i)->add_resident(names[name_id++]);
+                    int residents_count =
+                         name_id + std::rand() % (3 - 0 + 1) + 0;
+                    if (residents_count > names_size) {
+                	    residents_count = names_size;
+                    }
+                    for (; name_id < residents_count; ++name_id) {
+                        trees[id]->get_branch(i)->add_resident(names[name_id]);
+                    }
                 }
 
                 for (int j = 0; j < middle_branches_count; ++j) {
@@ -416,7 +395,15 @@ int main() {
                         little_branches_count);
 
                     if (name_id < names_size) {
-                        trees[id]->get_branch(i)->get_branch(j)->add_resident(names[name_id++]);
+                        int residents_count =
+                              name_id + std::rand() % (3 - 0 + 1) + 0;
+                        if (residents_count > names_size) {
+                        	residents_count = names_size;
+                        }
+                        
+                        for (; name_id < residents_count; ++name_id) {
+                            trees[id]->get_branch(i)->get_branch(j)->add_resident(names[name_id]);
+                        }
                     }
 
                     for (int k = 0; k < little_branches_count; ++k) {
@@ -434,6 +421,21 @@ int main() {
 
         for (int i = 0; i < trees_count; ++i) {
             trees[i]->print_branches(trees[i]);
+        }
+        
+        std::cout << name_id << "\n";
+
+        std::string name = "Oreo";
+        for (int i = 0; i < 5; ++i) {
+            auto branch = trees[i]->get_branch(name, trees[i]);
+
+            if (branch != nullptr) {
+                std::cout << branch->get_name() << "\n";
+                
+                std::cout << "The folliwing tenants are living with " <<  name << " in the house:\n";
+                for (const auto& n : branch->get_)
+                break;
+            }
         }
     }
 
@@ -457,7 +459,7 @@ int main() {
         std::cout << "\"display\"    - Display the window.\n";
         std::cout << "\"hide\"       - Hide the window.\n";
         std::cout << "\"screen\"     - Display the screen.\n";
-        std::cout << "\"close\"      - Close the window and exit.\n";
+        std::cout << "\"exit\"      - Exit.\n";
 
         std::string input = "";
         while (true) {
@@ -466,7 +468,7 @@ int main() {
             std::stringstream input_stream(input);
             input_stream >> input >> str1 >> str2;
 
-            if (input == "close") {
+            if (input == "exit") {
                 break;
             }
 
