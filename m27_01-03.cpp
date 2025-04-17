@@ -437,13 +437,17 @@ private:
 class Manager : public Employee {
 public:
     Manager(const std::string& name, const std::string& company,
-            int )
-        : Employee(name, company)
-    {
+            const int crew_size)
+        : Employee(name, company) {
+        crew_.resize(crew_size, nullptr);
     };
 
     const std::string_view get_name() const {
         return HumanNature::get_name();
+    }
+
+    std::vector<Employee*> get_crew() {
+        return crew_;
     }
 
     ~Manager() {
@@ -451,7 +455,7 @@ public:
     };
 
 private:
-
+    std::vector<Employee*> crew_;
 };
 
 
@@ -462,7 +466,7 @@ int main() {
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
-        Manager m{ "Igor", "Amazon" };
+        Manager m{ "Igor", "Amazon", 5 };
 
 
         return 0;
