@@ -373,15 +373,15 @@ class HumanNature {
 public:
     HumanNature() {};
 
-    HumanNature(std::string name)
-        : name_(name) {
-    };
+    HumanNature(const std::string& name)
+        : name_(name)
+    {};
 
     const std::string_view get_name() const {
         return name_;
     }
 
-    void set_name(const std::string name) {
+    void set_name(const std::string& name) {
         name_ = name;
     }
 
@@ -395,13 +395,17 @@ private:
 
 class Employee : public HumanNature {
 public:
-    Employee(std::string name, std::string company)
+    Employee(const std::string& name, const std::string& department)
         : HumanNature(name)
-        , company_(company)
+        , department_(department)
     {};
 
     const std::string_view get_name() const {
         return HumanNature::get_name();
+    }
+
+    const std::string_view get_department() const {
+        return department_;
     }
 
     const bool is_busy() const {
@@ -426,36 +430,61 @@ public:
     }
 
     ~Employee() {
-        std::cout << "Dtor Employee: " << get_name() << "\n";
+        std::cout << "Dtor Employee: department = " << department_
+                  << ", name = " << get_name() << "\n";
     };
 
 private:
-    std::string company_ = "unknown";
+    std::string department_ = "unknown";
     TASK task_ = TASK::IDLE;
 };
 
 class Manager : public Employee {
 public:
-    Manager(const std::string& name, const std::string& company,
-            const int crew_size)
-        : Employee(name, company) {
-        crew_.resize(crew_size, nullptr);
-    };
+    Manager(const std::string& name, const std::string& department)
+        : Employee(name, department)
+    {};
 
     const std::string_view get_name() const {
         return HumanNature::get_name();
     }
 
-    std::vector<Employee*> get_crew() {
+    void team_up(Employee*& employee) {
+        crew_.insert(employee);
+        employee = nullptr;
+    }
+
+    void team_up(const std::string& name) {
+        Employee* employee = new Employee(name, std::string(this->get_department()));
+        crew_.insert(employee);
+    }
+
+    Employee* fire(const std::string_view name) {
+        for (const auto ptr : crew_) {
+            if (toupper(std::string(ptr->get_name())) ==
+                toupper(std::string(name))) {
+                crew_.erase(ptr);
+                return ptr;
+            }
+        }
+        return nullptr;
+    }
+
+    const int crew_size() const {
+        return crew_.size();
+    }
+
+    const std::set<Employee*> get_crew() const {
         return crew_;
     }
 
     ~Manager() {
-        std::cout << "Dtor Manager: " << get_name() << "\n";
+        std::cout << "Dtor Manager: department = " << Employee::get_department()
+                  << ", name = " << get_name() << "\n";
     };
 
 private:
-    std::vector<Employee*> crew_;
+    std::set<Employee*> crew_;
 };
 
 
@@ -466,8 +495,27 @@ int main() {
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
-        Manager m{ "Igor", "Amazon", 5 };
+        Employee* emp = new Employee{ "Tom", "department#1" };
+            std::cout << "emp before " << emp->get_name() << "\n";
+        Manager* m = new Manager{ "Igor", "department#1" };
+        m->team_up(emp);
+            if (emp!=nullptr) std::cout << "emp after " << emp->get_name() << "\n";
 
+        for (const auto& c : m->get_crew()) {
+            std::cout << "emp in crew " << c->get_name() << "\n";
+        }
+
+        auto fired = m->fire("Tom");
+        if (fired != nullptr) std::cout << "fired = " << fired->get_name() << "\n";
+        for (const auto& c : m->get_crew()) {
+            std::cout << "emp in crew " << c->get_name() << "\n";
+        }
+
+
+        delete m;
+
+        delete fired;
+        delete emp;
 
         return 0;
     }
