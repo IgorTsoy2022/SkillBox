@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <unordered_map>
 
 bool is_number(const std::string str) {
     if (str.size() < 1) {
@@ -348,19 +349,30 @@ bool settle_elf(const std::string& name, const std::string& house,
 }
 
 bool evict_elf(const std::string& name, Branch** trees) {
-    bool found = false;
     for (int i = 0; i < 5; ++i) {
         auto branch = trees[i]->find_resident(name, trees[i]);
         if (branch != nullptr) {
             branch->evict_resident(name);
-            return true;;
+            return true;
         }
     }
     return false;
 }
 
 
+enum class DIVISION {
+    NONE = 0,
+    D1 = 1,
+    D2 = 2,
+    D3 = 3
+};
 
+enum class POSITION {
+    NONE = 0,
+    CEO = 1,
+    MANAGER = 2,
+    WORKER = 3
+};
 
 enum class TASK {
     IDLE = 0,
@@ -373,7 +385,7 @@ class HumanNature {
 public:
     HumanNature() {};
 
-    HumanNature(const std::string& name)
+    HumanNature(const std::string_view name)
         : name_(name)
     {};
 
@@ -381,145 +393,366 @@ public:
         return name_;
     }
 
-    void set_name(const std::string& name) {
-        name_ = name;
-    }
-
-    ~HumanNature() {
-        std::cout << "Dtor HumanNature: " << name_ << "\n";
+    virtual ~HumanNature() {
+        std::cout << "~HumanNature: " << name_ << "\n";
     };
 
 private:
     std::string name_ = "unknown";
 };
 
-class Employee : public HumanNature {
+class Persons {
 public:
-    Employee(const std::string& name, const std::string& department)
-        : HumanNature(name)
-        , department_(department)
-    {};
+    Persons() {};
 
-    const std::string_view get_name() const {
-        return HumanNature::get_name();
+    HumanNature* add_person(const std::string_view name) {
+        if (name.empty()) {
+            return nullptr;
+        }
+ 
+        if (persons_.count(name) > 0) {
+            std::cout << name << " already exists.\n";
+            return persons_[name];
+        }
+
+        auto person = new HumanNature(name);
+        persons_[person->get_name()] = person;
+        return person;
     }
 
-    const std::string_view get_department() const {
-        return department_;
+    void remove_person(const std::string_view name) {
+         if (persons_.count(name) == 0) {
+             std::cout << name << " not exists.\n";
+             return;
+         }
+         delete persons_[name];
+         persons_.erase(name);
+    }
+
+    HumanNature* get_person(const std::string_view name) {
+        if (persons_.count(name) > 0) {
+            return persons_[name];
+        }
+        return nullptr;
+    }
+
+    ~Persons() {
+        for(const auto& [_, person] : persons_) {
+            delete person;
+        }
+        std::cout << "~Persons" << std::endl;
+    };
+
+private:
+    std::map<std::string_view, HumanNature*> persons_;
+};
+
+class Employee {
+public:
+    Employee(HumanNature* person)
+        : person_(person)
+    {};
+
+    Employee* get_employee() {
+        return this;
+    }
+
+    const std::string_view get_name() {
+        return person_->get_name();
+    }
+
+    void set_division(const string_view division) {
+        division_ = division;
+    }
+
+    const std::string_view get_division() const {
+        return division_;
+    }
+
+    void set_position(const POSITION& position) {
+        position_ = position;
+    }
+
+    const POSITION get_position() {
+        return position_;
     }
 
     const bool is_busy() const {
         return task_ != TASK::IDLE;
     }
 
-    const std::string_view get_taskname() const {
-        switch (task_) {
-        case TASK::A:
-            return "A";
-        case TASK::B:
-            return "B";
-        case TASK::C:
-            return "C";
-        default:
-            return "IDLE";
-        }
-    }
-
     void set_task(const TASK task) {
         task_ = task;
     }
 
-    ~Employee() {
-        std::cout << "Dtor Employee: department = " << department_
-                  << ", name = " << get_name() << "\n";
+    const TASK get_task() const {
+        return task_;
+    }
+
+    virtual ~Employee() {
+        std::cout << "~Employee: "
+                  << person_->get_name() << "\n";
     };
 
 private:
-    std::string department_ = "unknown";
+    HumanNature* person_ = nullptr;
+    std::string_view division_;
+    
+    POSITION position_ = POSITION::NONE;
     TASK task_ = TASK::IDLE;
 };
 
 class Manager : public Employee {
 public:
-    Manager(const std::string& name, const std::string& department)
-        : Employee(name, department)
+    Manager(HumanNature* person) 
+        : Employee(person)
     {};
 
-    const std::string_view get_name() const {
-        return HumanNature::get_name();
+    void set_crew(std::set<Employee*>* crew) {
+        crew_ = crew;
+    }
+
+    const std::set<Employee*>* get_crew() const {
+        return crew_;
     }
 
     void team_up(Employee*& employee) {
-        crew_.insert(employee);
-        employee = nullptr;
+        if (crew_ == nullptr) {
+            return;
+        }
+        crew_->insert(employee);
     }
 
+/*
     void team_up(const std::string& name) {
+        std::string NAME = toupper(name);
+        for (const auto &employee : crew_) {
+            if (toupper(std::string(employee->get_name())) == NAME) {
+                return;
+            }
+        }
         Employee* employee = new Employee(name, std::string(this->get_department()));
         crew_.insert(employee);
     }
 
     Employee* fire(const std::string_view name) {
-        for (const auto ptr : crew_) {
-            if (toupper(std::string(ptr->get_name())) ==
-                toupper(std::string(name))) {
-                crew_.erase(ptr);
-                return ptr;
+        std::string NAME = toupper(std::string(name));
+        for (const auto employee : crew_) {
+            if (toupper(std::string(employee->get_name())) == NAME) {
+                crew_.erase(employee);
+                return employee;
             }
         }
         return nullptr;
     }
-
+*/
     const int crew_size() const {
-        return crew_.size();
+        return crew_->size();
     }
 
-    const std::set<Employee*> get_crew() const {
-        return crew_;
-    }
-
-    ~Manager() {
-        std::cout << "Dtor Manager: department = " << Employee::get_department()
-                  << ", name = " << get_name() << "\n";
+    virtual ~Manager() {
+        std::cout << "~Manager: "
+                  << get_name() << "\n";
     };
 
 private:
-    std::set<Employee*> crew_;
+    std::set<Employee*>* crew_ = nullptr;
 };
+
+class CEO : public Manager {
+public:
+    CEO(HumanNature* person) 
+        : Manager(person)
+    {};
+
+    ~CEO() {
+        std::cout << "~CEO: "
+                 << get_name() << "\n";
+    };
+
+private:
+    std::set<Manager*> managers_;
+};
+
+class Company {
+public:
+    Company() {};
+    Company(Persons* persons)
+        : persons_(persons)
+    {};
+
+    void set_persons(Persons* persons) {
+        persons_ = persons;
+    }
+
+    const std::map<std::string, std::set<Employee*>> crews() const {
+        return crews_;
+    }
+
+    void add_division(const std::string_view division) {
+        if (division.size() == 0) {
+            return;
+        }
+        crews_[division];
+    }
+
+
+
+
+    Employee* add_employee(const std::string_view name) {
+        if (name.empty()) {
+            return nullptr;
+        }
+
+         if (employees_.count(name) > 0) {
+             std::cout << "Employee " << name << " already exists.\n";
+            return employees_[name];
+         }
+ 
+        auto person = persons_->add_person(name);
+
+        auto employee = new Employee(person);
+        employees_[person->get_name()] = employee;
+        return employee;
+    }
+
+    void remove_employee(const std::string_view name) {
+        if (employees_.count(name) == 0) {
+             std::cout << "Employee " << name << " not exists.\n";
+             return;
+         }
+         
+         for (auto& [_, employees] : crews_) {
+             for (auto& employee : employees) {
+                 if (employee == employees_[name]) {
+                     employees.erase(employee);
+                 }
+             }
+         }
+
+         delete employees_[name];
+         employees_.erase(name);
+    }
+
+    Employee* get_employee(const std::string_view name) {
+        if (employees_.count(name) > 0) {
+            return employees_[name];
+        }
+        return nullptr;
+    }
+
+    Manager* add_manager(const std::string_view name) {
+        if (name.empty()) {
+            return nullptr;
+        }
+
+        if (managers_.count(name) > 0) {
+            std::cout << "Manager " << name << " already exists.\n";
+            return managers_[name];
+        }
+
+        auto person = persons_->add_person(name);
+
+        auto manager = new Manager(person);
+
+        managers_[person->get_name()] = manager;
+        return manager;
+    }
+
+    void remove_manager(const std::string_view name) {
+        if (managers_.count(name) == 0) {
+             std::cout << "Manager " << name << " not exists.\n";
+             return;
+         }
+         delete managers_[name];
+         managers_.erase(name);
+    }
+
+    Manager* get_manager(const std::string_view name) {
+        if (managers_.count(name) > 0) {
+            return managers_[name];
+        }
+        return nullptr;
+    }
+
+    CEO* appoint(const std::string_view name) {
+        if (name.empty()) {
+            return nullptr;
+        }
+
+        if (ceo_ != nullptr) {
+            if (ceo_->get_name() == name) {
+                return ceo_;
+            }
+            delete ceo_;
+        }
+
+        auto person = persons_->add_person(name);
+
+        ceo_ = new CEO(person);
+
+        return ceo_;
+    }
+
+    ~Company() {
+        for (const auto& [_, employee] : employees_) {
+            delete employee;
+        }
+        for (const auto& [_, manager] : managers_) {
+            delete manager;
+        }
+        delete ceo_;
+        std::cout << "~Company\n";
+    }
+
+private:
+    Persons* persons_ = nullptr;
+    std::map<std::string_view, Employee*> employees_;
+    std::map<std::string_view, Manager*> managers_;
+    CEO* ceo_ = nullptr;
+    std::map<std::string, std::set<Employee*>> crews_;
+
+};
+
+
+
 
 
 int main() {
 
     {
-        const int trees_count = 5;
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
-        Employee* emp = new Employee{ "Tom", "department#1" };
-            std::cout << "emp before " << emp->get_name() << "\n";
-        Manager* m = new Manager{ "Igor", "department#1" };
-        m->team_up(emp);
-            if (emp!=nullptr) std::cout << "emp after " << emp->get_name() << "\n";
+        Persons persons;
 
-        for (const auto& c : m->get_crew()) {
-            std::cout << "emp in crew " << c->get_name() << "\n";
+        Company company(&persons);
+        
+        auto ptr1 = company.add_employee("Tristan");
+        auto ptr2 = company.add_employee("Zorro");
+        
+//       *(company.crews())["no1"].insert(ptr1);
+//       *(company.crews())["no1"].insert(ptr2);
+        
+        for (const auto& [div, emps] : company.crews()) {
+        std::cout << div << "\n";
+        for (const auto& e : emps) {
+            std::cout << e->get_name() << "\n";
         }
-
-        auto fired = m->fire("Tom");
-        if (fired != nullptr) std::cout << "fired = " << fired->get_name() << "\n";
-        for (const auto& c : m->get_crew()) {
-            std::cout << "emp in crew " << c->get_name() << "\n";
         }
-
-
-        delete m;
-
-        delete fired;
-        delete emp;
-
-        return 0;
+        company.add_manager("Izolda");
+       company.remove_employee("Zorro");
+       
+       
+for (const auto& [div, emps] : company.crews()) {
+        std::cout << div << "\n";
+        for (const auto& e : emps) {
+            std::cout << e->get_name() << "\n";
+        }
+        }
+        
     }
-
+return 0;
     {
  //       std::cout << "Task 1. Hierarchy of geometric shapes.\n";
     }
