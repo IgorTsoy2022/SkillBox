@@ -519,10 +519,15 @@ private:
 
 class Company {
 public:
-    Company() {};
+    Company() {
+        init_tasks();
+    };
+
     Company(Persons* persons)
         : persons_(persons)
-    {};
+    {
+        init_tasks();
+    };
 
     void set_persons(Persons* persons) {
         persons_ = persons;
@@ -568,7 +573,6 @@ public:
 
         employees_[person->get_name()] = employee;
 
-
         return employee;
     }
 
@@ -594,6 +598,20 @@ public:
             return employees_[name];
         }
         return nullptr;
+    }
+
+    std::string_view get_task(std::string_view name) {
+        if (employees_.count(name) > 0) {
+        	return tasks_[employees_[name]->get_task()];
+        }
+        return "";
+    }
+
+    std::string_view get_task(Employee* employee) {
+        if (employee != nullptr) {
+        	return tasks_[employee->get_task()];
+        }
+        return "";
     }
 
 //    const std::map<std::string_view, Manager*> get_managers() const {
@@ -670,14 +688,37 @@ public:
         return ceo_;
     }
 
-    void print_staff_list() {
+    void print_managers_list() {
         std::cout << "CEO: " << ceo_->get_name() << "\n";
         for (const auto& [_, manager] : managers_) {
             std::cout << "Division: " << manager->get_division() << "\n";
             std::cout << "Manager:  " << manager->get_name() << "\n";
             std::cout << "Workers:\n";
             for (const auto& employee : *manager->get_crew()) {
-                std::cout << "          " << employee->get_name() << "\n";
+                std::cout << "          " << employee->get_name() 
+                << " " << tasks_[employee->get_task()] << "\n";
+            }
+        }
+    }
+
+    std::string_view  find_crew_manager(const std::string_view division) {
+        for (const auto& [name, manager] : managers_) {
+            if (manager->get_division() == division) {
+                return name;
+            }
+        }
+        return "";
+    }
+
+    void print_staff_list() {
+        std::cout << "CEO: " << ceo_->get_name() << "\n";
+        for (const auto& [division, employees] : crews_) {
+            std::cout << "Division: " << division << "\n";
+            std::cout << "Manager:  " << find_crew_manager(division) << "\n";
+            std::cout << "Workers:\n";
+            for (const auto& employee : employees) {
+                std::cout << "          " << employee->get_name() 
+                << " " << tasks_[employee->get_task()] << "\n";
             }
         }
     }
@@ -699,7 +740,13 @@ private:
     std::map<std::string_view, Manager*> managers_;
     CEO* ceo_ = nullptr;
     std::map<std::string, std::set<Employee*>> crews_;
-
+    std::map<TASK, std::string> tasks_;
+    void init_tasks() {
+        tasks_[TASK::IDLE] = "idle";
+        tasks_[TASK::A] = "task A";
+        tasks_[TASK::B] = "task B";
+        tasks_[TASK::C] = "task C";
+    }
 };
 
 
@@ -755,9 +802,15 @@ int main() {
 "Zoraida Birchshield", "Zoren Elmwood", "Zorrin Cloudjumper",
 "Zyren Stormchaser", "Zyron Starfrost"
     };
-//    shuffle(names);
+    shuffle(names);
 
     {
+ //       std::cout << "Task 1. Hierarchy of geometric shapes.\n";
+    }
+
+    {
+        std::cout << "\nTask 2. Company simulation.\n";
+        
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
@@ -818,48 +871,14 @@ int main() {
         std::cout << "Total number of staff - " << name_id << " persons.\n";
 
         std::cout << "\n";
-        company.print_staff_list();
+        
         std::cout << "\n";
-
-        while (true) {
-            if (input == "exit") {
-                break;
-            }
-
-            if (is_number(input)) {
-                if (crews_count == 0) {
-                    crews_count = std::stod(input);
-                }
-                else {
-                    crew_max_employees = std::stod(input);
-                }
-            }
-
-            if (crews_count == 0) {
-                std::cout << "Enter the number of crews: ";
-            }
-            else if (crew_max_employees == 0) {
-                std::cout << "Enter the maximum number of employees in crew: ";
-            }
-            else {
-                break;
-            }
-            std::getline(std::cin, input);
-        }
-    }
-return 0;
-    {
- //       std::cout << "Task 1. Hierarchy of geometric shapes.\n";
-    }
-
-    {
-        std::cout << "\nTask 2. Company simulation.\n";
+        
         std::cout << "Commands:\n";
         std::cout << "\"order\" - Instructions from the company's head.\n";
         std::cout << "\"print\" - Display the staff list.\n";
         std::cout << "\"exit\"  - Exit.\n";
 
-        std::string input = "";
         std::string str1 = "";
         std::string str2 = "";
         while (true) {
@@ -869,13 +888,17 @@ return 0;
             }
 
 
+
+
+            if (input == "print") {
+                company.print_staff_list();
+            }
+
             std::cout << "Command > ";
             std::getline(std::cin, input);
         }
-
-        return 0;
     }
-
+return 0;
     {
         std::cout << "Task 3. Elf Village.\n";
         const int trees_count = 5;
