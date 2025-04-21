@@ -360,20 +360,6 @@ bool evict_elf(const std::string& name, Branch** trees) {
 }
 
 
-enum class DIVISION {
-    NONE = 0,
-    D1 = 1,
-    D2 = 2,
-    D3 = 3
-};
-
-enum class POSITION {
-    NONE = 0,
-    CEO = 1,
-    MANAGER = 2,
-    WORKER = 3
-};
-
 enum class TASK {
     IDLE = 0,
     A = 1,
@@ -449,8 +435,9 @@ private:
 
 class Employee {
 public:
-    Employee(HumanNature* person)
+    Employee(HumanNature* person, std::string_view division = "")
         : person_(person)
+        , division_(division)
     {};
 
     Employee* get_employee() {
@@ -461,20 +448,12 @@ public:
         return person_->get_name();
     }
 
-    void set_division(const string_view division) {
+    void set_division(const std::string_view division) {
         division_ = division;
     }
 
     const std::string_view get_division() const {
         return division_;
-    }
-
-    void set_position(const POSITION& position) {
-        position_ = position;
-    }
-
-    const POSITION get_position() {
-        return position_;
     }
 
     const bool is_busy() const {
@@ -498,14 +477,13 @@ private:
     HumanNature* person_ = nullptr;
     std::string_view division_;
     
-    POSITION position_ = POSITION::NONE;
     TASK task_ = TASK::IDLE;
 };
 
 class Manager : public Employee {
 public:
-    Manager(HumanNature* person) 
-        : Employee(person)
+    Manager(HumanNature* person, std::string_view division = "")
+        : Employee(person, division)
     {};
 
     void set_crew(std::set<Employee*>* crew) {
@@ -514,40 +492,6 @@ public:
 
     const std::set<Employee*>* get_crew() const {
         return crew_;
-    }
-
-    void team_up(Employee*& employee) {
-        if (crew_ == nullptr) {
-            return;
-        }
-        crew_->insert(employee);
-    }
-
-/*
-    void team_up(const std::string& name) {
-        std::string NAME = toupper(name);
-        for (const auto &employee : crew_) {
-            if (toupper(std::string(employee->get_name())) == NAME) {
-                return;
-            }
-        }
-        Employee* employee = new Employee(name, std::string(this->get_department()));
-        crew_.insert(employee);
-    }
-
-    Employee* fire(const std::string_view name) {
-        std::string NAME = toupper(std::string(name));
-        for (const auto employee : crew_) {
-            if (toupper(std::string(employee->get_name())) == NAME) {
-                crew_.erase(employee);
-                return employee;
-            }
-        }
-        return nullptr;
-    }
-*/
-    const int crew_size() const {
-        return crew_->size();
     }
 
     virtual ~Manager() {
@@ -561,13 +505,12 @@ private:
 
 class CEO : public Manager {
 public:
-    CEO(HumanNature* person) 
+    CEO(HumanNature* person)
         : Manager(person)
     {};
 
     ~CEO() {
-        std::cout << "~CEO: "
-                 << get_name() << "\n";
+        std::cout << "~CEO: " << get_name() << "\n";
     };
 
 private:
@@ -585,21 +528,19 @@ public:
         persons_ = persons;
     }
 
-    const std::map<std::string, std::set<Employee*>> crews() const {
-        return crews_;
-    }
-
     void add_division(const std::string_view division) {
         if (division.size() == 0) {
             return;
         }
-        crews_[division];
+        crews_[std::string(division)];
     }
 
+//    const std::map<std::string_view, Employee*> get_employees() const {
+//        return employees_;
+//    }
 
-
-
-    Employee* add_employee(const std::string_view name) {
+    Employee* add_employee(const std::string_view name,
+                           const std::string_view division = "") {
         if (name.empty()) {
             return nullptr;
         }
@@ -612,7 +553,22 @@ public:
         auto person = persons_->add_person(name);
 
         auto employee = new Employee(person);
+
+        if (division.size() > 0) {
+            std::string key = std::string(division);
+            if (crews_.count(key) > 0) {
+                auto it = crews_.find(key);
+                employee->set_division(it->first);
+                crews_[key].insert(employee);
+            }
+            else {
+                employee->set_division("");
+            }
+        }
+
         employees_[person->get_name()] = employee;
+
+
         return employee;
     }
 
@@ -620,15 +576,14 @@ public:
         if (employees_.count(name) == 0) {
              std::cout << "Employee " << name << " not exists.\n";
              return;
-         }
+        }
          
-         for (auto& [_, employees] : crews_) {
-             for (auto& employee : employees) {
-                 if (employee == employees_[name]) {
-                     employees.erase(employee);
-                 }
-             }
-         }
+        for (auto& [_, employees] : crews_) {
+            auto it = employees.find(employees_[name]);
+            if (it != employees.end()) {
+                employees.erase(it);
+            }
+        }
 
          delete employees_[name];
          employees_.erase(name);
@@ -641,7 +596,12 @@ public:
         return nullptr;
     }
 
-    Manager* add_manager(const std::string_view name) {
+//    const std::map<std::string_view, Manager*> get_managers() const {
+//        return managers_;
+//    }
+
+    Manager* add_manager(const std::string_view name,
+                         const std::string_view division = "") {
         if (name.empty()) {
             return nullptr;
         }
@@ -654,6 +614,18 @@ public:
         auto person = persons_->add_person(name);
 
         auto manager = new Manager(person);
+
+        if (division.size() > 0) {
+            std::string key = std::string(division);
+            if (crews_.count(key) > 0) {
+                auto it = crews_.find(key);
+                manager->set_division(it->first);
+                manager->set_crew(&crews_[key]);
+            }
+            else {
+                manager->set_division("");
+            }
+        }
 
         managers_[person->get_name()] = manager;
         return manager;
@@ -675,7 +647,7 @@ public:
         return nullptr;
     }
 
-    CEO* appoint(const std::string_view name) {
+    CEO* appoint_ceo(const std::string_view name) {
         if (name.empty()) {
             return nullptr;
         }
@@ -692,6 +664,22 @@ public:
         ceo_ = new CEO(person);
 
         return ceo_;
+    }
+
+    CEO* get_ceo() {
+        return ceo_;
+    }
+
+    void print_staff_list() {
+        std::cout << "CEO: " << ceo_->get_name() << "\n";
+        for (const auto& [_, manager] : managers_) {
+            std::cout << "Division: " << manager->get_division() << "\n";
+            std::cout << "Manager:  " << manager->get_name() << "\n";
+            std::cout << "Workers:\n";
+            for (const auto& employee : *manager->get_crew()) {
+                std::cout << "          " << employee->get_name() << "\n";
+            }
+        }
     }
 
     ~Company() {
@@ -719,38 +707,145 @@ private:
 
 
 int main() {
+    std::vector<std::string> names = {
+"Adceran Biphidrossel", "Aelara", "Aelinor", "Aerendir", "Aerinwe",
+"Aerisil", "Alandur", "Alara Maplewood", "Alariel", "Alaris",
+"Aldariel", "Alfaboo", "Aranathor", "Arannis", "Arwenya",
+"Astra Timberwing", "Athannon Darknessblight", "Aylia Seaspray",
+"Baldithas Aspengaze", "Bibella Shadowkind", "Bippity Bop",
+"Branwyn Willowthorn", "Breana Birchwood", "Bryn Starfrost",
+"Caelaria", "Caelendir", "Caladwen", "Calindra", "Calithra",
+"Candy Cane", "Celeborn", "Celestia", "Cloudweaver",
+"Cordelia Maplewood", "Cullucai Runecaster",
+"Dingleberry", "Draelin Oakenshield",
+"Eilsys Stonesmile", "Elandra", "Elenara", "Elendriel", "Elenweyr",
+"Elfo", "Elindor", "Elondir", "Elowen", "Elquinal Starcrown",
+"Enqirelle Dolie", "Eranos Deathbringer", "Evaine Cloudjumper",
+"Faefina Wooddreamer", "Faelanor", "Faelanwe", "Faelenor",
+"Faelindra", "Falindor", "Finrodan", "Fizzgig",
+"Galadhel", "Galadra", "Galadriel", "Galanwe", "Galathia",
+"Galathil", "Garron Weirwatcher", "Gingersnap",
+"Grannok Skullcrusher", "Grin Willowthorn", "Gwendolyn Birchwood",
+"Hula-Hooper",
+"Iarthana Shildrirrish", "Iselle Stormchaser", "Isengrin",
+"Jolly Jingle", "Jorani Oakenshield", "Keelie Oakenshield",
+"Kookie Kringle", "Laurana Willowthorn", "Lila Silverfrost",
+"Lirin Snowbreeze", "Lollypop", "Magvyre Larirre",
+"Miavyre Vurnoveviash", "Miri Moonfire", "Mr. Mistletoe",
+"Naren Riverwind", "Nathalie Darknessblight", "Nenithra",
+"Nenriel", "Nerigella Fallmane", "Nirelindil", "Nutmeg",
+"Oakenbreeze", "Omacan Nusonn", "Oreo", "Orgulo Pinebranch",
+"Oriana Deathbringer", "Peppermint Patti",
+"Qivalur Flenescath", "Qixidor Windbreeze", "Quirky Quince",
+"Raena Willowthorn", "Ralokas Dawnbrook", "Ralolamin Drultahe",
+"Riverbend", "Roscoe", "Rowan Riverwind",
+"Saren Seaspray", "Seacutter", "Serafina Skullcrusher", "Silmara",
+"Silmariel", "Silvermoon", "Snickerdoodle", "Starburst",
+"Sylva Silverfrost", "Talia Bloodmoon", "Taren Starfrost",
+"Thalara", "Thalarel", "Thalindra", "Thalionwen", "Thandoria",
+"Thanduril", "Thiriana", "Thiriandil", "Thiriandur", "Thirianna",
+"Thornfrade Windrider", "Twinkle Toes",
+"Umpa Lumpa", "Uthanon Bloodmoon",
+"Valandril", "Valanya", "Valeria", "Varen Cloudjumper", "Vixen",
+"Whirly Twirly", "Willowfire", "Wrantumal Lunint",
+"Wysaphine Galdelenthrash",
+"Xander Sparklebottom", "Xandros Soulreaper", "Xaviera Soulreaper",
+"Yarik Stormchaser", "Yarilani Maplethorn", "Yesstina Elderspark",
+"Yoyo",
+"Zoraida Birchshield", "Zoren Elmwood", "Zorrin Cloudjumper",
+"Zyren Stormchaser", "Zyron Starfrost"
+    };
+//    shuffle(names);
 
     {
         std::srand(std::time(nullptr));
 //        std::rand() % (max - min + 1) + min;
 
-        Persons persons;
-
+        Persons persons{};
         Company company(&persons);
-        
-        auto ptr1 = company.add_employee("Tristan");
-        auto ptr2 = company.add_employee("Zorro");
-        
-//       *(company.crews())["no1"].insert(ptr1);
-//       *(company.crews())["no1"].insert(ptr2);
-        
-        for (const auto& [div, emps] : company.crews()) {
-        std::cout << div << "\n";
-        for (const auto& e : emps) {
-            std::cout << e->get_name() << "\n";
+
+        int name_id = 0;
+        int crews_count = 0;
+        int crew_max_employees = 0;
+
+        std::string input = "";
+        while (true) {
+            if (input == "exit") {
+                break;
+            }
+
+            if (is_number(input)) {
+                if (crews_count == 0) {
+                    crews_count = std::stod(input);
+                }
+                else {
+                    crew_max_employees = std::stod(input);
+                }
+            }
+
+            if (crews_count == 0) {
+                std::cout << "Enter the number of crews: ";
+            }
+            else if (crew_max_employees == 0) {
+                std::cout << "Enter the maximum number of employees in crew: ";
+            }
+            else {
+                break;
+            }
+            std::getline(std::cin, input);
         }
+
+        company.appoint_ceo(names[name_id++]);
+        int crew_id = 0;
+        for (; crew_id < crews_count; ++crew_id) {
+            int employees_count = std::rand() % (crew_max_employees - 1 + 1) + 1;
+            std::string division = "division#" + std::to_string(crew_id + 1);
+            company.add_division(division);
+            company.add_manager(names[name_id++], division);
+            if (name_id == names.size()) {
+                break;
+            }
+            for (int j = 0; j < employees_count; ++j) {
+                company.add_employee(names[name_id++], division);
+                if (name_id == names.size()) {
+                    break;
+                }
+            }
+            division = "";
         }
-        company.add_manager("Izolda");
-       company.remove_employee("Zorro");
-       
-       
-for (const auto& [div, emps] : company.crews()) {
-        std::cout << div << "\n";
-        for (const auto& e : emps) {
-            std::cout << e->get_name() << "\n";
+
+        std::cout << "The company has " << crew_id << " divisions.\n";
+        std::cout << "Total number of staff - " << name_id << " persons.\n";
+
+        std::cout << "\n";
+        company.print_staff_list();
+        std::cout << "\n";
+
+        while (true) {
+            if (input == "exit") {
+                break;
+            }
+
+            if (is_number(input)) {
+                if (crews_count == 0) {
+                    crews_count = std::stod(input);
+                }
+                else {
+                    crew_max_employees = std::stod(input);
+                }
+            }
+
+            if (crews_count == 0) {
+                std::cout << "Enter the number of crews: ";
+            }
+            else if (crew_max_employees == 0) {
+                std::cout << "Enter the maximum number of employees in crew: ";
+            }
+            else {
+                break;
+            }
+            std::getline(std::cin, input);
         }
-        }
-        
     }
 return 0;
     {
@@ -760,10 +855,8 @@ return 0;
     {
         std::cout << "\nTask 2. Company simulation.\n";
         std::cout << "Commands:\n";
-        std::cout << "\"find\"  - Find a resident.\n";
-        std::cout << "\"add\"   - Settle a resident.\n";
-        std::cout << "\"evict\" - Evict the resident.\n";
-        std::cout << "\"print\" - Display the trees.\n";
+        std::cout << "\"order\" - Instructions from the company's head.\n";
+        std::cout << "\"print\" - Display the staff list.\n";
         std::cout << "\"exit\"  - Exit.\n";
 
         std::string input = "";
@@ -788,55 +881,6 @@ return 0;
         const int trees_count = 5;
         std::srand(std::time(nullptr));
         //        std::rand() % (max - min + 1) + min;
-
-        std::vector<std::string> names = {
-    "Adceran Biphidrossel", "Aelara", "Aelinor", "Aerendir", "Aerinwe",
-    "Aerisil", "Alandur", "Alara Maplewood", "Alariel", "Alaris",
-    "Aldariel", "Alfaboo", "Aranathor", "Arannis", "Arwenya",
-    "Astra Timberwing", "Athannon Darknessblight", "Aylia Seaspray",
-    "Baldithas Aspengaze", "Bibella Shadowkind", "Bippity Bop",
-    "Branwyn Willowthorn", "Breana Birchwood", "Bryn Starfrost",
-    "Caelaria", "Caelendir", "Caladwen", "Calindra", "Calithra",
-    "Candy Cane", "Celeborn", "Celestia", "Cloudweaver",
-    "Cordelia Maplewood", "Cullucai Runecaster",
-    "Dingleberry", "Draelin Oakenshield",
-    "Eilsys Stonesmile", "Elandra", "Elenara", "Elendriel", "Elenweyr",
-    "Elfo", "Elindor", "Elondir", "Elowen", "Elquinal Starcrown",
-    "Enqirelle Dolie", "Eranos Deathbringer", "Evaine Cloudjumper",
-    "Faefina Wooddreamer", "Faelanor", "Faelanwe", "Faelenor",
-    "Faelindra", "Falindor", "Finrodan", "Fizzgig",
-    "Galadhel", "Galadra", "Galadriel", "Galanwe", "Galathia",
-    "Galathil", "Garron Weirwatcher", "Gingersnap",
-    "Grannok Skullcrusher", "Grin Willowthorn", "Gwendolyn Birchwood",
-    "Hula-Hooper",
-    "Iarthana Shildrirrish", "Iselle Stormchaser", "Isengrin",
-    "Jolly Jingle", "Jorani Oakenshield", "Keelie Oakenshield",
-    "Kookie Kringle", "Laurana Willowthorn", "Lila Silverfrost",
-    "Lirin Snowbreeze", "Lollypop", "Magvyre Larirre",
-    "Miavyre Vurnoveviash", "Miri Moonfire", "Mr. Mistletoe",
-    "Naren Riverwind", "Nathalie Darknessblight", "Nenithra",
-    "Nenriel", "Nerigella Fallmane", "Nirelindil", "Nutmeg",
-    "Oakenbreeze", "Omacan Nusonn", "Oreo", "Orgulo Pinebranch",
-    "Oriana Deathbringer", "Peppermint Patti",
-    "Qivalur Flenescath", "Qixidor Windbreeze", "Quirky Quince",
-    "Raena Willowthorn", "Ralokas Dawnbrook", "Ralolamin Drultahe",
-    "Riverbend", "Roscoe", "Rowan Riverwind",
-    "Saren Seaspray", "Seacutter", "Serafina Skullcrusher", "Silmara",
-    "Silmariel", "Silvermoon", "Snickerdoodle", "Starburst",
-    "Sylva Silverfrost", "Talia Bloodmoon", "Taren Starfrost",
-    "Thalara", "Thalarel", "Thalindra", "Thalionwen", "Thandoria",
-    "Thanduril", "Thiriana", "Thiriandil", "Thiriandur", "Thirianna",
-    "Thornfrade Windrider", "Twinkle Toes",
-    "Umpa Lumpa", "Uthanon Bloodmoon",
-    "Valandril", "Valanya", "Valeria", "Varen Cloudjumper", "Vixen",
-    "Whirly Twirly", "Willowfire", "Wrantumal Lunint",
-    "Wysaphine Galdelenthrash",
-    "Xander Sparklebottom", "Xandros Soulreaper", "Xaviera Soulreaper",
-    "Yarik Stormchaser", "Yarilani Maplethorn", "Yesstina Elderspark",
-    "Yoyo",
-    "Zoraida Birchshield", "Zoren Elmwood", "Zorrin Cloudjumper",
-    "Zyren Stormchaser", "Zyron Starfrost"
-        };
 
         shuffle(names);
         Branch** trees = new Branch * [trees_count];
