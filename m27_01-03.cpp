@@ -364,7 +364,8 @@ enum class TASK {
     IDLE = 0,
     A = 1,
     B = 2,
-    C = 3
+    C = 3,
+    BUSY = 100
 };
 
 class HumanNature {
@@ -540,9 +541,13 @@ public:
         crews_[std::string(division)];
     }
 
-//    const std::map<std::string_view, Employee*> get_employees() const {
-//        return employees_;
-//    }
+    const std::map<std::string, std::set<Employee*>>* get_divisions() const {
+        return &crews_;
+    }
+
+    const int get_divisions_count() const {
+        return crews_.size();
+    }
 
     Employee* add_employee(const std::string_view name,
                            const std::string_view division = "") {
@@ -613,10 +618,6 @@ public:
         }
         return "";
     }
-
-//    const std::map<std::string_view, Manager*> get_managers() const {
-//        return managers_;
-//    }
 
     Manager* add_manager(const std::string_view name,
                          const std::string_view division = "") {
@@ -692,7 +693,8 @@ public:
         std::cout << "CEO: " << ceo_->get_name() << "\n";
         for (const auto& [_, manager] : managers_) {
             std::cout << "Division: " << manager->get_division() << "\n";
-            std::cout << "Manager:  " << manager->get_name() << "\n";
+            std::cout << "Manager:  " << manager->get_name() << " "
+                      << tasks_[manager->get_task()] << "\n";
             std::cout << "Workers:\n";
             for (const auto& employee : *manager->get_crew()) {
                 std::cout << "          " << employee->get_name() 
@@ -701,20 +703,22 @@ public:
         }
     }
 
-    std::string_view  find_crew_manager(const std::string_view division) {
+    Manager* find_crew_manager(const std::string_view division) {
         for (const auto& [name, manager] : managers_) {
             if (manager->get_division() == division) {
-                return name;
+                return manager;
             }
         }
-        return "";
+        return nullptr;
     }
 
     void print_staff_list() {
         std::cout << "CEO: " << ceo_->get_name() << "\n";
         for (const auto& [division, employees] : crews_) {
             std::cout << "Division: " << division << "\n";
-            std::cout << "Manager:  " << find_crew_manager(division) << "\n";
+            auto manager = find_crew_manager(division);
+            std::cout << "Manager:  " << manager->get_name() << " "
+                      << tasks_[manager->get_task()] << "\n";
             std::cout << "Workers:\n";
             for (const auto& employee : employees) {
                 std::cout << "          " << employee->get_name() 
@@ -740,16 +744,61 @@ private:
     std::map<std::string_view, Manager*> managers_;
     CEO* ceo_ = nullptr;
     std::map<std::string, std::set<Employee*>> crews_;
+
     std::map<TASK, std::string> tasks_;
     void init_tasks() {
         tasks_[TASK::IDLE] = "idle";
         tasks_[TASK::A] = "task A";
         tasks_[TASK::B] = "task B";
         tasks_[TASK::C] = "task C";
+        tasks_[TASK::BUSY] = "busy";
     }
 };
 
+void execute_order(Company& company, const int seed) {
+    bool is_busy = false;
+    int crew_id = 1;
+    for (const auto& [division, employees] : *company.get_divisions()) {
+        auto manager = company.find_crew_manager(division);
+        if (manager->get_task() == TASK::BUSY) {
+            continue;
+        }
+        std::cout << division << ": " << manager->get_name()
+                  << " has been given an assignment.\n";
 
+        int idle_count = 0;
+        for (const auto& employee : employees) {
+            if (employee->get_task() == TASK::IDLE) {
+                ++idle_count;
+            }
+        }
+
+        if (idle_count == 0) {
+            manager->set_task(TASK::BUSY);
+            continue;
+        }
+
+        std::srand(seed + crew_id++);
+        int tasks_count = std::rand() % (idle_count - 0 + 1) + 0;
+        for (const auto& employee : employees) {
+            if (employee->get_task() != TASK::IDLE) {
+                continue;
+            }
+
+            TASK task = TASK(std::rand() % (3 - 1 + 1) + 1);
+            employee->set_task(task);
+            std::cout << "    " << employee->get_name()
+                      << " has been given an assignment: "
+                      << company.get_task(employee) << "\n";
+
+            if (--tasks_count == 0) {
+                break;
+            }
+        }
+    }
+    
+
+}
 
 
 
@@ -823,19 +872,6 @@ int main() {
 
         std::string input = "";
         while (true) {
-            if (input == "exit") {
-                break;
-            }
-
-            if (is_number(input)) {
-                if (crews_count == 0) {
-                    crews_count = std::stod(input);
-                }
-                else {
-                    crew_max_employees = std::stod(input);
-                }
-            }
-
             if (crews_count == 0) {
                 std::cout << "Enter the number of crews: ";
             }
@@ -846,6 +882,18 @@ int main() {
                 break;
             }
             std::getline(std::cin, input);
+
+            if (is_number(input)) {
+                if (crews_count == 0) {
+                    crews_count = std::stod(input);
+                }
+                else {
+                    crew_max_employees = std::stod(input);
+                }
+            }
+            else {
+                std::cout << "Incorrect number! Try again.\n";
+            }
         }
 
         company.appoint_ceo(names[name_id++]);
@@ -868,27 +916,42 @@ int main() {
         }
 
         std::cout << "The company has " << crew_id << " divisions.\n";
-        std::cout << "Total number of staff - " << name_id << " persons.\n";
-
-        std::cout << "\n";
-        
-        std::cout << "\n";
+        std::cout << "Total number of staff - " << name_id << " persons.\n\n";
         
         std::cout << "Commands:\n";
         std::cout << "\"order\" - Instructions from the company's head.\n";
         std::cout << "\"print\" - Display the staff list.\n";
         std::cout << "\"exit\"  - Exit.\n";
-
-        std::string str1 = "";
-        std::string str2 = "";
+        std::string number = "";
         while (true) {
-
             if (input == "exit") {
                 break;
             }
 
+            number.clear();
+            std::stringstream input_stream(input);
+            input_stream >> input >> number;
+            if (input == "order") {
+                int seed = 0;
+                if (is_number(number)) {
+                    seed = std::stod(number);
+                }
+                else {
+                    while (true) {
+                        std::cout << "Enter order: ";
+                        std::getline(std::cin, number);
 
-
+                        if (is_number(number)) {
+                            seed = std::stod(number);
+                            break;
+                        }
+                        else {
+                            std::cout << "Incorrect number! Try again.\n";
+                        }
+                    }
+                }
+                execute_order(company, seed);
+            }
 
             if (input == "print") {
                 company.print_staff_list();
