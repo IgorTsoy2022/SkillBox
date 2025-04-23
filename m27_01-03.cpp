@@ -495,6 +495,14 @@ public:
         return crew_;
     }
 
+    const int inactive_labours() const {
+        return inactive_labours_;
+    }
+
+    void inactive_labours(int numbers) {
+        inactive_labours_ = numbers;
+    }
+
     virtual ~Manager() {
         std::cout << "~Manager: "
                   << get_name() << "\n";
@@ -502,6 +510,7 @@ public:
 
 private:
     std::set<Employee*>* crew_ = nullptr;
+    int inactive_labours_ = 0;
 };
 
 class CEO : public Manager {
@@ -515,7 +524,7 @@ public:
     };
 
 private:
-    std::set<Manager*> managers_;
+//    std::set<Manager*> managers_;
 };
 
 class Company {
@@ -534,23 +543,19 @@ public:
         persons_ = persons;
     }
 
-    void add_division(const std::string_view division) {
-        if (division.size() == 0) {
+    void add_division(const std::string& division) {
+        if (division.empty()) {
             return;
         }
-        crews_[std::string(division)];
+        crews_[division];
+        crews_managers_[crews_.find(division)->first];
     }
 
     const std::map<std::string, std::set<Employee*>>* get_divisions() const {
         return &crews_;
     }
 
-    const int get_divisions_count() const {
-        return crews_.size();
-    }
-
-    Employee* add_employee(const std::string_view name,
-                           const std::string_view division = "") {
+    Employee* add_employee(const std::string& name, const std::string& division = "") {
         if (name.empty()) {
             return nullptr;
         }
@@ -560,16 +565,17 @@ public:
             return employees_[name];
          }
  
+ 
+ 
         auto person = persons_->add_person(name);
 
-        auto employee = new Employee(person);
+        auto employee = new Employee(person, division);
 
         if (division.size() > 0) {
-            std::string key = std::string(division);
-            if (crews_.count(key) > 0) {
-                auto it = crews_.find(key);
+            if (crews_.count(division) > 0) {
+                auto it = crews_.find(division);
                 employee->set_division(it->first);
-                crews_[key].insert(employee);
+                crews_[division].insert(employee);
             }
             else {
                 employee->set_division("");
@@ -640,6 +646,8 @@ public:
                 auto it = crews_.find(key);
                 manager->set_division(it->first);
                 manager->set_crew(&crews_[key]);
+
+                crews_managers_[it->first] = manager;
             }
             else {
                 manager->set_division("");
@@ -666,6 +674,24 @@ public:
         return nullptr;
     }
 
+    void reset_inactive_labours(Manager* manager) {
+        manager->set_task(TASK::IDLE);
+        manager->inactive_labours(manager->get_crew()->size());
+        for (const auto& employee : *manager->get_crew()) {
+            employee->set_task(TASK::IDLE);
+        }
+    }
+
+    void reset_inactive_labours() {
+        for (const auto& [_, manager] : managers_) {
+            manager->set_task(TASK::IDLE);
+            manager->inactive_labours(manager->get_crew()->size());
+        }
+        for (const auto& [_, employee] : employees_) {
+            employee->set_task(TASK::IDLE);
+        }
+    }
+
     CEO* appoint_ceo(const std::string_view name) {
         if (name.empty()) {
             return nullptr;
@@ -689,6 +715,7 @@ public:
         return ceo_;
     }
 
+/*
     void print_managers_list() {
         std::cout << "CEO: " << ceo_->get_name() << "\n";
         for (const auto& [_, manager] : managers_) {
@@ -702,6 +729,7 @@ public:
             }
         }
     }
+*/
 
     Manager* find_crew_manager(const std::string_view division) {
         for (const auto& [name, manager] : managers_) {
@@ -744,6 +772,7 @@ private:
     std::map<std::string_view, Manager*> managers_;
     CEO* ceo_ = nullptr;
     std::map<std::string, std::set<Employee*>> crews_;
+    std::map<std::string_view, Manager*> crews_managers_;
 
     std::map<TASK, std::string> tasks_;
     void init_tasks() {
@@ -796,7 +825,6 @@ void execute_order(Company& company, const int seed) {
             }
         }
     }
-    
 
 }
 
@@ -914,6 +942,7 @@ int main() {
             }
             division = "";
         }
+        company.reset_inactive_labours();
 
         std::cout << "The company has " << crew_id << " divisions.\n";
         std::cout << "Total number of staff - " << name_id << " persons.\n\n";
