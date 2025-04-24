@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -55,6 +56,255 @@ std::string toupper(const std::string& text) {
 }
 
 // Task 1. Hierarchy of geometric shapes
+
+enum class COLOR {
+    NONE = 0,
+    RED = 1,
+    GREEN = 2,
+    BLUE = 3
+};
+
+struct COORD {
+    double x = 0.0;
+    double y = 0.0;
+    COORD& operator=(const COORD& right) {
+        x = right.x;
+        y = right.y;
+        return *this;
+    }
+};
+
+struct RECT {
+    double width = 0.0;
+    double height = 0.0;
+    RECT& operator=(const RECT& right) {
+        width = right.width;
+        height = right.height;
+        return *this;
+    }
+};
+
+class Shape {
+public:
+    Shape() {};
+
+    Shape(const RECT& frame, const COORD& coords = COORD{})
+        : frame_(frame)
+        , centre_(coords)
+    {};
+
+    Shape(const COORD& coords)
+        : centre_(coords)
+    {};
+
+    void color(const COLOR& color) {
+        color_ = color;
+    }
+
+    const COLOR& color() const {
+        return color_;
+    }
+
+    void set_coords(const double x, const double y) {
+        centre_.x = x;
+        centre_.y = y;
+    }
+
+    void set_coords(const COORD& coords) {
+        centre_ = coords;
+    }
+
+    const COORD& get_coords() const {
+        return centre_;
+    }
+
+    void set_frame(const double width, const double height) {
+        frame_.width = width;
+        frame_.height = height;
+    }
+
+    void set_frame(const RECT& frame) {
+        frame_ = frame;
+    }
+
+    const RECT& get_frame() const {
+        return frame_;
+    }
+
+    const double frame_square() const {
+        return frame_.width * frame_.height;
+    }
+
+    ~Shape() {
+        std::cout << "~Shape\n";
+    };
+
+private:
+    RECT frame_ = RECT{};
+    COORD centre_ = COORD{};
+    COLOR color_ = COLOR::NONE;
+};
+
+class Rectangle : public Shape {
+public:
+    Rectangle() {};
+
+    Rectangle(const RECT& sizes, const COORD& coords = COORD{})
+        : Shape(coords)
+        , sizes_(sizes)
+    {
+        square_ = recalc_square();
+        set_frame(sizes_);
+    };
+
+    Rectangle(const double width, const double height, const COORD& coords = COORD{})
+        : Shape(coords)
+    {
+        sizes_.width = width;
+        sizes_.height = height;
+        square_ = recalc_square();
+        set_frame(sizes_);
+    };
+
+    void set_sizes(const RECT& sizes) {
+        sizes_ = sizes;
+        square_ = recalc_square();
+        set_frame(sizes);
+    }
+
+    const RECT get_sizes() const {
+        return sizes_;
+    }
+
+    const double square() const {
+        return square_;
+    }
+
+    ~Rectangle() {
+        std::cout << "~Rectangle\n";
+    }
+
+private:
+    RECT sizes_ = RECT{};
+    double square_ = 0.0;
+
+    const double recalc_square() const {
+        return sizes_.width * sizes_.height;
+    }
+};
+
+class Quad : public Rectangle {
+public:
+    Quad() {};
+
+    Quad(const double edge,
+        const COORD& coords = COORD{})
+        : Rectangle(edge, edge, coords)
+    {
+    };
+
+    ~Quad() {
+        std::cout << "~Quad\n";
+    }
+};
+
+class Circle : public Shape {
+public:
+    Circle() {};
+
+    Circle(const double radius, const COORD& coords = COORD{})
+        : Shape(coords)
+        , radius_(radius)
+    {
+        square_ = recalc_square();
+        auto size = radius_ * 2;
+        set_frame(size, size);
+    };
+
+    void radius(const double radius) {
+        radius_ = radius;
+        square_ = recalc_square();
+        auto size = radius_ * 2;
+        set_frame(size, size);
+    }
+
+    const double radius() const {
+        return radius_;
+    }
+
+    const double square() const {
+        return square_;
+    }
+
+    ~Circle() {
+        std::cout << "~Circle\n";
+    }
+
+private:
+    double radius_ = 0.0;
+    double square_ = 0.0;
+
+    const double recalc_square() const {
+        return M_PI * radius_ * radius_;
+    }
+};
+
+class Triangle : public Shape {
+public:
+    Triangle() {};
+
+    Triangle(const double a, const double b, const double c,
+        const COORD& coords = COORD{})
+        : Shape(coords)
+        , a_(a)
+        , b_(b)
+        , c_(c)
+    {
+        square_ = recalc_square();
+        recalc_frame();
+    };
+
+    void sizes(const double a, const double b, const double c) {
+        a_ = a, b_ = b, c_ = c;
+        square_ = recalc_square();
+        recalc_frame();
+    }
+
+    void get_sizes(double& a, double& b, double& c) const {
+        a = a_, b = b_, c = c_;
+    }
+
+    const double square() const {
+        return square_;
+    }
+
+    ~Triangle() {
+        std::cout << "~Triangle\n";
+    }
+
+private:
+    double a_ = 0.0;
+    double b_ = 0.0;
+    double c_ = 0.0;
+    double square_ = 0.0;
+
+    const double recalc_square() const {
+        double p = (a_ + b_ + c_) / 2;
+        return std::sqrt(p * (p - a_) * (p - b_) * (p - c_));
+    }
+
+    // Frame square
+    // Smin = sqrt(4*b*b*c*c - (b*b + c*c - a*a) * (b*b + c*c - a*a)) / 2
+    void recalc_frame() {
+        double square_a = a_ * a_;
+        double square_b = b_ * b_;
+        double square_c = c_ * c_;
+        double term = square_b + square_c - square_a;
+        double s = std::sqrt(4 * square_b * square_c - term * term) / 2;
+        set_frame(b_, s / b_);
+    }
+};
+
 
 // Task 2. Company simulation.
 
@@ -835,193 +1085,19 @@ bool evict_elf(const std::string& name, Branch** trees) {
     return false;
 }
 
-enum class COLOR {
-    NONE = 0,
-    RED = 1,
-    GREEN = 2,
-    BLUE = 3
-};
-
-struct COORD {
-    double x = 0.0;
-    double y = 0.0;
-    COORD& operator=(const COORD& right) {
-        x = right.x;
-        y = right.y;
-        return *this;
-    }
-};
-
-struct RECT {
-    double width = 0.0;
-    double height = 0.0;
-    RECT& operator=(const RECT& right) {
-        width = right.width;
-        height = right.height;
-        return *this;
-    }
-};
-
-class Shape {
-public:
-    Shape() {};
-
-    Shape(const RECT& frame, const COORD& coords = COORD{})
-        : frame_(frame)
-        , centre_(coords)
-    {};
-
-    Shape(const COORD& coords)
-    	: centre_(coords)
-    {};
-
-    void color(const COLOR& color) {
-        color_ = color;
-    }
-
-    const COLOR& color() const {
-        return color_;
-    }
-
-    void set_coords(const double x, const double y) {
-        centre_.x = x;
-        centre_.y = y;
-    }
-
-    void set_coords(const COORD& coords) {
-        centre_ = coords;
-    }
-
-    const COORD& get_coords() const {
-        return centre_;
-    }
-
-    void set_frame(const double width, const double height) {
-        frame_.width = width;
-        frame_.height = height;
-    }
-
-    void set_frame(const RECT& frame) {
-        frame_ = frame;
-    }
-
-    const RECT& get_frame() const {
-        return frame_;
-    }
-
-    const double frame_square() const {
-        return frame_.width * frame_.height;
-    }
-
-    ~Shape() {
-        std::cout << "~Shape\n";
-    };
-
-private:
-    RECT frame_ = RECT{};
-    COORD centre_ = COORD{};
-    COLOR color_ = COLOR::NONE;
-};
-
-class Rectangle : public Shape {
-public:
-    Rectangle() {};
-
-    Rectangle(const RECT& sizes, const COORD& coords = COORD{})
-        : Shape(coords)
-        , sizes_(sizes)
-    {
-    	set_frame(sizes_);
-    };
-
-    Rectangle(const double width, const double height, const COORD& coords = COORD{})
-        : Shape(coords)
-    {
-    	sizes_.width = width;
-    	sizes_.height = height;
-    	set_frame(sizes_);
-    };
-
-    void set_sizes(const RECT& sizes) {
-        sizes_ = sizes;
-        set_frame(sizes);
-    }
-
-    const RECT get_sizes() const {
-        return sizes_;
-    }
-
-    const double square() const {
-        return sizes_.width * sizes_.height;
-    }
-
-    ~Rectangle() {
-        std::cout << "~Rectangle\n";
-    }
-
-private:
-    RECT sizes_ = RECT{};
-};
-
-class Quad : public Rectangle {
-public:
-    Quad() {};
-
-    Quad(const double edge,
-        const COORD& coords = COORD{})
-        : Rectangle(edge, edge, coords)
-    {};
-
-    ~Quad() {
-        std::cout << "~Quad\n";
-    }
-};
-
-class Circle : public Shape {
-public:
-    Circle() {};
-
-    Circle(const double radius, const COORD& coords = COORD{})
-        : Shape(coords)
-        , radius_(radius)
-    {
-    	auto size = radius_ * 2;
-    	set_frame(size, size);
-    };
-
-    void radius(const double radius) {
-        radius_ = radius;
-        auto size = radius_ * 2;
-        set_frame(size, size);
-    }
-
-    const double radius() const {
-        return radius_;
-    }
-
-    const double square() const {
-        return std::atan(1) * 4 * radius_;
-    }
-
-    ~Circle() {
-        std::cout << "~Circle\n";
-    }
-
-private:
-    double radius_ = 0.0;
-};
-
 int main() {
     {
-    	std::map<COLOR, std::string> rgb;
+        std::cout << "Task 1. Hierarchy of geometric shapes.\n";
+
+        std::map<COLOR, std::string> rgb;
         rgb[COLOR::NONE] = "none";
         rgb[COLOR::RED] = "red";
         rgb[COLOR::GREEN] = "green";
         rgb[COLOR::BLUE] = "blue";
 
-        Rectangle rect(6, 8);
-        rect.color(COLOR::RED);
-        rect.set_coords(28, 15);
+        Rectangle rectangle(6, 8);
+        rectangle.color(COLOR::RED);
+        rectangle.set_coords(28, 15);
     	
         Quad quad(12);
         quad.color(COLOR::GREEN);
@@ -1031,7 +1107,9 @@ int main() {
         circle.color(COLOR::BLUE);
         circle.set_coords(12, 12);
 
-        std::cout << std::atan(1) << "\n";
+        Triangle triangle(3, 3, 3);
+        triangle.color(COLOR::GREEN);
+        triangle.set_coords(12, 12);
 
     	std::string input = "";
     	std::cout << "Commands:\n";
@@ -1047,13 +1125,13 @@ int main() {
 
             if (input == "rectangle") {
                 std::cout << "Rectangle:\n";
-                auto sizes = rect.get_sizes();
-                auto coords = rect.get_coords();
+                auto sizes = rectangle.get_sizes();
+                auto coords = rectangle.get_coords();
                 std::cout << "width = " << sizes.width << ", height = " << sizes.height << "\n";
-                std::cout << "square = " << rect.square() << " sq. units\n";
-                std::cout << "frame square = " << rect.frame_square() << " sq. units\n";
+                std::cout << "square = " << rectangle.square() << " sq. units\n";
+                std::cout << "frame square = " << rectangle.frame_square() << " sq. units\n";
                 std::cout << "centre coords: x = " << coords.x << ", y = " << coords.y << "\n";
-                std::cout << "color = " << rgb[rect.color()] << "\n";
+                std::cout << "color = " << rgb[rectangle.color()] << "\n";
             }
 
             if (input == "quad") {
@@ -1078,6 +1156,17 @@ int main() {
                 std::cout << "color = " << rgb[circle.color()] << "\n";
             }
 
+            if (input == "triangle") {
+                std::cout << "Triangle:\n";
+                double a = 0, b = 0, c = 0;
+                triangle.get_sizes(a, b, c);
+                auto coords = triangle.get_coords();
+                std::cout << "sizes: a = " << a << ", b = " << b << ", c = " << c << "\n";
+                std::cout << "square = " << triangle.square() << " sq. units\n";
+                std::cout << "frame square = " << triangle.frame_square() << " sq. units\n";
+                std::cout << "centre coords: x = " << coords.x << ", y = " << coords.y << "\n";
+                std::cout << "color = " << rgb[triangle.color()] << "\n";
+            }
 
             std::cout << "Command > ";
             std::getline(std::cin, input);
@@ -1135,10 +1224,6 @@ int main() {
     shuffle(names);
 
     {
-        std::cout << "Task 1. Hierarchy of geometric shapes.\n";
-    }
-
-    {
         std::cout << "\nTask 2. Company simulation.\n";
 
         Persons persons{};
@@ -1174,7 +1259,7 @@ int main() {
         }
 
         std::srand(std::time(nullptr));
-//        std::rand() % (max - min + 1) + min;
+        //  std::rand() % (max - min + 1) + min;
 
         int name_id = 0;
         company.appoint_ceo(names[name_id++]);
@@ -1260,7 +1345,7 @@ int main() {
         std::cout << "Task 3. Elf Village.\n";
         const int trees_count = 5;
         std::srand(std::time(nullptr));
-        //        std::rand() % (max - min + 1) + min;
+        //  std::rand() % (max - min + 1) + min;
 
         shuffle(names);
         Branch** trees = new Branch * [trees_count];
