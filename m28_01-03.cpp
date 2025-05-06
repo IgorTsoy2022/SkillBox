@@ -237,7 +237,8 @@ public:
     }
 
     void remove(const std::string_view name) {
-        auto it = std::find_if(pool_swimmers_.begin(), pool_swimmers_.end(), [&name](Swimmer* swimmer) { 
+        auto it = std::find_if(pool_swimmers_.begin(), pool_swimmers_.end(),
+                               [&name](Swimmer* swimmer) { 
             return swimmer->name() == name;
             });
         if (it == pool_swimmers_.end()) {
@@ -249,7 +250,8 @@ public:
     }
 
     Swimmer* find(const std::string name) {
-        auto it = std::find_if(pool_swimmers_.begin(), pool_swimmers_.end(), [&name](Swimmer* swimmer) { 
+        auto it = std::find_if(pool_swimmers_.begin(), pool_swimmers_.end(),
+                               [&name](Swimmer* swimmer) { 
             return swimmer->name() == name;
             });
         if (it == pool_swimmers_.end()) {
@@ -269,13 +271,15 @@ public:
     }
 
     void sort_by_records() {
-        std::sort(pool_swimmers_.begin(), pool_swimmers_.end(), [] (Swimmer* a, Swimmer* b) {
+        std::sort(pool_swimmers_.begin(), pool_swimmers_.end(),
+                  [] (Swimmer* a, Swimmer* b) {
         return a->speed_record() > b->speed_record();
         });
     }
 
     void sort_by_winners() {
-        std::sort(standings_.begin(), standings_.end(), [](std::pair<int, double> a, std::pair<int, double> b) {
+        std::sort(standings_.begin(), standings_.end(),
+                  [](std::pair<int, double> a, std::pair<int, double> b) {
             return a.second < b.second;
         });
     }
@@ -314,10 +318,12 @@ public:
 
     void print_standings() {
         sort_by_winners();
-        std::cout << std::setw((name_width_ + 1) / 2 + 9) << "Standings" << std::endl;
+        std::cout << std::setw((name_width_ + 1) / 2 + 9) << "Standings\n";
 
         for (const auto& value : standings_) {
-            std::cout << " " << std::setw(name_width_ + 1) << std::left << pool_swimmers_[value.first]->name() << std::right << std::fixed << std::setprecision(3);
+            std::cout << " " << std::setw(name_width_ + 1) << std::left
+                      << pool_swimmers_[value.first]->name() << std::right
+                      << std::fixed << std::setprecision(3);
             if (value.second < 10) {
             	std::cout << " ";
             }
@@ -333,10 +339,13 @@ public:
 
     void print_high_score() {
         sort_by_records();
-        std::cout << std::setw((name_width_ - 3) / 2 + 16) << "High-score table" << std::endl;
+        std::cout << std::setw((name_width_ - 3) / 2 + 16)
+                  << "High-score table\n";
 
         for (const auto& value : pool_swimmers_) {
-            std::cout << "   " << std::setw(name_width_ + 1) << std::left << value->name() << std::right << std::fixed << std::setprecision(3);
+            std::cout << "   " << std::setw(name_width_ + 1) << std::left
+                      << value->name() << std::right << std::fixed
+                      << std::setprecision(3);
             if (value->speed_record() < 10) {
             	std::cout << " ";
             }
@@ -367,7 +376,8 @@ void track(Pool* pool, const int track_no) {
     int current_pos = 0;
     int current_speed = std::rand() % (2624 - 1706 + 1) + 1706;
     double elapsed_distance = 0.0;
-    while (pool->in_the_swim() > 0) {     std::this_thread::sleep_for(std::chrono::seconds(1));
+    while (pool->in_the_swim() > 0) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         ++current_time;
 
         mtx.lock();
@@ -383,22 +393,28 @@ void track(Pool* pool, const int track_no) {
         }
 
         if (elapsed_distance >= pool->distance()) {
-            double elapsed_time = double(current_time) - (elapsed_distance - pool->distance()) * 1000 / double(current_speed);
+            double elapsed_time = double(current_time) 
+                   - (elapsed_distance - pool->distance()) * 1000
+                   / double(current_speed);
             pool->write_standings(track_no, elapsed_time);
-            current_pos = shuttle(pool->length(), pool->distance()) + pool->name_width() + 2;
+            current_pos = shuttle(pool->length(), pool->distance())
+                        + pool->name_width() + 2;
             goto_xy(current_pos, track_no + 2);
             std::cout << track_no;
             goto_xy(pool->name_width() + 4 + pool->length(), track_no + 2);
-            std::cout << std::right << std::fixed << std::setprecision(1) << double(pool->distance());
+            std::cout << std::right << std::fixed << std::setprecision(1)
+                      << double(pool->distance());
             --pool->in_the_swim();
             current_time = 0;
         }
         else {
-        	current_pos = shuttle(pool->length(), elapsed_distance) + pool->name_width() + 2;
+        	current_pos = shuttle(pool->length(), elapsed_distance)
+                        + pool->name_width() + 2;
             goto_xy(current_pos, track_no + 2);
             std::cout << track_no;
             goto_xy(pool->name_width() + 4 + pool->length(), track_no + 2);
-            std::cout << std::right << std::fixed << std::setprecision(1) << elapsed_distance;
+            std::cout << std::right << std::fixed << std::setprecision(1)
+                      << elapsed_distance;
         }
 
         mtx.unlock();
@@ -463,7 +479,6 @@ private:
 void train(Station* station, const int id, const int row) {
     bool on_platform = false;
     int current_time = 0;
-//    int current_pos = 0;
     std::string blank10(20, ' ');
 
     goto_xy(10, row + id);
@@ -543,7 +558,7 @@ void station_command(Station* station, const int row) {
     std::string input = "";
     std::cout << "Station operation > ";
     while(true) {
-    	        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         mtx.lock();
 
@@ -724,7 +739,8 @@ public:
     {};
 
     Order* take_order() {
-        Order* order = new Order(bistro, ++bistro->meter, std::rand() % (bistro->menu_size()));
+        Order* order = new Order(bistro, ++bistro->meter,
+                                 std::rand() % (bistro->menu_size()));
         bistro->take_order(order);
         return order;
     }
@@ -739,6 +755,10 @@ public:
     Kitchen(Bistro* bistro, const int max_time, const int min_time)
         : Service(bistro, max_time, min_time)
     {};
+
+    Order* current_order() {
+        return bistro->current_order();
+    }
 
     Order* move_to_ready() {
         return bistro->move_to_ready();
@@ -768,26 +788,32 @@ public:
 
 void getting_order(Waiter* waiter, const int row) {
     int count_orders = 0;
-    
+    int daily_throughput = waiter->daily_throughput();
+
+    mtx.lock();
+
+    goto_xy(0, row);
     std::cout << "Waiter: waiting for the order.\n";
+
+    mtx.unlock();
+
     while (true) {
         int time = waiter->random_time();
 
-//         while (time > 0) {
-     std::this_thread::sleep_for(std::chrono::seconds(time));
+        std::this_thread::sleep_for(std::chrono::seconds(time));
 
         mtx.lock();
 
         auto order = waiter->take_order();
         ++count_orders;
 
-        std::cout << "Waiter: took the order #" << order->id() << " " << order->course() << "\n";
+        goto_xy(0, row);
+        std::cout << "Waiter: took the order #" << order->id() << " "
+                  << order->course() << "\n";
 
         mtx.unlock();
 
-//         }
-
-        if (count_orders >= waiter->daily_throughput()) {
+        if (count_orders >= daily_throughput) {
             return;
         }
     }
@@ -795,9 +821,43 @@ void getting_order(Waiter* waiter, const int row) {
 
 void preparing_order(Kitchen* kitchen, const int row) {
     int count_orders = 0;
+    int daily_throughput = kitchen->daily_throughput();
+    Order* current_order = nullptr;
 
-    std::cout << "Kitchen: waiting for the order.\n";
     while (true) {
+
+        mtx.lock();
+
+        goto_xy(0, row);
+        std::cout << "Kitchen: waiting for the order.\n";
+
+        mtx.unlock();
+
+        while (true) {
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            mtx.lock();
+
+            current_order = kitchen->current_order();
+//            goto_xy(0, row);
+//            std::cout << "Kitchen: waiting for the order.\n";
+
+            mtx.unlock();
+
+            if (current_order != nullptr) {
+                break;
+            }
+        }
+
+        mtx.lock();
+
+        goto_xy(0, row);
+        std::cout << "Kitchen: preparing the order #" << current_order->id()
+                  << " " << current_order->course() << ".\n";
+
+        mtx.unlock();
+
         int time = kitchen->random_time();
         std::this_thread::sleep_for(std::chrono::seconds(time));
 
@@ -806,11 +866,13 @@ void preparing_order(Kitchen* kitchen, const int row) {
         auto order = kitchen->move_to_ready();
         ++count_orders;
 
-        std::cout << "Kitchen: the order #" << order->id() << " " << order->course() << " is ready.\n";
+        goto_xy(0, row);
+        std::cout << "Kitchen: the order #" << order->id() << " "
+                  << order->course() << " is ready.\n";
 
         mtx.unlock();
 
-        if (count_orders >= kitchen->daily_throughput()) {
+        if (count_orders >= daily_throughput) {
             return;
         }
     }
@@ -818,18 +880,58 @@ void preparing_order(Kitchen* kitchen, const int row) {
 
 void picking_up_order(Courier* courier, const int row) {
     int count_orders = 0;
+    int daily_throughput = courier->daily_throughput();
+    Order* current_ready_order = nullptr;
+    int time = courier->process_time();
 
     while (true) {
-         int time = courier->process_time();
+
+        mtx.lock();
+
+        goto_xy(0, row);
+        std::cout << "Courier: waiting for the order.\n";
+
+        mtx.unlock();
+
+        while (true) {
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            mtx.lock();
+
+            current_ready_order = courier->current_ready_order();
+//            goto_xy(0, row);
+//            std::cout << "Courier: waiting for the order.\n";
+
+            mtx.unlock();
+
+            if (current_ready_order != nullptr) {
+                break;
+            }
+        }
+
+        mtx.lock();
+
+        goto_xy(0, row);
+        std::cout << "Courier: the order #" << current_ready_order->id()
+                  << " " << current_ready_order->course()
+                  << " is ready to go. Waiting for courier.\n";
+
+        mtx.unlock();
+
         std::this_thread::sleep_for(std::chrono::seconds(time));
 
         mtx.lock();
 
+        goto_xy(0, row);
+        std::cout << "Courier: took the order #" << current_ready_order->id()
+            << " " << current_ready_order->course() << ".\n";
+        courier->remove_ready_order();
         ++count_orders;
 
         mtx.unlock();
 
-        if (count_orders >= courier->daily_throughput()) {
+        if (count_orders >= daily_throughput) {
             return;
         }
     }
