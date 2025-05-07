@@ -113,7 +113,11 @@ std::mutex mtx;
 // Task 3. Simulation of online restaurant kitchen operation
 
 class Bistro;
+class Service;
+
 class Waiter;
+class Kitchen;
+class Courier;
 static void getting_order(Bistro* bistro, Waiter* waiter, const int row);
 
 class Order {
@@ -199,6 +203,10 @@ public:
         ready_orders_.pop_front();
     }
 
+
+    void getting_order(Waiter* waiter, const int row);
+
+
     const int menu_size() const {
         return menu_.size();
     }
@@ -231,7 +239,6 @@ private:
 const std::string_view Order::course() const {
     return bistro->course(course_id_);
 }
-
 
 class Service {
 public:
@@ -275,13 +282,45 @@ public:
 
     Order* take_order() {
         Order* order = new Order(bistro, ++bistro->meter,
-                                 std::rand() % (bistro->menu_size()));
+                                 std::rand() % bistro->menu_size());
         bistro->take_order(order);
         return order;
     }
 
     ~Waiter() {};
 };
+
+void Bistro::getting_order(Waiter* waiter, const int row) {
+    int count_orders = 0;
+
+    mtx.lock();
+    goto_xy(0, row);
+    std::cout << "Waiter: waiting for the order.\n";
+    mtx.unlock();
+
+    while (true) {
+        int time = waiter->random_time();
+
+        std::this_thread::sleep_for(std::chrono::seconds(time));
+
+        mtx.lock();
+
+        Order* order = new Order(this, ++meter, std::rand() % menu_.size());
+        orders_.emplace_back(order);
+        ++count_orders;
+
+        goto_xy(0, row);
+        std::cout << "Waiter: took the order #" << order->id() << " "
+            << order->course() << "\n";
+
+        mtx.unlock();
+
+        if (count_orders >= daily_throughput_) {
+            return;
+        }
+    }
+
+}
 
 class Kitchen : public Service {
 public:
@@ -477,7 +516,8 @@ int main() {
     Courier courier(&bistro, 30);
 
     int row = 3;
-//    std::thread waiter_thread = std::thread(getting_order, std::ref(bistro), std::ref(waiter), std::ref(row));
+    std::thread waiter_thread = std::thread(&Bistro::getting_order, bistro, waiter, std::ref(row));
+    waiter_thread.join();
     /*
     std::thread waiter_thread(getting_order, waiter, 3);
     waiter_thread.detach();
