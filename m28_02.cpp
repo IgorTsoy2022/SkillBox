@@ -164,7 +164,7 @@ private:
 void train(Station* station, const int id, const int row) {
     bool on_platform = false;
     int current_time = 0;
-    std::string blank10(20, ' ');
+    std::string blank10(16, ' ');
 
     while(true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -266,9 +266,7 @@ void station_command(Station* station, const int row) {
     }
 }
 
-
 int main() {
-    std::srand(std::time(nullptr));
     std::cout << "Task 2. Simulation of train station operation.\n";
 
     int trains_count = 3;
@@ -279,7 +277,7 @@ int main() {
     std::cout << "Enter travel time for each train.\n";
     std::cout << "Enter \"exit\" for exit.\n";
     std::string input = "";
-    std::string blank50(50, ' ');
+    std::string blank40(60, ' ');
     int train_id = 0;
     while (true) {
         std::cout << "Train #" << train_id << " > ";
@@ -295,7 +293,7 @@ int main() {
         }
         else {
             goto_xy(0, current_row + 1);
-            std::cout << blank50;
+            std::cout << blank40;
             goto_xy(0, current_row +1);
         }
  

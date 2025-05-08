@@ -321,7 +321,7 @@ public:
         std::cout << std::setw((name_width_ + 1) / 2 + 9) << "Standings\n";
 
         for (const auto& value : standings_) {
-            std::cout << " " << std::setw(name_width_ + 1) << std::left
+            std::cout << std::setw(name_width_ + 1) << std::left
                       << pool_swimmers_[value.first]->name() << std::right
                       << std::fixed << std::setprecision(3);
             if (value.second < 10) {
@@ -343,7 +343,7 @@ public:
                   << "High-score table\n";
 
         for (const auto& value : pool_swimmers_) {
-            std::cout << "   " << std::setw(name_width_ + 1) << std::left
+            std::cout << std::setw(name_width_ + 1) << std::left
                       << value->name() << std::right << std::fixed
                       << std::setprecision(3);
             if (value->speed_record() < 10) {
@@ -382,7 +382,7 @@ void track(Pool* pool, const int track_no) {
 
         mtx.lock();
 
-        if (current_time % 5 == 0) {
+        if (current_time % 2 == 0) {
              current_speed += std::rand() % 201 - 100;
         }
         elapsed_distance += double(current_speed) / 1000;
@@ -440,13 +440,15 @@ int main() {
     pool.add("Matt Biondi", 2.043);
 
     pool.shuffle();
-    std::cout << "\n";
+
+    goto_xy(0, 2);
     pool.print_swimmers();
 
     pool.start();
 
-    goto_xy(0, 9);
+    goto_xy(0, 8);
     pool.print_standings();
+    pool.print_high_score();
 
     return 0;
 }
