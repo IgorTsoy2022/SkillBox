@@ -205,6 +205,67 @@ public:
         }
     }
 
+    void start(const int row) {
+        std::thread waiter_thread(&Bistro::getting_order, this, row);
+        std::thread kitchen_thread(&Bistro::preparing_order, this, row + 1);
+        std::thread courier_thread(&Bistro::picking_up_order, this, row + 2);
+
+//        waiter_thread.detach();
+//        kitchen_thread.detach();
+//        courier_thread.detach();
+
+        if (waiter_thread.joinable()) {
+            waiter_thread.join();
+        }
+        if (kitchen_thread.joinable()) {
+            kitchen_thread.join();
+        }
+        if (courier_thread.joinable()) {
+            courier_thread.join();
+        }
+    }
+
+    const std::string_view course(int id) const {
+        if (menu_.size() < 1) {
+            return "";
+        }
+        if (id >= 0 && id < menu_.size()) {
+            return menu_[id];
+        }
+        return "";
+    }
+
+    void menu() const {
+        int id = 0;
+        for (const auto& course : menu_) {
+            std::cout << id++ << " " << course << "\n";
+        }
+    }
+
+    ~Bistro() {
+//        std::cout << "~Bistro\n";
+        delete waiter_;
+        delete kitchen_;
+        delete courier_;
+
+        for (const auto& order : orders_) {
+            delete order;
+        }
+
+        for (const auto& order : ready_orders_) {
+            delete order;
+        }
+    };
+private:
+    std::vector<std::string> menu_;
+    std::deque<Order*> orders_;
+    std::deque<Order*> ready_orders_;
+    int daily_throughput_ = 0;
+    int meter_ = 0;
+    Service* waiter_ = nullptr;
+    Service* kitchen_ = nullptr;
+    Service* courier_ = nullptr;
+    
     Order* move_to_ready() {
         if (orders_.empty()) {
             return nullptr;
@@ -370,67 +431,6 @@ public:
             }
         }
     }
-
-    void start(const int row) {
-        std::thread waiter_thread(&Bistro::getting_order, this, row);
-        std::thread kitchen_thread(&Bistro::preparing_order, this, row + 1);
-        std::thread courier_thread(&Bistro::picking_up_order, this, row + 2);
-
-//        waiter_thread.detach();
-//        kitchen_thread.detach();
-//        courier_thread.detach();
-
-        if (waiter_thread.joinable()) {
-            waiter_thread.join();
-        }
-        if (kitchen_thread.joinable()) {
-            kitchen_thread.join();
-        }
-        if (courier_thread.joinable()) {
-            courier_thread.join();
-        }
-    }
-
-    const std::string_view course(int id) const {
-        if (menu_.size() < 1) {
-            return "";
-        }
-        if (id >= 0 && id < menu_.size()) {
-            return menu_[id];
-        }
-        return "";
-    }
-
-    void menu() const {
-        int id = 0;
-        for (const auto& course : menu_) {
-            std::cout << id++ << " " << course << "\n";
-        }
-    }
-
-    ~Bistro() {
-//        std::cout << "~Bistro\n";
-        delete waiter_;
-        delete kitchen_;
-        delete courier_;
-
-        for (const auto& order : orders_) {
-            delete order;
-        }
-
-        for (const auto& order : ready_orders_) {
-            delete order;
-        }
-    };
-private:
-    std::vector<std::string> menu_;
-    std::deque<Order*> orders_;
-    std::deque<Order*> ready_orders_;
-    int daily_throughput_ = 0;
-    int meter_ = 0;
-    Service* waiter_ = nullptr;
-    Service* kitchen_ = nullptr;
-    Service* courier_ = nullptr;
 };
 
 int main() {
