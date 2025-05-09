@@ -1,17 +1,12 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <algorithm>
-#include <cmath>
-#include <ctime>
-#include <deque>
+//#include <ctime>
 #include <thread>
 #include <mutex>
-#include <map>
 #include <random>
-#include <string>
-#include <string_view>
-#include <vector>
+//#include <string>
+//#include <string_view>
 #include <windows.h>
 
 static bool is_number(const std::string str) {
@@ -164,7 +159,7 @@ private:
 void train(Station* station, const int id, const int row) {
     bool on_platform = false;
     int current_time = 0;
-    std::string blank10(16, ' ');
+    std::string blank(16, ' ');
 
     while(true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -176,7 +171,7 @@ void train(Station* station, const int id, const int row) {
             goto_xy(10, row + id);
             if (station->is_free) {
                 std::cout << "has arrived";
-                std::cout << blank10;
+                std::cout << blank;
                 station->is_free = false;
                 on_platform = true;
             }
@@ -188,7 +183,7 @@ void train(Station* station, const int id, const int row) {
         else {
             goto_xy(23, row + id);
             std::cout << "expected in " << to_time(station->train_duration(id) - current_time);
-            std::cout << blank10;	
+            std::cout << blank;	
         }
 
         mtx.unlock();
@@ -206,7 +201,7 @@ void train(Station* station, const int id, const int row) {
         if (station->is_free) {
             goto_xy(10, row + id);
             std::cout << "has arrived";
-            std::cout << blank10;
+            std::cout << blank;
             station->is_free = false;
             on_platform = true;
         }
@@ -222,7 +217,7 @@ void train(Station* station, const int id, const int row) {
         if (station->departure) {
             goto_xy(10, row + id);
             std::cout << "departured";
-            std::cout << blank10;
+            std::cout << blank;
             station->is_free = true;
             station->departure = false;
             on_platform = false;
@@ -277,7 +272,7 @@ int main() {
     std::cout << "Enter travel time for each train.\n";
     std::cout << "Enter \"exit\" for exit.\n";
     std::string input = "";
-    std::string blank40(60, ' ');
+    std::string blank(60, ' ');
     int train_id = 0;
     while (true) {
         std::cout << "Train #" << train_id << " > ";
@@ -293,7 +288,7 @@ int main() {
         }
         else {
             goto_xy(0, current_row + 1);
-            std::cout << blank40;
+            std::cout << blank;
             goto_xy(0, current_row +1);
         }
  

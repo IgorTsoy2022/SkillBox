@@ -1,106 +1,13 @@
 #include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <algorithm>
-#include <cmath>
-#include <ctime>
+//#include <ctime>
 #include <deque>
 #include <thread>
 #include <mutex>
 #include <map>
 #include <random>
-#include <string>
-#include <string_view>
-#include <vector>
+//#include <string>
+//#include <string_view>
 #include <windows.h>
-
-static bool is_number(const std::string str) {
-    if (str.size() < 1) {
-        return false;
-    }
-    for (const auto& c : str) {
-        if (c >= '0' && c <= '9') {
-            continue;
-        }
-        if (c == '.' || c == '-' || c == '+') {
-            continue;
-        }
-        return false;
-    }
-    return true;
-}
-
-static std::string to_time(double sec) {
-    const double epsilon = 0.001;
-    std::string out = "";
-    if (sec < 0) {
-        out = "-";
-        sec = -sec;
-    }
-
-    std::ostringstream output_stream;
-    int days = 0;
-    if (sec > 86400 || std::abs(sec - 86400) < epsilon) {
-        days = sec / 86400;
-        sec -= days * 86400;
-        sec = sec < 0 ? -sec : sec;
-
-        output_stream << days;
-        out += output_stream.str() + " day";
-        output_stream.str("");
-        output_stream.clear();
-        if (days > 1) {
-            out += "s";
-        }
-    }
-
-    int hours = 0;
-    if (sec > 3600 || std::abs(sec - 3600) < epsilon) {
-        hours = sec / 3600;
-        sec -= hours * 3600;
-        sec = sec < 0 ? -sec : sec;
-    }
-    if (days > 0 || hours > 0) {
-        if (days > 0) {
-            out += " ";
-        }
-        if (hours < 10) {
-            out += "0";
-        }
-        output_stream << hours;
-        out += output_stream.str() + " h";
-        output_stream.str("");
-        output_stream.clear();
-    }
-
-    int minutes = 0;
-    if (sec > 60 || std::abs(sec - 60) < epsilon) {
-        minutes = sec / 60;
-        sec -= minutes * 60;
-        sec = sec < 0 ? -sec : sec;
-    }
-    if (days > 0 || hours > 0 || minutes > 0) {
-        if (days > 0 || hours > 0) {
-            out += " ";
-        }
-        if (minutes < 10) {
-            out += "0";
-        }
-        output_stream << minutes;
-        out += output_stream.str() + " m";
-        output_stream.str("");
-        output_stream.clear();
-        out += " ";
-    }
-
-    if (sec < 10) {
-        out += "0";
-    }
-    output_stream << sec;
-    out += output_stream.str() + " s";
-
-    return out;
-}
 
 static void goto_xy(SHORT x, SHORT y) {
     HANDLE hStdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
@@ -442,13 +349,8 @@ int main() {
     std::vector<std::string> menu = {
         "pizza", "soup", "steak", "salad", "sushi"
     };
-        
-//    Bistro* bistro = new Bistro(std::move(menu), daily_throughput);
 
     Bistro bistro(std::move(menu), daily_throughput);
-
-//    bistro.menu();
-
 
     bistro.set_waiter(10, 5);
     bistro.set_kitchen(15, 5);
@@ -456,27 +358,6 @@ int main() {
 
     int row = 3;
     bistro.start(row);
-//    std::thread waiter_thread = std::thread(&Bistro::getting_order, bistro, row);
-//    waiter_thread.join();
-
-    /*
-    std::thread waiter_thread(getting_order, waiter, 3);
-    waiter_thread.detach();
-    std::thread kitchen_thread(preparing_order, kitchen, 4);
-    kitchen_thread.detach();
-    std::thread courier_thread(picking_up_order, courier, 5);
-    courier_thread.detach();
-
-    if (waiter_thread.joinable()) {
-        waiter_thread.join();
-    }
-    if (kitchen_thread.joinable()) {
-        kitchen_thread.join();
-    }
-    if (courier_thread.joinable()) {
-        courier_thread.join();
-    }
-    */
 
     return 0;
 }
