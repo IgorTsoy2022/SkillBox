@@ -178,10 +178,6 @@ public:
         , daily_throughput_(daily_throughput)
     {};
 
-    const int daily_throughput() const {
-        return daily_throughput_;
-    }
-
     void set_waiter(const int max_time, const int min_time) {
         if (waiter_ == nullptr) {
             waiter_ = new Service(max_time, min_time);
@@ -209,27 +205,6 @@ public:
         }
     }
 
-    int meter = 0;
-/*
-    Order* current_order() {
-        if (orders_.empty()) {
-            return nullptr;
-        }
-        return orders_.front();
-    }
-
-    Order* current_ready_order() {
-        if (ready_orders_.empty()) {
-            return nullptr;
-        }
-        return ready_orders_.front();
-    }
-
-    void take_order(Order* order) {
-        orders_.emplace_back(order);
-    }
-*/
-
     Order* move_to_ready() {
         if (orders_.empty()) {
             return nullptr;
@@ -249,7 +224,6 @@ public:
         ready_orders_.pop_front();
     }
 
-
     void getting_order(const int row) {
         int count_orders = 0;
         std::string blank(10, ' ');
@@ -265,7 +239,7 @@ public:
 
             mtx.lock();
 
-            Order* order = new Order(++meter, std::rand() % menu_.size());
+            Order* order = new Order(++meter_, std::rand() % menu_.size());
             orders_.emplace_back(order);
             ++count_orders;
 
@@ -417,10 +391,6 @@ public:
         }
     }
 
-    const int menu_size() const {
-        return menu_.size();
-    }
-
     const std::string_view course(int id) const {
         if (menu_.size() < 1) {
             return "";
@@ -457,6 +427,7 @@ private:
     std::deque<Order*> orders_;
     std::deque<Order*> ready_orders_;
     int daily_throughput_ = 0;
+    int meter_ = 0;
     Service* waiter_ = nullptr;
     Service* kitchen_ = nullptr;
     Service* courier_ = nullptr;
