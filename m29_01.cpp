@@ -1,6 +1,5 @@
 #include <iostream>
-#include <set>
-
+#include <unordered_set>
 
 class Skills {
 public:
@@ -53,9 +52,10 @@ public:
 };
 
 enum class SKILL {
-    SWIM = 1,
-    DANCE = 2,
-    COUNT = 3
+    SWIM,
+    DANCE,
+    COUNT,
+    LAST
 };
 
 class Dog {
@@ -66,18 +66,28 @@ public:
         : name_(name)
     {};
 
-    void set_skill(const std::initializer_list<SKILL>& skills) {
-        for (const auto& skill : skills) {
-            switch (skill) {
-            case SKILL::SWIM:
-                break;
-            default:
-                break;
-            }
+    void set_skill(const SKILL& value) {
+        Skills* skill = nullptr;
+        switch (value) {
+        case SKILL::SWIM:
+            skill = new Swimming();
+            break;
+        case SKILL::DANCE:
+            skill = new Dancing();
+            break;
+        case SKILL::COUNT:
+            skill = new Counting();
+            break;
+        default:
+            break;
+        }
+        if (skill != nullptr) {
+            skills_.emplace(skill);
         }
     }
 
     void show_skills() const {
+        std::cout << name_ << ":\n";
         if (skills_.size() < 1) {
             std::cout << "I can't do anything.\n";
             return;
@@ -88,20 +98,26 @@ public:
     }
 
     ~Dog() {
+        std::cout << name_ << "'s skills:\n";
         for (const auto& skill : skills_) {
             delete skill;
         }
-        std::cout << "~Dog;\n";
+        std::cout << name_ << ": ~Dog;\n";
     }
 private:
     std::string name_ = "unknown";
-    std::set<Skills*> skills_;
+    std::unordered_set<Skills*> skills_;
 };
 
 int main() {
+    Dog puppy("Puppy");
+    puppy.show_skills();
+    Dog super_dog("Rex");
+    super_dog.set_skill(SKILL::SWIM);
+    super_dog.set_skill(SKILL::DANCE);
+    super_dog.show_skills();
+    super_dog.set_skill(SKILL::COUNT);
+    super_dog.show_skills();
 
-    Skills* talent = new Swimming();
-    talent->can_do();
-    delete talent;
     return 0;
 }
