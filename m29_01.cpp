@@ -66,7 +66,7 @@ public:
         : name_(name)
     {};
 
-    void set_skill(const SKILL& value) {
+    void add_skill(const SKILL& value) {
         Skills* skill = nullptr;
         switch (value) {
         case SKILL::SWIM:
@@ -113,10 +113,10 @@ int main() {
     Dog puppy("Puppy");
     puppy.show_skills();
     Dog super_dog("Rex");
-    super_dog.set_skill(SKILL::SWIM);
-    super_dog.set_skill(SKILL::DANCE);
+    super_dog.add_skill(SKILL::SWIM);
+    super_dog.add_skill(SKILL::DANCE);
     super_dog.show_skills();
-    super_dog.set_skill(SKILL::COUNT);
+    super_dog.add_skill(SKILL::COUNT);
     super_dog.show_skills();
 
     return 0;
