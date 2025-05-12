@@ -1,12 +1,9 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-//#include <ctime>
 #include <thread>
 #include <mutex>
 #include <random>
-//#include <string>
-//#include <string_view>
 #include <windows.h>
 
 static bool is_number(const std::string str) {
@@ -107,25 +104,15 @@ std::mutex mtx;
 
 // Task 2. Simulation of train station operation
 
-class Station;
-void train(Station* station, const int train_no, const int row);
-void station_command(Station* station, const int row);
-
 class Station {
 public:
     Station() = delete;
     
     Station(const int trains_count)
-        : trains_count(trains_count)
+        : trains_count_(trains_count)
     {
-        trains_durations_.resize(trains_count, 0);
+        trains_durations_.resize(trains_count_, 0);
     };
-
-    int trains_count = 0;
-
-    bool is_free = true;
-
-    bool departure = false;
 
     int row = 0;
 
@@ -134,12 +121,12 @@ public:
     }
 
     void start() {
-        std::vector<std::thread> threads(trains_count);
+        std::vector<std::thread> threads(trains_count_);
 
-        for (int i = 0; i < trains_count; ++i) {
-            threads[i] = std::thread(train, this, i, row);
+        for (int i = 0; i < trains_count_; ++i) {
+            threads[i] = std::thread(&Station::train, this, i, row);
         }
-        std::thread station(station_command, this, row + 3);
+        std::thread station(&Station::station_command, this, row + trains_count_);
 
         if (station.joinable()) {
             station.join();
@@ -154,112 +141,118 @@ public:
     ~Station() {};
 private:
     std::vector<int> trains_durations_;
-};
 
-void train(Station* station, const int id, const int row) {
-    bool on_platform = false;
-    int current_time = 0;
-    std::string blank(16, ' ');
+    int trains_count_ = 0;
 
-    while(true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    	++current_time;
+    bool is_free_ = true;
+    bool departure_ = false;
 
-        mtx.lock();
+    void train(const int id, const int row) {
+        bool on_platform = false;
+        int current_time = 0;
+        std::string blank(18, ' ');
 
-        if (current_time >= station->train_duration(id)) {
-            goto_xy(10, row + id);
-            if (station->is_free) {
-                std::cout << "has arrived";
-                std::cout << blank;
-                station->is_free = false;
-                on_platform = true;
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ++current_time;
+
+            mtx.lock();
+
+            if (current_time >= trains_durations_[id]) {
+                goto_xy(10, row + id);
+                if (is_free_) {
+                    std::cout << "has arrived" << blank;
+                    is_free_ = false;
+                    on_platform = true;
+                }
+                else {
+                    std::cout << "waiting for free platform" << blank;
+                }
+                goto_xy(21, row + trains_count_);
+                current_time = 0;
             }
             else {
-                std::cout << "waiting for free platform";
+                goto_xy(23, row + id);
+                std::cout << "expected in "
+                          << to_time(trains_durations_[id] - current_time)
+                          << blank;
+                goto_xy(21, row + trains_count_);
             }
-            current_time = 0;
-        }
-        else {
-            goto_xy(23, row + id);
-            std::cout << "expected in " << to_time(station->train_duration(id) - current_time);
-            std::cout << blank;	
-        }
 
-        mtx.unlock();
+            mtx.unlock();
 
-        if (current_time == 0) {
-            break;
-        }
-    }
-
-    while(!on_platform) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        mtx.lock();
-
-        if (station->is_free) {
-            goto_xy(10, row + id);
-            std::cout << "has arrived";
-            std::cout << blank;
-            station->is_free = false;
-            on_platform = true;
-        }
-
-        mtx.unlock();
-    }
-
-    while (on_platform) {
-         std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        mtx.lock();
-
-        if (station->departure) {
-            goto_xy(10, row + id);
-            std::cout << "departured";
-            std::cout << blank;
-            station->is_free = true;
-            station->departure = false;
-            on_platform = false;
-            --station->trains_count;
-        };
-
-        mtx.unlock();
-    }
-}
-
-void station_command(Station* station, const int row) {
-    std::string blank(30, ' ');
-    goto_xy(0, row);
-    std::string input = "";
-
-    mtx.lock();
-    std::cout << "Station operation > ";
-    mtx.unlock();
-
-    while(true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        mtx.lock();
-
-        int trains_count = station->trains_count;
-        if (!station->is_free) {
-            goto_xy(21, row);
-            std::cout << blank;
-            goto_xy(21, row);
-            std::getline(std::cin, input);
-            if (input == "depart") {
-                station->departure = true;
+            if (current_time == 0) {
+                break;
             }
         }
 
-        mtx.unlock();
+        while (!on_platform) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        if (trains_count < 1) {
-            return;
+            mtx.lock();
+
+            if (is_free_) {
+                goto_xy(10, row + id);
+                std::cout << "has arrived" << blank;
+                is_free_ = false;
+                on_platform = true;
+                goto_xy(21, row + trains_count_);
+            }
+
+            mtx.unlock();
+        }
+
+        while (on_platform) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            mtx.lock();
+
+            if (departure_) {
+                goto_xy(10, row + id);
+                std::cout << "departured" << blank;
+                is_free_ = true;
+                departure_ = false;
+                on_platform = false;
+                --trains_count_;
+                goto_xy(21, row + trains_count_);
+            };
+
+            mtx.unlock();
         }
     }
-}
+
+    void station_command(const int row) {
+        std::string blank(30, ' ');
+        goto_xy(0, row);
+        std::string input = "";
+
+        mtx.lock();
+        std::cout << "Station operation > ";
+        mtx.unlock();
+
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            mtx.lock();
+            goto_xy(21, row);
+            std::cout << blank;
+            goto_xy(21, row);
+            mtx.unlock();
+
+            if (!is_free_) {
+                goto_xy(21, row);
+                std::getline(std::cin, input);
+                if (input == "depart") {
+                    departure_ = true;
+                }
+            }
+
+            if (trains_count_ < 1) {
+                return;
+            }
+        }
+    }
+};
 
 int main() {
     std::cout << "Task 2. Simulation of train station operation.\n";

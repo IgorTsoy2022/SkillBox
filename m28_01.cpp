@@ -1,12 +1,9 @@
 #include <iostream>
 #include <iomanip>
-//#include <ctime>
 #include <thread>
 #include <mutex>
 #include <map>
 #include <random>
-//#include <string>
-//#include <string_view>
 #include <windows.h>
 
 static void goto_xy(SHORT x, SHORT y) {
@@ -108,9 +105,6 @@ private:
     std::map<std::string_view, Swimmer*> swimmers_;
 };
 
-class Pool;
-void track(Pool* pool, const int track_no);
-
 class Pool {
 public:
     Pool() = delete;
@@ -121,14 +115,6 @@ public:
         , swimmers_(swimmers)
     {};
 
-    const int length() const {
-        return length_;
-    }
-
-    const int distance() const {
-        return distance_;
-    }
-
     void add(const std::string& name, const double speed_record = 0) {
         if (find(name) != nullptr) {
             std::cout << name << " already exists in the pool." << std::endl;
@@ -137,10 +123,6 @@ public:
         auto swimmer = swimmers_->add(name, speed_record);
         name_width_ = name_width_ > name.size() ? name_width_ : name.size();
         pool_swimmers_.emplace_back(swimmer);
-    }
-
-    const int name_width() const {
-        return name_width_;
     }
 
     void remove(const std::string_view name) {
@@ -167,10 +149,6 @@ public:
         return *it;
     }
 
-    const int tracks_count() const {
-        return pool_swimmers_.size();
-    }
-
     void shuffle() {
         std::random_device rd;
         std::mt19937 g(rd());
@@ -191,29 +169,14 @@ public:
         });
     }
 
-    Swimmer* pool_swimmer(const int track_no) const {
-        return pool_swimmers_[track_no];
-    }
-
-    int& in_the_swim() {
-        return in_the_swim_;
-    }
-
-    void resize_standings() {
-        standings_.resize(pool_swimmers_.size(), {});
-        in_the_swim_ = pool_swimmers_.size();
-    }
-
-    void write_standings(const int track_no, const double seconds) {
-        standings_[track_no] = { track_no, seconds };
-    }
-
     void start() {
-        resize_standings();
-        std::vector<std::thread> threads(pool_swimmers_.size());
+        in_the_swim_ = pool_swimmers_.size();
+        standings_.resize(in_the_swim_, {});
+        std::vector<std::thread> threads(in_the_swim_);
 
-        for (int i = 0; i < pool_swimmers_.size(); ++i) {
-            threads[i] = std::thread(track, this, i);
+        for (int i = 0; i < in_the_swim_; ++i) {
+            int speed = std::rand() % (2624 - 1706 + 1) + 1706;
+            threads[i] = std::thread(&Pool::track, this, speed, i);
         }
 
         for (auto & thread : threads) {
@@ -276,64 +239,66 @@ private:
     std::vector<std::pair<int, double>> standings_;
 
     int in_the_swim_ = 0;
-};
 
-void track(Pool* pool, const int track_no) {
-    int current_time = 0;
-    int current_pos = 0;
-    int current_speed = std::rand() % (2624 - 1706 + 1) + 1706;
-    double elapsed_distance = 0.0;
-    while (pool->in_the_swim() > 0) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        ++current_time;
+    void track(const int speed, const int track_no) {
+        int current_time = 0;
+        int current_pos = 0;
+        int right_border = name_width_ + 4 + length_;
 
-        mtx.lock();
+        int current_speed = speed;
 
-        if (current_time % 2 == 0) {
-             current_speed += std::rand() % 201 - 100;
-        }
-        elapsed_distance += double(current_speed) / 1000;
+        double elapsed_distance = 0.0;
+        while (in_the_swim_ > 0) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ++current_time;
 
-        if (current_pos > 0) {
-            goto_xy(current_pos, track_no + 2);
-            std::cout << " ";
-        }
+            mtx.lock();
 
-        if (elapsed_distance >= pool->distance()) {
-            double elapsed_time = double(current_time) 
-                   - (elapsed_distance - pool->distance()) * 1000
-                   / double(current_speed);
-            pool->write_standings(track_no, elapsed_time);
-            current_pos = shuttle(pool->length(), pool->distance())
-                        + pool->name_width() + 2;
-            goto_xy(current_pos, track_no + 2);
-            std::cout << track_no;
-            goto_xy(pool->name_width() + 4 + pool->length(), track_no + 2);
-            std::cout << std::right << std::fixed << std::setprecision(1)
-                      << double(pool->distance());
-            --pool->in_the_swim();
-            current_time = 0;
-        }
-        else {
-        	current_pos = shuttle(pool->length(), elapsed_distance)
-                        + pool->name_width() + 2;
-            goto_xy(current_pos, track_no + 2);
-            std::cout << track_no;
-            goto_xy(pool->name_width() + 4 + pool->length(), track_no + 2);
-            std::cout << std::right << std::fixed << std::setprecision(1)
-                      << elapsed_distance;
-        }
+            if (current_time % 2 == 0) {
+                current_speed += std::rand() % 201 - 100;
+            }
+            elapsed_distance += double(current_speed) / 1000;
 
-        mtx.unlock();
-        if (current_time == 0) {
-            return;
+            if (current_pos > 0) {
+                goto_xy(current_pos, track_no + 2);
+                std::cout << " ";
+            }
+
+            if (elapsed_distance >= distance_) {
+                double elapsed_time = double(current_time) 
+                       - (elapsed_distance - distance_) * 1000
+                       / double(current_speed);
+                standings_[track_no] = { track_no, elapsed_time };
+
+                current_pos = shuttle(length_, distance_) + name_width_ + 2;
+                goto_xy(current_pos, track_no + 2);
+                std::cout << track_no;
+                goto_xy(right_border, track_no + 2);
+                std::cout << std::right << std::fixed << std::setprecision(1)
+                          << double(distance_);
+
+                --in_the_swim_;
+                current_time = 0;
+            }
+            else {
+        	    current_pos = shuttle(length_, elapsed_distance) + name_width_ + 2;
+                goto_xy(current_pos, track_no + 2);
+                std::cout << track_no;
+                goto_xy(right_border, track_no + 2);
+                std::cout << std::right << std::fixed << std::setprecision(1)
+                          << elapsed_distance;
+            }
+
+            mtx.unlock();
+            if (current_time == 0) {
+                return;
+            }
         }
     }
-}
+};
 
 int main() {
     std::cout << "Task 1. The 100-meter swim.\n";
-
     std::srand(std::time(nullptr));
 
     Swimmers swimmers;

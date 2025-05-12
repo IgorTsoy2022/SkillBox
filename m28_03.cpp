@@ -1,12 +1,9 @@
 #include <iostream>
-//#include <ctime>
 #include <deque>
 #include <thread>
 #include <mutex>
 #include <map>
 #include <random>
-//#include <string>
-//#include <string_view>
 #include <windows.h>
 
 static void goto_xy(SHORT x, SHORT y) {
@@ -203,7 +200,7 @@ private:
 
         while (true) {
             int time = waiter_->random_time();
-                        std::this_thread::sleep_for(std::chrono::seconds(time));
+            std::this_thread::sleep_for(std::chrono::seconds(time));
 
             mtx.lock();
 
@@ -236,7 +233,7 @@ private:
         while (true) {
  
             while (true) {
-            	            std::this_thread::sleep_for(std::chrono::seconds(1));
+                std::this_thread::sleep_for(std::chrono::seconds(1));
 
                 mtx.lock();
                 if (orders_.size() > 0) {
@@ -257,7 +254,7 @@ private:
             mtx.lock();
             goto_xy(0, row);
             std::cout << "Kitchen: preparing the order #" << current_order->id()
-                  << " " << course(current_order->course_id()) << "." << blank;
+                      << " " << course(current_order->course_id()) << "." << blank;
             mtx.unlock();
 
             int time = kitchen_->random_time();
@@ -270,7 +267,7 @@ private:
 
             goto_xy(0, row);
             std::cout << "Kitchen: the order #" << order->id() << " "
-                  << course(order->course_id()) << " is ready." << blank;
+                      << course(order->course_id()) << " is ready." << blank;
             mtx.unlock();
 
             if (count_orders >= daily_throughput_) {
@@ -325,7 +322,8 @@ private:
                 mtx.lock();
                 goto_xy(0, row);
                 std::cout << "Courier: took the order #" << current_ready_order->id()
-                      << " " << course(current_ready_order->course_id()) << "." << blank << blank;
+                          << " " << course(current_ready_order->course_id()) << "."
+                          << blank << blank;
                 remove_ready_order();
                 mtx.unlock();
 
