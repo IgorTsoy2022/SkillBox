@@ -178,5 +178,9 @@ int main() {
     printParams(rectangle);
     printParams(triangle);
 
+    delete circle;
+    delete rectangle;
+    delete triangle;
+
     return 0;
 }
