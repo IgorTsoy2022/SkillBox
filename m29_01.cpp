@@ -1,20 +1,45 @@
 #include <iostream>
-#include <unordered_set>
+#include <algorithm>
+#include <vector>
+#include <unordered_map>
+
+enum class SKILL {
+    SWIM,
+    DANCE,
+    COUNT,
+    NOTHING
+};
 
 class Skills {
 public:
     Skills() {};
+
+    Skills(const SKILL& skill, const std::string& skill_name)
+        : skill_(skill)
+        , skill_name_(skill_name)
+    {};
+
+    const SKILL get_skill() const {
+        return skill_;
+    }
+
+    const std::string_view get_skill_name() const {
+        return skill_name_;
+    }
 
     virtual void can_do() const = 0;
 
     virtual ~Skills() {
         std::cout << "~Skills;\n";
     };
+private:
+    SKILL skill_ = SKILL::NOTHING;
+    std::string skill_name_ = "Nothing";
 };
 
 class Swimming : public Skills {
 public:
-    Swimming() {};
+    Swimming() : Skills(SKILL::SWIM, "Swimming") {};
 
     void can_do() const override {
         std::cout << "I can swim.\n";
@@ -27,7 +52,7 @@ public:
 
 class Dancing : public Skills {
 public:
-    Dancing() {};
+    Dancing() : Skills(SKILL::DANCE, "Dancing") {};
 
     void can_do() const override {
         std::cout << "I can dance.\n";
@@ -40,7 +65,7 @@ public:
 
 class Counting : public Skills {
 public:
-    Counting() {};
+    Counting() : Skills(SKILL::COUNT, "Counting") {};
 
     void can_do() const override {
         std::cout << "I can count.\n";
@@ -49,13 +74,6 @@ public:
     ~Counting() {
         std::cout << "~Counting; \n";
     }
-};
-
-enum class SKILL {
-    SWIM,
-    DANCE,
-    COUNT,
-    LAST
 };
 
 class Dog {
@@ -68,6 +86,14 @@ public:
 
     void add_skill(const SKILL& value) {
         Skills* skill = nullptr;
+        auto it = std::find_if(skills_.begin(), skills_.end(),
+            [value](const Skills* skill) {
+                return skill->get_skill() == value; });
+        if (it != skills_.end()) {
+            std::cout << "The dog already has the skill \""
+                      << (*it)->get_skill_name() << "\".\n";
+            return;
+        }
         switch (value) {
         case SKILL::SWIM:
             skill = new Swimming();
@@ -82,7 +108,7 @@ public:
             break;
         }
         if (skill != nullptr) {
-            skills_.emplace(skill);
+            skills_.emplace_back(skill);
         }
     }
 
@@ -106,7 +132,7 @@ public:
     }
 private:
     std::string name_ = "unknown";
-    std::unordered_set<Skills*> skills_;
+    std::vector<Skills*> skills_;
 };
 
 int main() {
@@ -116,6 +142,7 @@ int main() {
     super_dog.add_skill(SKILL::SWIM);
     super_dog.add_skill(SKILL::DANCE);
     super_dog.show_skills();
+    super_dog.add_skill(SKILL::COUNT);
     super_dog.add_skill(SKILL::COUNT);
     super_dog.show_skills();
 

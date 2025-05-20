@@ -148,7 +148,7 @@ private:
     double a_ = 0.0;
     double b_ = 0.0;
     double c_ = 0.0;
-    const Box& frame_size(const double a, const double b, const double c) const {
+    const Box frame_size(const double a, const double b, const double c) const {
         auto semi_perimeter = (a + b + c) / 2.0;
         auto triangle_area = std::sqrt(semi_perimeter * (semi_perimeter - a) *
                                       (semi_perimeter - b) * (semi_perimeter - c));
@@ -177,10 +177,6 @@ int main() {
     printParams(circle);
     printParams(rectangle);
     printParams(triangle);
-
-    delete circle;
-    delete rectangle;
-    delete triangle;
 
     return 0;
 }
