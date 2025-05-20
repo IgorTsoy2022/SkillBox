@@ -8,17 +8,22 @@ public:
         : name_(name)
     {};
 
-    ~Toy() {
-        std::cout << "~Toy: " << name_ << std::endl;
+    const std::string_view name() const {
+        return name_;
     }
 
+    ~Toy() {
+        std::cout << "The toy \"" << name_ << "\" has been destroyed." << std::endl;
+    }
 private:
     std::string name_ = "unknown";
 };
 
 class Dog {
 public:
-    Dog(const std::string& name, std::shared_ptr<Toy> toy, int age)
+    Dog() {};
+
+    Dog(const std::string& name, int age, std::shared_ptr<Toy> toy = nullptr)
         : name_(name)
         , toy_(toy)
     {
@@ -27,9 +32,32 @@ public:
         }
     };
 
-    Dog() : Dog("Dog", std::make_shared<Toy>("Toy"), 0) {};
-    Dog(const std::string& name) : Dog(name, std::make_shared<Toy>("Toy"), 0) {};
-    Dog(int age) : Dog("Dog", std::make_shared<Toy>("Toy"), age) {};
+    Dog(const std::string& name) : Dog(name, 0) {};
+    Dog(const std::string& name, int age, const std::string& toy)
+        : Dog(name, age, std::make_shared<Toy>(toy)) {};
+
+    const std::string_view name() const {
+        return name_;
+    }
+
+    const int age() const {
+        return age_;
+    }
+
+    void get_toy(std::shared_ptr<Toy>&& toy) {
+        if (toy == nullptr) {
+            return;
+        }
+        if (toy_ == toy) {
+            std::cout << "I already have this toy.\n";
+        }
+        else if (toy.use_count() > 0) {
+            std::cout << "Another dog is playing with this toy.\n";
+        }
+        else {
+            toy_ = std::move(toy);
+        }
+    }
 
     void copyToy(const Dog& other) {
         toy_ = other.toy_;
@@ -39,6 +67,13 @@ public:
         bestie_ = bestie;
     }
 
+    const std::string_view dogs_toy() const {
+        if (toy_ == nullptr) {
+            return "";
+        }
+        return toy_->name();
+    }
+
     ~Dog() {
         std::cout << "~Dog: " << name_ << std::endl;
     }
@@ -46,7 +81,6 @@ private:
     std::string name_ = "a dog";
     int age_ = 0;
     std::shared_ptr<Toy> toy_;
-//    std::shared_ptr<Dog> bestie_;
     std::weak_ptr<Dog> bestie_;
 };
 
@@ -77,9 +111,9 @@ int main() {
         std::shared_ptr<Toy> ball = std::make_shared<Toy>("Ball");
         std::shared_ptr<Toy> bone = std::make_shared<Toy>("Bone");
 
-        std::shared_ptr<Dog> a = std::make_shared<Dog>("a", ball, 10);
-        std::shared_ptr<Dog> b = std::make_shared<Dog>("b", ball, 11);
-        std::shared_ptr<Dog> c = std::make_shared<Dog>("c", ball, 12);
+        std::shared_ptr<Dog> a = std::make_shared<Dog>("a", 10, ball);
+        std::shared_ptr<Dog> b = std::make_shared<Dog>("b", 11, ball);
+        std::shared_ptr<Dog> c = std::make_shared<Dog>("c", 12, ball);
 
         a->set_bestie(b);
         b->set_bestie(a);
@@ -94,11 +128,14 @@ int main() {
         bone.reset();
 */
     }
+    std::cout << std::boolalpha;
 
     std::shared_ptr<Toy> ball = std::make_shared<Toy>("Ball");
     std::shared_ptr<Toy> bone = std::make_shared<Toy>("Bone");
 
-    std::cout << ball.use_count() << " dog(s) is(are) playing with this toy.\n";
+    std::shared_ptr<Dog> a = std::make_shared<Dog>("a", 10, ball);
+    std::shared_ptr<Dog> b = std::make_shared<Dog>("b", 11, ball);
 
-    return 0;
+
+        return 0;
 }
