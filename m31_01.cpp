@@ -44,30 +44,51 @@ public:
         return age_;
     }
 
-    void get_toy(std::shared_ptr<Toy>&& toy) {
+    const bool get_toy(std::shared_ptr<Toy>& toy) {
         if (toy == nullptr) {
-            return;
+            return false;
         }
         if (toy_ == toy) {
-            std::cout << "I already have this toy.\n";
+            std::cout << "The dog " << name_
+                      << ": I already have the toy \"" << toy_name() << "\".\n";
+            return false;
         }
-        else if (toy.use_count() > 0) {
-            std::cout << "Another dog is playing with this toy.\n";
+        else if (toy.use_count() > 1) {
+            std::cout << "The dog " << name_ 
+                      << ": Another dog is playing with the toy \""
+                      << toy->name() << "\".\n";
+            return false;
         }
         else {
-            toy_ = std::move(toy);
+            toy_ = toy;
+            std::cout << "The dog " << name_
+                      << ": I've taken the toy \"" << toy_name() << "\".\n";
+            return true;
         }
     }
 
-    void copyToy(const Dog& other) {
-        toy_ = other.toy_;
+    const std::shared_ptr<Toy> drop_toy() {
+        auto dropped_toy = toy_;
+        if (toy_ == nullptr) {
+            std::cout << "The Dog " << name_ << ": Nothing to drop.\n";
+        }
+        else {
+            std::cout << "The Dog " << name_ << ": I've dropped the toy "
+                      << toy_name() << ".\n";
+            toy_ = nullptr;
+        }
+        return dropped_toy;
     }
 
     void set_bestie(std::shared_ptr<Dog> bestie) {
         bestie_ = bestie;
     }
 
-    const std::string_view dogs_toy() const {
+    const std::shared_ptr<Toy>& toy() const {
+        return toy_;
+    }
+
+    const std::string_view toy_name() const {
         if (toy_ == nullptr) {
             return "";
         }
@@ -78,7 +99,7 @@ public:
         std::cout << "~Dog: " << name_ << std::endl;
     }
 private:
-    std::string name_ = "a dog";
+    std::string name_ = "A dog";
     int age_ = 0;
     std::shared_ptr<Toy> toy_;
     std::weak_ptr<Dog> bestie_;
@@ -133,9 +154,36 @@ int main() {
     std::shared_ptr<Toy> ball = std::make_shared<Toy>("Ball");
     std::shared_ptr<Toy> bone = std::make_shared<Toy>("Bone");
 
-    std::shared_ptr<Dog> a = std::make_shared<Dog>("a", 10, ball);
-    std::shared_ptr<Dog> b = std::make_shared<Dog>("b", 11, ball);
+    std::shared_ptr<Dog> a = std::make_shared<Dog>("Alpha", 10);
+    std::shared_ptr<Dog> b = std::make_shared<Dog>("Betta", 11);
 
+    std::cout << a->name() << "! Take the toy \"" << ball->name() << "\"!\n";
+    a->get_toy(ball);
+    std::cout << "    ball.use_count() = " << ball.use_count() << "\n";
+    std::cout << "    a->toy().use_count() = " << a->toy().use_count() << "\n";
 
-        return 0;
+    std::cout << a->name() << "! Take the toy \"" << ball->name() << "\"!\n";
+    a->get_toy(ball);
+    std::cout << b->name() << "! Take the toy \"" << ball->name() << "\"!\n";
+    b->get_toy(ball);
+
+    std::cout << "Reset ball ptr.\n";
+    ball.reset();
+    std::cout << "    ball.use_count() = " << ball.use_count() << "\n";
+    std::cout << "    a->toy().use_count() = " << a->toy().use_count() << "\n";
+    std::cout << "    b->toy().use_count() = " << b->toy().use_count() << "\n";
+
+    std::cout << a->name() << "! Drop the toy \"" << a->toy_name() << "\"!\n";
+    ball = a->drop_toy();
+    std::cout << "    ball.use_count() = " << ball.use_count() << "\n";
+    std::cout << "    a->toy().use_count() = " << a->toy().use_count() << "\n";
+
+    std::cout << b->name() << "! Drop the toy \"" << b->toy_name() << "\"!\n";
+    auto another_ball = b->drop_toy();
+    std::cout << "    ball.use_count() = " << ball.use_count() << "\n";
+    std::cout << "    another_ball.use_count() = " << another_ball.use_count() << "\n";
+    std::cout << "    a->toy().use_count() = " << a->toy().use_count() << "\n";
+    std::cout << "    b->toy().use_count() = " << b->toy().use_count() << "\n";
+
+    return 0;
 }
