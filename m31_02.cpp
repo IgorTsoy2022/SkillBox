@@ -1,42 +1,119 @@
 #include <iostream>
 
 template <typename T>
-class ControlBlock {
+struct default_delete {
+    void operator()(T* ptr) const {
+        delete ptr;
+    }
+};
+
+template <typename T, typename Deleter = std::default_delete<T>>
+class unique_ptr {
 public:
-    explicit ControlBlock(T* p) noexcept
-        : shared_count(1),
-        weak_count(1),
-        ptr(p) {
+    unique_ptr(T* ptr)
+        : ptr_(ptr)
+    {}
+
+    unique_ptr(T* ptr, Deleter del)
+        : ptr_(ptr)
+        , del_(del)
+    {}
+
+    unique_ptr(const unique_ptr&) = delete;
+    unique_ptr& operator=(const unique_ptr&) = delete;
+
+    unique_ptr(unique_ptr&& other)
+        : ptr_(other.ptr_)
+        , del_(std::move(other.del_))
+    {
+        other.ptr_ = nullptr;
+    }
+    unique_ptr& operator=(unique_ptr&& other) {
+        if (this != &other) {
+            del_(ptr_);
+            ptr_ = other.ptr_;
+            del_ = std::move(other.del_);
+            other.ptr_ = nullptr;
+        }
+        return *this;
     }
 
-    void add_ref() noexcept {
-        ++shared_count;
+    T& operator*() const {
+        return *ptr_;
     }
 
-    void release() noexcept {
-        if (!--shared_count) {
-            delete ptr;
-            if (!--weak_count) {
-                destroy();
+    T* operator->() const {
+        return ptr_;
+    }
+
+    T* get() const {
+        return ptr_;
+    }
+
+    ~unique_ptr() {
+        del_(ptr_);
+    }
+private:
+    T* ptr_;
+    [[no_unique_address]] Deleter del_;
+};
+
+template <typename T, typename... Args>
+unique_ptr<T> make_unique(Args&&... args) {
+    return unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+template <typename T>
+class ControlBlockBase {
+public:
+    explicit ControlBlockBase(T* ptr) noexcept
+        : shared_count_(1)
+        , weak_count_(1)
+        , ptr_(ptr)
+    {};
+
+    void increment_shared() noexcept {
+        ++shared_count_;
+    }
+
+    void increment_weak() noexcept {
+        ++weak_count_;
+    }
+
+    void decrement_shared() noexcept {
+        if (shared_count_ == 0) {
+            throw std::logic_error("shared_count_ is already zero.");
+        }
+        --shared_count_;
+    }
+
+    void decrement_weak() noexcept {
+        if (weak_count_ == 0) {
+            throw std::logic_error("weak_count_ is already zero.");
+        }
+        --weak_count_;
+    }
+
+    void release_shared() noexcept {
+        if (--shared_count_ < 1) {
+            delete ptr_;
+            if (--weak_count_ < 1) {
+                delete this;
             }
         }
     }
 
-    void add_ref_weak() noexcept {
-        ++weak_count;
-    }
-
     void release_weak() noexcept {
-        if (!--weak_count) {
-            destroy();
+        if (--weak_count_ < 1) {
+            delete this;
         }
     }
 
     size_t use_count() const noexcept {
-        return shared_count.load();
+        return shared_count_.load();
     }
 
-    void add_ref_lock() {
+    void increment_shared_lock() {
         // Сохраняем текущее значение shared_count
         size_t cur_value(shared_count.load());
         do {
@@ -52,15 +129,45 @@ public:
         } while (shared_count.compare_exchange_weak(cur_value, cur_value + 1));
     }
 
-private:
-    void destroy() noexcept {
-        delete this;
+    virtual void distruct() = 0;
+
+    virtual void ~ControlBlockBase() {
+        release();
     }
 
 private:
-    std::atomic<size_t> shared_count;
-    std::atomic<size_t> weak_count;
-    T* ptr;
+    std::atomic<size_t> shared_count_;
+    std::atomic<size_t> weak_count_;
+    T* ptr_;
+};
+
+template <typename T>
+class PtrControlBlock : ControlBlockBase {
+public:
+    explicit PtrControlBlock(T* ptr)
+        : ptr_(ptr)
+    {}
+
+    void distruct() override {
+        delete ptr_;
+    }
+
+private:
+    T* ptr_ = nullptr;
+};
+
+template <typename T>
+class ObjControlBlock : ControlBlockBase {
+public:
+    template<typename ... Args>
+    explicit ObjControlBlock(Args&& ...args)
+        : obj_(args...)
+    {}
+
+    void distruct() override {}
+
+private:
+    T obj_{};
 };
 
 
@@ -70,15 +177,14 @@ class weak_ptr;
 template <typename T>
 class shared_ptr {
 public:
-    shared_ptr() noexcept : ptr(nullptr), counted(nullptr) {}
+    shared_ptr() noexcept : ptr_(nullptr), counted(nullptr) {}
 
-    // excaption safe конструктор
     explicit shared_ptr(T* p) {
         std::unique_ptr<T> holder(p);
         // new может кинуть исключение, и, если p не передать в unique_ptr,
         // память под p потеряется
         counted = new ControlBlock<T>(holder.get());
-        ptr = holder.release();
+        ptr_ = holder.release();
     }
 
     ~shared_ptr() noexcept {
@@ -86,7 +192,7 @@ public:
     }
 
     shared_ptr(const shared_ptr& other) noexcept : ptr(other.ptr), counted(other.counted) {
-        add_ref();
+        increment_shared();
     }
 
     shared_ptr& operator=(const shared_ptr& other) noexcept {
@@ -98,7 +204,7 @@ public:
         counted = other.counted;
 
         // Устанавливаем владение новым указателем
-        add_ref();
+        increment_shared();
 
         // Ура! Я не забыл вернуть *this!
         return *this;
@@ -113,9 +219,9 @@ public:
     }
 
 private:
-    void add_ref() {
+    void increment_shared() {
         if (counted) {
-            counted->add_ref();
+            counted->increment_shared();
         }
     }
 
@@ -126,11 +232,23 @@ private:
     }
 
 private:
-    T* ptr;
+    T* ptr_;
     ControlBlock<T>* counted;
+
+
 
     friend class weak_ptr<T>;
 };
+
+template <typename T, typename ... Args>
+shared_ptr<T> make_shared(Args&& ... args) {
+    shared_ptr<T> ptr = nullptr;
+    auto object = new typename shared_ptr<T>::ObjControlBlock<T>(args ...);
+    ptr.ptr_ = &object->obj_;
+    ptr.cptr_ = object;
+    return ptr;
+}
+
 
 template <typename T>
 class weak_ptr {
@@ -139,11 +257,11 @@ public:
     weak_ptr() noexcept : ptr(nullptr), counted(nullptr) {}
 
     weak_ptr(const weak_ptr& other) noexcept : ptr(other.ptr), counted(other.counted) {
-        add_ref_weak();
+        increment_weak();
     }
 
     weak_ptr(const shared_ptr<T>& p) noexcept : ptr(p.ptr), counted(p.counted) {
-        add_ref_weak();
+        increment_weak();
     }
 
     weak_ptr& operator=(const weak_ptr& other) noexcept {
@@ -152,7 +270,7 @@ public:
         ptr = other.ptr;
         counted = other.counted;
 
-        add_ref_weak();
+        increment_weak();
 
         return *this;
     }
@@ -163,7 +281,7 @@ public:
         ptr = p.ptr;
         counted = p.counted;
 
-        add_ref_weak();
+        increment_weak();
 
         return *this;
     }
@@ -183,10 +301,21 @@ public:
         return counted != nullptr ? counted->use_count() : 0;
     }
 
+    const bool expired() const noexcept {
+        return shared_count_.load() > 0;
+    }
+
+    const shared_ptr<T> lock() const noexcept {
+        if (shared_count_.load() > 0) {
+            return shared_ptr<T>();
+        }
+        return nullptr;
+    }
+
 private:
-    void add_ref_weak() noexcept {
+    void increment_weak() noexcept {
         if (counted) {
-            counted->add_ref_weak();
+            counted->increment_weak();
         }
     }
 
@@ -299,14 +428,6 @@ private:
     ControlBlock<T>* cptr_ = nullptr;
 };
 */
-
-template <typename T>
-class unique_ptr {};
-
-template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args&&... args) {
-    return unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 
 struct S {
     int x = 0;
