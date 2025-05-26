@@ -1,5 +1,68 @@
 #include <iostream>
 
+template <typename T>
+struct default_delete {
+    void operator()(T* ptr) const {
+        delete ptr;
+    }
+};
+
+template <typename T, typename Deleter = std::default_delete<T>>
+class unique_ptr {
+public:
+    unique_ptr(T* ptr)
+        : ptr_(ptr)
+    {}
+
+    unique_ptr(T* ptr, Deleter del)
+        : ptr_(ptr)
+        , del_(del)
+    {}
+
+    unique_ptr(const unique_ptr&) = delete;
+    unique_ptr& operator=(const unique_ptr&) = delete;
+
+    unique_ptr(unique_ptr&& other)
+        : ptr_(other.ptr_)
+        , del_(std::move(other.del_))
+    {
+        other.ptr_ = nullptr;
+    }
+    unique_ptr& operator=(unique_ptr&& other) {
+        if (this != &other) {
+            del_(ptr_);
+            ptr_ = other.ptr_;
+            del_ = std::move(other.del_);
+            other.ptr_ = nullptr;
+        }
+        return *this;
+    }
+
+    T& operator*() const {
+        return *ptr_;
+    }
+
+    T* operator->() const {
+        return ptr_;
+    }
+
+    T* get() const {
+        return ptr_;
+    }
+
+    ~unique_ptr() {
+        del_(ptr_);
+    }
+private:
+    T* ptr_;
+    [[no_unique_address]] Deleter del_;
+};
+
+template <typename T, typename... Args>
+unique_ptr<T> make_unique(Args&&... args) {
+    return unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 namespace ptr {
     class ControlBlockBase {
     public:
@@ -79,6 +142,7 @@ class weak_ptr;
 
 template <typename T>
 class shared_ptr {
+//    friend class weak_ptr<T>;
 public:
     shared_ptr() {}
 
@@ -111,7 +175,7 @@ public:
         }
     }
 
-    shared_ptr& operator=(shared_ptr& other) noexcept {
+    shared_ptr& operator=(const shared_ptr& other) noexcept {
 
         decrement_shared();
 
@@ -127,7 +191,7 @@ public:
 
         decrement_shared();
 
-        if (ptr.use_count() > 0) {
+    	if (ptr.use_count() > 0) {
             ptr_ = ptr.get();
             cptr_ = ptr.get_cptr();
             increment_shared();
@@ -138,21 +202,6 @@ public:
         }
 
         return *this;
-    }
-
-    shared_ptr& operator=(std::nullptr_t ptr = nullptr) noexcept {
-        decrement_shared();
-        ptr_ = nullptr;
-        cptr_ = nullptr;
-        return *this;
-    }
-
-    bool operator==(std::nullptr_t ptr) {
-        return (ptr_ == nullptr) && (cptr_ == nullptr);
-    }
-
-    bool operator==(shared_ptr& ptr) {
-        return (*this == ptr);
     }
 
     void set_ptr(T* ptr) {
@@ -226,7 +275,7 @@ private:
 
 template <typename T, typename ... Args>
 shared_ptr<T> make_shared(Args&& ... args) {
-    shared_ptr<T> ptr;
+	shared_ptr<T> ptr;
     auto cptr = new ptr::ObjControlBlock<T>{ T(std::forward<Args>(args)...) };
     ptr.set_ptr(&cptr->get_object());
     ptr.set_cptr(cptr);
@@ -235,6 +284,7 @@ shared_ptr<T> make_shared(Args&& ... args) {
 
 template <typename T>
 class weak_ptr {
+//    friend class shared_ptr<T>;
 public:
     weak_ptr() {}
 
@@ -280,7 +330,7 @@ public:
         return *this;
     }
 
-    weak_ptr& operator=(shared_ptr<T>& ptr) {
+    weak_ptr& operator=(const shared_ptr<T>& ptr) {
 
         decrement_weak();
 
@@ -290,10 +340,6 @@ public:
         increment_weak();
 
         return *this;
-    }
-
-    bool& operator==(weak_ptr<T>& ptr) {
-        return (*this == ptr);
     }
 
     T* get() const noexcept {
@@ -368,122 +414,72 @@ private:
 
 };
 
-class Toy {
-public:
-    Toy() {}
-
-    Toy(const std::string& name)
-        : name_(name)
-    {}
-
-    const std::string_view name() const {
-        return name_;
-    }
-
-    ~Toy() {
-        std::cout << "The toy \"" << name_ << "\" has been destroyed." << std::endl;
-    }
-private:
-    std::string name_ = "unknown";
-};
-
-class Dog {
-public:
-    Dog() {}
-
-    Dog(const std::string& name, int age, shared_ptr<Toy> toy = nullptr)
-        : name_(name)
-        , toy_(toy)
-    {
-        if (age > 0 && age < 30) {
-            age_ = age;
-        }
-    }
-
-    Dog(const std::string& name) : Dog(name, 0) {}
-    Dog(const std::string& name, int age, const std::string& toy)
-        : Dog(name, age, make_shared<Toy>(toy)) {
-    }
-
-    const std::string_view name() const {
-        return name_;
-    }
-
-    const int age() const {
-        return age_;
-    }
-
-    const bool get_toy(shared_ptr<Toy>& toy) {
-        if (toy == nullptr) {
-            return false;
-        }
-        if (toy_ == toy) {
-            std::cout << "The dog " << name_
-                << ": I already have the toy \"" << toy_name() << "\".\n";
-            return false;
-        }
-        else if (toy.use_count() > 1) {
-            std::cout << "The dog " << name_
-                << ": Another dog is playing with the toy \""
-                << toy->name() << "\".\n";
-            return false;
-        }
-        else {
-            toy_ = toy;
-            std::cout << "The dog " << name_
-                << ": I've taken the toy \"" << toy_name() << "\".\n";
-            return true;
-        }
-    }
-
-    const shared_ptr<Toy> drop_toy() {
-        auto dropped_toy = toy_;
-        if (toy_ == nullptr) {
-            std::cout << "The Dog " << name_ << ": Nothing to drop.\n";
-        }
-        else {
-            std::cout << "The Dog " << name_ << ": I've dropped the toy "
-                << toy_name() << ".\n";
-            toy_ = nullptr;
-        }
-        return dropped_toy;
-    }
-
-    void set_bestie(shared_ptr<Dog> bestie) {
-        bestie_ = bestie;
-    }
-
-    const shared_ptr<Toy>& toy() const {
-        return toy_;
-    }
-
-    const std::string_view toy_name() const {
-        if (toy_ == nullptr) {
-            return "";
-        }
-        return toy_->name();
-    }
-
-    ~Dog() {
-        std::cout << "~Dog: " << name_ << std::endl;
-    }
-private:
-    std::string name_ = "A dog";
-    int age_ = 0;
-    shared_ptr<Toy> toy_;
-    weak_ptr<Dog> bestie_;
+struct S {
+    int x = 0;
+    std::string str;
+    S(int x, const std::string& str)
+        : x(x)
+        , str(str)
+    {};
 };
 
 int main() {
-    
-    shared_ptr<Toy> ball = make_shared<Toy>("Ball");
+    auto p1 = shared_ptr<int>(5);
+    int x = 6;
+    auto p2 = shared_ptr<int>(x);
+    auto p3 = shared_ptr<int>(new int(7));
+    auto p4 = make_shared<int>(8);
+    auto p5 = p1;
 
-    shared_ptr<Dog> a = make_shared<Dog>("a", 10, ball);
-    shared_ptr<Dog> b = make_shared<Dog>("b", 11, ball);
+    std::cout << *p1 << " count=" << p1.use_count() << std::endl;
+    std::cout << *p2 << " count=" << p2.use_count() << std::endl;
+    std::cout << *p3 << " count=" << p3.use_count() << std::endl;
+    std::cout << *p4 << " count=" << p4.use_count() << std::endl;
+    std::cout << *p5 << " count=" << p5.use_count() << std::endl;
 
-    a->set_bestie(b);
-    b->set_bestie(a);
+    p5 = p4;
 
+    std::cout << *p1 << " count=" << p1.use_count() << std::endl;
+    std::cout << *p2 << " count=" << p2.use_count() << std::endl;
+    std::cout << *p3 << " count=" << p3.use_count() << std::endl;
+    std::cout << *p4 << " count=" << p4.use_count() << std::endl;
+    std::cout << *p5 << " count=" << p5.use_count() << std::endl;
 
+    auto ps = shared_ptr<S>(6, "abc");
+    std::cout << ps->x << " " << ps->str << std::endl;
+
+    auto w1 = weak_ptr<int>(5);
+    auto w2 = weak_ptr<int>(x);
+    auto w3 = weak_ptr<int>(new int(7));
+    auto w4 = w1;
+
+    auto w5 = weak_ptr<int>(p1);
+    auto w6 = weak_ptr<int>(w5);
+    weak_ptr<int> w7 = p2;
+    auto w8 = w5;
+
+    std::cout << " count=" << w1.use_count() << " weak count=" << w1.use_weak_count() << std::endl;
+    std::cout << " count=" << w2.use_count() << " weak count=" << w2.use_weak_count() << std::endl;
+    std::cout << " count=" << w3.use_count() << " weak count=" << w3.use_weak_count() << std::endl;
+    std::cout << " count=" << w4.use_count() << " weak count=" << w4.use_weak_count() << std::endl;
+    std::cout << " count=" << w5.use_count() << " weak count=" << w5.use_weak_count() << std::endl;
+    std::cout << " count=" << w6.use_count() << " weak count=" << w6.use_weak_count() << std::endl;
+    std::cout << " count=" << w7.use_count() << " weak count=" << w7.use_weak_count() << std::endl;
+    std::cout << " count=" << w8.use_count() << " weak count=" << w8.use_weak_count() << std::endl;
+
+    auto pw = w5.lock();
+    std::cout << " count=" << w5.use_count() << " weak count=" << w5.use_weak_count() << std::endl;
+
+    p1.reset();
+    p2.reset();
+    p3.reset();
+    p4.reset();
+
+    std::cout << " count=" << w1.use_count() << " weak count=" << w1.use_weak_count() << std::endl;
+    std::cout << " count=" << w2.use_count() << " weak count=" << w2.use_weak_count() << std::endl;
+    std::cout << " count=" << w3.use_count() << " weak count=" << w3.use_weak_count() << std::endl;
+    std::cout << " count=" << w4.use_count() << " weak count=" << w4.use_weak_count() << std::endl;
+
+   
     return 0;
 }
