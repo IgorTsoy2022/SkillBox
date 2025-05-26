@@ -63,113 +63,73 @@ unique_ptr<T> make_unique(Args&&... args) {
     return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-template <typename T>
 class ControlBlockBase {
 public:
-    explicit ControlBlockBase(T* ptr) noexcept
-        : shared_count_(1)
-        , weak_count_(1)
-        , ptr_(ptr)
-    {};
+    ControlBlockBase() {}
 
-    void increment_shared() noexcept {
-        ++shared_count_;
+    ControlBlockBase(const size_t _shared_count, const size_t _weak_count = 0)
+        : shared_count(_shared_count)
+        , weak_count(_weak_count)
+    {}
+
+    const size_t use_count() const noexcept {
+        return shared_count;
     }
 
-    void increment_weak() noexcept {
-        ++weak_count_;
+    virtual void distruct() {}
+
+    virtual ~ControlBlockBase() {
+        std::cout << "~ControlBlockBase\n";
     }
 
-    void decrement_shared() noexcept {
-        if (shared_count_ == 0) {
-            throw std::logic_error("shared_count_ is already zero.");
-        }
-        --shared_count_;
-    }
-
-    void decrement_weak() noexcept {
-        if (weak_count_ == 0) {
-            throw std::logic_error("weak_count_ is already zero.");
-        }
-        --weak_count_;
-    }
-
-    void release_shared() noexcept {
-        if (--shared_count_ < 1) {
-            delete ptr_;
-            if (--weak_count_ < 1) {
-                delete this;
-            }
-        }
-    }
-
-    void release_weak() noexcept {
-        if (--weak_count_ < 1) {
-            delete this;
-        }
-    }
-
-    size_t use_count() const noexcept {
-        return shared_count_.load();
-    }
-
-    void increment_shared_lock() {
-        // Сохраняем текущее значение shared_count
-        size_t cur_value(shared_count.load());
-        do {
-            // Если счётчик сильных ссылок равен нулю (т.е. нет больше живых shared_ptr),
-            // то новый shared_ptr создавать не из чего.
-            if (!cur_value) {
-                throw std::bad_weak_ptr();
-            }
-            // Пытаемся увеличить счётчик shared_count на единицу
-            // Если в промежутке между сохранением shared_count в cur_value, shared_count изменился,
-            // то операция compare_exchange_weak вернёт false, запишет новое значение shared_count в cur_value,
-            // и цикл повторится
-        } while (shared_count.compare_exchange_weak(cur_value, cur_value + 1));
-    }
-
-    virtual void distruct() = 0;
-
-    virtual void ~ControlBlockBase() {
-        release();
-    }
-
-private:
-    std::atomic<size_t> shared_count_;
-    std::atomic<size_t> weak_count_;
-    T* ptr_;
+    size_t shared_count = 0;
+    size_t weak_count = 0;
 };
 
 template <typename T>
-class PtrControlBlock : ControlBlockBase {
+class PtrControlBlock : public ControlBlockBase {
 public:
-    explicit PtrControlBlock(T* ptr)
-        : ptr_(ptr)
+    explicit PtrControlBlock(const size_t shared_count, const size_t weak_count, T* ptr)
+        : ControlBlockBase(shared_count, weak_count)
+        , ptr_(ptr)
     {}
 
     void distruct() override {
         delete ptr_;
+        ptr_ = nullptr;
     }
 
+    ~PtrControlBlock() {
+        std::cout << "~PtrControlBlock\n";
+        if (ptr_ != nullptr) {
+            delete ptr_;
+        }
+    }
 private:
     T* ptr_ = nullptr;
 };
 
 template <typename T>
-class ObjControlBlock : ControlBlockBase {
+class ObjControlBlock : public ControlBlockBase {
 public:
     template<typename ... Args>
     explicit ObjControlBlock(Args&& ...args)
-        : obj_(args...)
+        : ControlBlockBase(1)
+        , obj_(args...)
     {}
+
+    T& get_object() noexcept {
+        return obj_;
+    }
 
     void distruct() override {}
 
+    ~ObjControlBlock() {
+        std::cout << "~ObjControlBlock\n";
+    }
 private:
     T obj_{};
 };
-
 
 template <typename T>
 class weak_ptr;
@@ -177,179 +137,75 @@ class weak_ptr;
 template <typename T>
 class shared_ptr {
 public:
-    shared_ptr() noexcept : ptr_(nullptr), counted(nullptr) {}
+    shared_ptr() {}
 
-    explicit shared_ptr(T* p) {
-        std::unique_ptr<T> holder(p);
-        // new может кинуть исключение, и, если p не передать в unique_ptr,
-        // память под p потеряется
-        counted = new ControlBlock<T>(holder.get());
-        ptr_ = holder.release();
+    template <typename... Args>
+    explicit shared_ptr(Args&&... args)
+        : ptr_(new T(std::forward<Args>(args)...))
+    {
+        cptr_ = new PtrControlBlock<T>(1, 0, ptr_);
     }
 
-    ~shared_ptr() noexcept {
-        release();
-    }
-
-    shared_ptr(const shared_ptr& other) noexcept : ptr(other.ptr), counted(other.counted) {
-        increment_shared();
-    }
-
-    shared_ptr& operator=(const shared_ptr& other) noexcept {
-        // Освобождаем владение предыдущим указателем
-        release();
-
-        // Выполняем присваивание
-        ptr = other.ptr;
-        counted = other.counted;
-
-        // Устанавливаем владение новым указателем
-        increment_shared();
-
-        // Ура! Я не забыл вернуть *this!
-        return *this;
-    }
-
-    T* get() const noexcept {
-        return ptr;
-    }
-
-    size_t use_count() const noexcept {
-        return counted != nullptr ? counted->use_count() : 0;
-    }
-
-private:
-    void increment_shared() {
-        if (counted) {
-            counted->increment_shared();
-        }
-    }
-
-    void release() {
-        if (counted) {
-            counted->release();
-        }
-    }
-
-private:
-    T* ptr_;
-    ControlBlock<T>* counted;
-
-
-
-    friend class weak_ptr<T>;
-};
-
-template <typename T, typename ... Args>
-shared_ptr<T> make_shared(Args&& ... args) {
-    shared_ptr<T> ptr = nullptr;
-    auto object = new typename shared_ptr<T>::ObjControlBlock<T>(args ...);
-    ptr.ptr_ = &object->obj_;
-    ptr.cptr_ = object;
-    return ptr;
-}
-
-
-template <typename T>
-class weak_ptr {
-    friend class shared_ptr<T>;
-public:
-    weak_ptr() noexcept : ptr(nullptr), counted(nullptr) {}
-
-    weak_ptr(const weak_ptr& other) noexcept : ptr(other.ptr), counted(other.counted) {
-        increment_weak();
-    }
-
-    weak_ptr(const shared_ptr<T>& p) noexcept : ptr(p.ptr), counted(p.counted) {
-        increment_weak();
-    }
-
-    weak_ptr& operator=(const weak_ptr& other) noexcept {
-        release_weak();
-
-        ptr = other.ptr;
-        counted = other.counted;
-
-        increment_weak();
-
-        return *this;
-    }
-
-    weak_ptr& operator=(const shared_ptr<T>& p) {
-        release_weak();
-
-        ptr = p.ptr;
-        counted = p.counted;
-
-        increment_weak();
-
-        return *this;
-    }
-
-    // Пытаемся сделать shared_ptr. Для этого вызывается конструктор shared_ptr(const weak_ptr &amp;);
-    // В случае невозможности создать shared_ptr возвращается пустой объект
-    shared_ptr<T> lock() noexcept {
-        try {
-            return shared_ptr<T>(*this);
-        }
-        catch (const std::bad_weak_ptr&) {
-            return shared_ptr<T>();
-        }
-    }
-
-    size_t use_count() const noexcept {
-        return counted != nullptr ? counted->use_count() : 0;
-    }
-
-    const bool expired() const noexcept {
-        return shared_count_.load() > 0;
-    }
-
-    const shared_ptr<T> lock() const noexcept {
-        if (shared_count_.load() > 0) {
-            return shared_ptr<T>();
-        }
-        return nullptr;
-    }
-
-private:
-    void increment_weak() noexcept {
-        if (counted) {
-            counted->increment_weak();
-        }
-    }
-
-    void release_weak() noexcept {
-        if (counted) {
-            counted->release_weak();
-        }
-    }
-
-private:
-    T* ptr;
-    ControlBlock<T>* counted;
-};
-
-/*
-template <typename T>
-class shared_ptr {
-public:
-    shared_ptr(T* ptr)
+    explicit shared_ptr(T* ptr)
         : ptr_(ptr)
-        , counter_(new size_t(1))
-    {};
+    {
+        cptr_ = new PtrControlBlock<T>(1, 0, ptr_);
+    }
 
-    shared_ptr(const shared_ptr& other)
+    explicit shared_ptr(shared_ptr& other) noexcept
         : ptr_(other.ptr_)
-        , counter_(other.counter_)
-    {};
+        , cptr_(other.cptr_)
+    {
+        ++cptr_->shared_count;
+    }
 
-    shared_ptr(shared_ptr&& other)
-        : ptr_(other.ptr_)
-        , counter_(other.counter_) {
-        other.ptr_ = nullptr;
-        other.counter_ = nullptr;
-    };
+    explicit shared_ptr(weak_ptr<T>& ptr) noexcept
+    {
+        if (ptr.use_count() > 0) {
+            ptr_ = ptr.get();
+            cptr_ = ptr.get_cptr();
+            ++cptr_->shared_count;
+        }
+    }
+
+    shared_ptr& operator=(shared_ptr& other) noexcept {
+
+        --cptr_->shared_count;
+        release_shared();
+
+        ptr_ = other.ptr_;
+        cptr_ = other.cptr_;
+
+        ++cptr_->shared_count;
+
+        return *this;
+    }
+
+    shared_ptr& operator=(weak_ptr<T>& ptr) {
+
+        --cptr_->shared_count;
+    	release_shared();
+
+    	if (ptr.use_count() > 0) {
+            ptr_ = ptr.get();
+            cptr_ = ptr.get_cptr();
+            ++cptr_->shared_count;
+        }
+        else {
+            ptr_ = nullptr;
+            cptr_ = nullptr;
+        }
+
+        return *this;
+    }
+
+    void set_ptr(T* ptr) {
+        ptr_ = ptr;
+    }
+
+    void set_cptr(ControlBlockBase* cptr) {
+        cptr_ = cptr;
+    }
 
     T& operator*() const {
         return *ptr_;
@@ -359,75 +215,166 @@ public:
         return ptr_;
     }
 
-    size_t use_count() const {
-        return counter_;
+    T* get() const noexcept {
+        return ptr_;
     }
 
-    ~shared_ptr() {
-        if (*counter_ > 1) {
-            --*counter_;
-            return;
+    ControlBlockBase* get_cptr() const noexcept {
+        return cptr_;
+    }
+
+    const size_t use_count() const noexcept {
+        return cptr_->shared_count;
+    }
+
+   void release_shared() {
+        if (cptr_->shared_count < 1) {
+            if (cptr_->weak_count < 1) {
+                delete cptr_;
+            }
+            else {
+                cptr_->distruct();
+            }
         }
-        delete ptr_;
-        delete counter_;
     }
 
+    ~shared_ptr() noexcept {
+        std::cout << "~shared_ptr\n";
+        --cptr_->shared_count;
+        release_shared();
+    }
 private:
     T* ptr_ = nullptr;
-    size_t* counter_ = 0;
+    ControlBlockBase* cptr_ = nullptr;
 
-    template <typename U>
-    struct ControlBlock {
-        size_t counter;
-        U object;
-    };
-
-    template <typename U>
-    class weak_ptr {};
-
-    ControlBlock<T>* cptr_ = nullptr;
-
-    template <typename U, typename... Args>
-    friend shared_ptr<U> make_shared(Args&&... args);
-
-    struct make_shared_t;
-
-    template <typename... Args>
-    shared_ptr(make_shared_t, ControlBlock<T>* storage_ptr)
-        : cptr_(storage_ptr)
-    {}
+//    friend class weak_ptr<T>;
 };
-*/
 
-/*
-template <typename T, typename... Args>
-shared_ptr<T> make_shared(Args&&... args) {
-    auto ptr = new ControlBlock<T>(1, T(std::forward<Args>(args)...));
-    return shared_ptr<T>(shared_ptr::make_shared_t(), ptr);
-//    auto ptr = new T(std::forward<Args>(args)...);
-//    return shared_ptr<T>(ptr);
+template <typename T, typename ... Args>
+shared_ptr<T> make_shared(Args&& ... args) {
+	shared_ptr<T> ptr;
+    auto cptr = new ObjControlBlock<T>(T(std::forward<Args>(args)...));
+    ptr.set_ptr(&cptr->get_object());
+    ptr.set_cptr(cptr);
+    return shared_ptr<T>(ptr);
 }
-*/
 
-/*
+
 template <typename T>
 class weak_ptr {
+//    friend class shared_ptr<T>;
 public:
-    weak_ptr(const shared_ptr<T>& ptr)
-        : cptr_(ptr.cptr_)
-    {};
+    weak_ptr() {}
 
-    bool expired() const {
-        return cptr_->counter > 0;
+    template <typename... Args>
+    explicit weak_ptr(Args&&... args)
+    {
+        cptr_ = new PtrControlBlock<T>(0, 1, ptr_);
     }
 
-    shared_ptr<T> lock() const {
+    weak_ptr(T* ptr) noexcept
+        : ptr_(ptr)
+    {
+        cptr_ = new PtrControlBlock<T>(0, 1, ptr_);
+    }
 
+    weak_ptr(weak_ptr& other) noexcept
+        : ptr_(other.ptr_)
+        , cptr_(other.cptr_)
+    {
+        if (other.cptr_ == nullptr) {
+            cptr_ = new PtrControlBlock<T>(0, 1, ptr_);
+            other.cptr_ = cptr_;
+        }
+        ++cptr_->weak_count;
+    }
+
+    weak_ptr(shared_ptr<T>& ptr) noexcept
+        : ptr_(ptr.get())
+        , cptr_(ptr.get_cptr())
+    {
+        ++cptr_->weak_count;
+    }
+
+    weak_ptr& operator=(weak_ptr& other) noexcept {
+
+        release_weak();
+
+        ptr_ = other.ptr_;
+        cptr_ = other.cptr_;
+
+        ++cptr_->weak_count;
+
+        return *this;
+    }
+
+    weak_ptr& operator=(shared_ptr<T>& ptr) {
+
+        release_weak();
+
+        ptr_ = ptr.get();
+        cptr_ = ptr.get_cptr();
+
+        ++cptr_->weak_count;
+
+        return *this;
+    }
+
+    T* get() const noexcept {
+        return ptr_;
+    }
+
+    ControlBlockBase* get_cptr() const noexcept {
+        return cptr_;
+    }
+
+    size_t use_weak_count() const noexcept {
+        return cptr_->weak_count;
+    }
+
+    size_t use_count() const noexcept {
+        return cptr_->shared_count;
+    }
+
+    const bool expired() const noexcept {
+        return cptr_->shared_count > 0;
+    }
+
+    shared_ptr<T> lock() noexcept {
+        if (cptr_ != nullptr) {
+            if (cptr_->shared_count > 0) {
+                return shared_ptr<T>(*this);
+            }
+        }
+        return shared_ptr<T>();
+    }
+
+    void release_weak() {
+        if (cptr_ == nullptr) {
+            return;
+        }
+        --cptr_->weak_count;
+        if (cptr_->weak_count < 1) {
+            if (cptr_->shared_count < 1) {
+                delete cptr_;
+                cptr_ = nullptr;
+            }
+        }
+        else {
+            if (cptr_->shared_count < 1) {
+                ptr_ = nullptr;
+            }
+        }
+    }
+
+    ~weak_ptr() noexcept {
+        std::cout << "~weak_ptr\n";
+        release_weak();
     }
 private:
-    ControlBlock<T>* cptr_ = nullptr;
+    T* ptr_ = nullptr;
+    ControlBlockBase* cptr_ = nullptr;
 };
-*/
 
 struct S {
     int x = 0;
@@ -439,8 +386,52 @@ struct S {
 };
 
 int main() {
+    auto p1 = shared_ptr<int>(5);
+    auto p2 = shared_ptr<int>(p1);
+    auto p3 = shared_ptr<int>(new int(8));
+    auto p4 = make_shared<int>(9);
+    p4 = p1;
+//    auto p5 = p1;
+    
+    std::cout << *p1 << std::endl;
+    std::cout << *p2 << std::endl;
+    std::cout << *p3 << std::endl;
+    std::cout << *p4 << std::endl;
 
-//    auto sp = make_shared<S>(5, "abc");
+    std::cout << "p1 count=" << p1.use_count() << std::endl;
+    std::cout << "p2 count=" << p2.use_count() << std::endl;
+    std::cout << "p3 count=" << p3.use_count() << std::endl;
+    std::cout << "p4 count=" << p4.use_count() << std::endl;
 
+    auto ps = shared_ptr<S>(6, "abc");
+    std::cout << ps->x << " " << ps->str << std::endl;
+
+
+    auto xs = make_shared<int>(10);
+    std::cout << *xs << std::endl;
+    std::cout << "xs count=" << xs.use_count() << std::endl;
+
+    auto w1 = weak_ptr<int>(0);
+    std::cout << w1.use_count() << "\n";
+//    auto pw1 = w1.lock();
+
+    auto w2 = weak_ptr<int>(p1);
+    std::cout << "w2 count=" << w2.use_count() << "\n"; 
+    auto pw2 = w2.lock();
+    std::cout << "w2 count=" << w2.use_count() << "\n"; 
+    auto w3 = weak_ptr<int>(w2);
+    auto w4 = weak_ptr<int>(90);
+    
+    auto wps = weak_ptr<S>(9, "www");
+    auto pwps = w2.lock();
+    std::cout << "pwps count=" << pwps.use_count() << "\n"; 
+    
+    p1.release_shared();
+    p2.release_shared();
+    p4.release_shared();
+    pw2.release_shared();
+    pwps.release_shared();
+    std::cout << "pwps count=" << p1.use_count() << "\n";
+    
     return 0;
 }
