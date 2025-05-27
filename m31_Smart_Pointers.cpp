@@ -166,11 +166,28 @@ public:
         increment_shared();
     }
 
+    shared_ptr(shared_ptr* other)
+    {
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+        }
+    }
+
     shared_ptr(weak_ptr<T>& ptr) noexcept
     {
         if (ptr.use_count() > 0) {
             ptr_ = ptr.get();
             cptr_ = ptr.get_cptr();
+            increment_shared();
+        }
+    }
+
+    shared_ptr(weak_ptr<T>* ptr) noexcept
+    {
+        if (ptr->use_count() > 0) {
+            ptr_ = ptr->get();
+            cptr_ = ptr->get_cptr();
             increment_shared();
         }
     }
@@ -187,6 +204,20 @@ public:
         return *this;
     }
 
+    shared_ptr& 	operator=(shared_ptr* other) noexcept {
+
+        decrement_shared();
+
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+
+            increment_shared();
+        }
+
+        return this;
+    }
+
     shared_ptr& operator=(weak_ptr<T>& ptr) noexcept {
 
         decrement_shared();
@@ -200,6 +231,25 @@ public:
             ptr_ = nullptr;
             cptr_ = nullptr;
         }
+
+        return *this;
+    }
+
+   shared_ptr& operator=(weak_ptr<T>* ptr) noexcept {
+
+        decrement_shared();
+
+    	if (ptr != nullptr) {
+        	if (ptr->use_count() > 0) {
+                ptr_ = ptr->get();
+                cptr_ = ptr->get_cptr();
+                increment_shared();
+                return *this;
+            }
+    	}
+
+        ptr_ = nullptr;
+        cptr_ = nullptr;
 
         return *this;
     }
@@ -470,7 +520,7 @@ int main() {
     auto pw = w5.lock();
     std::cout << " count=" << w5.use_count() << " weak count=" << w5.use_weak_count() << std::endl;
 
-    p1.reset();
+    p1 = nullptr;
     p2.reset();
     p3.reset();
     p4.reset();
