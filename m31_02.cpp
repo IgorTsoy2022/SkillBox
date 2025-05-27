@@ -18,7 +18,7 @@ namespace ptr {
         virtual void distruct() {}
 
         virtual ~ControlBlockBase() {
-            std::cout << "~ControlBlockBase\n";
+//            std::cout << "~ControlBlockBase\n";
         }
 
         size_t shared_count = 0;
@@ -41,7 +41,7 @@ namespace ptr {
         }
 
         ~PtrControlBlock() {
-            std::cout << "~PtrControlBlock\n";
+//            std::cout << "~PtrControlBlock\n";
             if (ptr_ != nullptr) {
                 delete ptr_;
             }
@@ -67,12 +67,12 @@ namespace ptr {
         void distruct() override {}
 
         ~ObjControlBlock() {
-            std::cout << "~ObjControlBlock\n";
+//            std::cout << "~ObjControlBlock\n";
         }
     private:
         T obj_{};
     };
-}
+} // namespace ptr
 
 template <typename T>
 class weak_ptr;
@@ -102,11 +102,29 @@ public:
         increment_shared();
     }
 
+    shared_ptr(shared_ptr* other) noexcept
+    {
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+            increment_shared();
+        }
+    }
+
     shared_ptr(weak_ptr<T>& ptr) noexcept
     {
         if (ptr.use_count() > 0) {
             ptr_ = ptr.get();
             cptr_ = ptr.get_cptr();
+            increment_shared();
+        }
+    }
+
+    shared_ptr(weak_ptr<T>* ptr) noexcept
+    {
+        if (ptr->use_count() > 0) {
+            ptr_ = ptr->get();
+            cptr_ = ptr->get_cptr();
             increment_shared();
         }
     }
@@ -121,6 +139,24 @@ public:
         increment_shared();
 
         return *this;
+    }
+
+    shared_ptr* operator=(shared_ptr* other) noexcept {
+
+        decrement_shared();
+
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+
+            increment_shared();
+        }
+        else {
+            ptr_ = nullptr;
+            cptr_ = nullptr;
+        }
+
+        return this;
     }
 
     shared_ptr& operator=(weak_ptr<T>& ptr) noexcept {
@@ -140,19 +176,15 @@ public:
         return *this;
     }
 
-    shared_ptr& operator=(std::nullptr_t ptr = nullptr) noexcept {
-        decrement_shared();
-        ptr_ = nullptr;
-        cptr_ = nullptr;
-        return *this;
+    bool operator==(const shared_ptr& other) const {
+        return (ptr_ == other.ptr_) && (cptr_ == other.cptr_);
     }
 
-    bool operator==(std::nullptr_t ptr) {
-        return (ptr_ == nullptr) && (cptr_ == nullptr);
-    }
-
-    bool operator==(shared_ptr& ptr) {
-        return (*this == ptr);
+    bool operator==(const shared_ptr* other) const {
+        if (other == nullptr) {
+            return (ptr_ == nullptr) && (cptr_ == nullptr);
+        }
+        return (ptr_ == other->ptr_) && (cptr_ == other->cptr_);
     }
 
     void set_ptr(T* ptr) {
@@ -190,7 +222,7 @@ public:
     }
 
     ~shared_ptr() noexcept {
-        std::cout << "~shared_ptr\n";
+//        std::cout << "~shared_ptr\n";
         decrement_shared();
     }
 private:
@@ -218,8 +250,8 @@ private:
             }
             else {
                 cptr_->distruct();
-                ptr_ = nullptr;
             }
+            ptr_ = nullptr;
         }
     }
 };
@@ -235,6 +267,7 @@ shared_ptr<T> make_shared(Args&& ... args) {
 
 template <typename T>
 class weak_ptr {
+//    friend class shared_ptr<T>;
 public:
     weak_ptr() {}
 
@@ -261,6 +294,15 @@ public:
         increment_weak();
     }
 
+    weak_ptr(weak_ptr* other) noexcept
+    {
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+            increment_weak();
+        }
+    }
+
     weak_ptr(shared_ptr<T>& ptr) noexcept
         : ptr_(ptr.get())
         , cptr_(ptr.get_cptr())
@@ -268,7 +310,16 @@ public:
         increment_weak();
     }
 
-    weak_ptr& operator=(const weak_ptr& other) noexcept {
+    weak_ptr(shared_ptr<T>* ptr) noexcept
+    {
+        if (ptr != nullptr) {
+            ptr_ = ptr->ptr_;
+            cptr_ = ptr->cptr_;
+            increment_weak();
+        }
+    }
+
+    weak_ptr& operator=(weak_ptr& other) noexcept {
 
         decrement_weak();
 
@@ -278,6 +329,24 @@ public:
         increment_weak();
 
         return *this;
+    }
+
+    weak_ptr* operator=(weak_ptr* other) noexcept {
+
+        decrement_weak();
+
+        if (other != nullptr) {
+            ptr_ = other->ptr_;
+            cptr_ = other->cptr_;
+
+            increment_weak();
+        }
+        else {
+            ptr_ = nullptr;
+            cptr_ = nullptr;
+        }
+
+        return this;
     }
 
     weak_ptr& operator=(shared_ptr<T>& ptr) {
@@ -292,8 +361,15 @@ public:
         return *this;
     }
 
-    bool& operator==(weak_ptr<T>& ptr) {
-        return (*this == ptr);
+    bool operator==(const weak_ptr& other) const {
+        return (ptr_ == other.ptr_) && (cptr_ == other.cptr_);
+    }
+
+    bool operator==(const weak_ptr* other) const {
+        if (other == nullptr) {
+            return (ptr_ == nullptr) && (cptr_ == nullptr);
+        }
+        return (ptr_ == other->ptr_) && (cptr_ == other->cptr_);
     }
 
     T* get() const noexcept {
@@ -332,7 +408,7 @@ public:
     }
 
     ~weak_ptr() noexcept {
-        std::cout << "~weak_ptr\n";
+//        std::cout << "~weak_ptr\n";
         decrement_weak();
     }
 private:
@@ -357,6 +433,7 @@ private:
             if (cptr_->shared_count < 1) {
                 delete cptr_;
                 cptr_ = nullptr;
+                ptr_ = nullptr;
             }
         }
         else {
@@ -387,102 +464,30 @@ private:
     std::string name_ = "unknown";
 };
 
-class Dog {
-public:
-    Dog() {}
-
-    Dog(const std::string& name, int age, shared_ptr<Toy> toy = nullptr)
-        : name_(name)
-        , toy_(toy)
-    {
-        if (age > 0 && age < 30) {
-            age_ = age;
-        }
-    }
-
-    Dog(const std::string& name) : Dog(name, 0) {}
-    Dog(const std::string& name, int age, const std::string& toy)
-        : Dog(name, age, make_shared<Toy>(toy)) {
-    }
-
-    const std::string_view name() const {
-        return name_;
-    }
-
-    const int age() const {
-        return age_;
-    }
-
-    const bool get_toy(shared_ptr<Toy>& toy) {
-        if (toy == nullptr) {
-            return false;
-        }
-        if (toy_ == toy) {
-            std::cout << "The dog " << name_
-                << ": I already have the toy \"" << toy_name() << "\".\n";
-            return false;
-        }
-        else if (toy.use_count() > 1) {
-            std::cout << "The dog " << name_
-                << ": Another dog is playing with the toy \""
-                << toy->name() << "\".\n";
-            return false;
-        }
-        else {
-            toy_ = toy;
-            std::cout << "The dog " << name_
-                << ": I've taken the toy \"" << toy_name() << "\".\n";
-            return true;
-        }
-    }
-
-    const shared_ptr<Toy> drop_toy() {
-        auto dropped_toy = toy_;
-        if (toy_ == nullptr) {
-            std::cout << "The Dog " << name_ << ": Nothing to drop.\n";
-        }
-        else {
-            std::cout << "The Dog " << name_ << ": I've dropped the toy "
-                << toy_name() << ".\n";
-            toy_ = nullptr;
-        }
-        return dropped_toy;
-    }
-
-    void set_bestie(shared_ptr<Dog> bestie) {
-        bestie_ = bestie;
-    }
-
-    const shared_ptr<Toy>& toy() const {
-        return toy_;
-    }
-
-    const std::string_view toy_name() const {
-        if (toy_ == nullptr) {
-            return "";
-        }
-        return toy_->name();
-    }
-
-    ~Dog() {
-        std::cout << "~Dog: " << name_ << std::endl;
-    }
-private:
-    std::string name_ = "A dog";
-    int age_ = 0;
-    shared_ptr<Toy> toy_;
-    weak_ptr<Dog> bestie_;
-};
+using shared_ptr_toy = shared_ptr<Toy>;
 
 int main() {
-    
-    shared_ptr<Toy> ball = make_shared<Toy>("Ball");
 
-    shared_ptr<Dog> a = make_shared<Dog>("a", 10, ball);
-    shared_ptr<Dog> b = make_shared<Dog>("b", 11, ball);
+    auto ball1 = make_shared<Toy>("Ball1");
+    std::cout << "ball1=" << ball1->name() << " shared_count=" << ball1.use_count() << std::endl;
 
-    a->set_bestie(b);
-    b->set_bestie(a);
+    auto ball2 = shared_ptr_toy(ball1);
+    std::cout << "ball2=" << ball2->name() << " shared_count=" << ball2.use_count() << std::endl;
+
+    Toy toy("Ball3");
+    auto ball3 = shared_ptr_toy(toy);
+    std::cout << "ball3=" << ball3->name() << " shared_count=" << ball3.use_count() << std::endl;
+
+    auto ball4 = ball3;
+    std::cout << "ball4=" << ball4->name() << " shared_count=" << ball4.use_count() << std::endl;
+
+    std::cout << "ball4.reset():\n";
+    ball4.reset();
+    std::cout << std::boolalpha << "(ball4==nullptr) = " << (ball4 == nullptr) << "\n";
+
+    std::cout << "ball3=nullptr:\n";
+    ball3 = nullptr;
+    std::cout << "(ball3==nullptr) = " << (ball3 == nullptr) << "\n";
 
 
     return 0;
