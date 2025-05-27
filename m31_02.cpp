@@ -467,28 +467,41 @@ private:
 using shared_ptr_toy = shared_ptr<Toy>;
 
 int main() {
+    {
+        shared_ptr_toy toy_01 = make_shared<Toy>("ball");
+        shared_ptr_toy toy_02(toy_01);
+        shared_ptr_toy toy_03("duck");
+        std::cout << "=================================================" << std::endl;
+        std::cout << toy_01->name() << " links:" << toy_01.use_count() << "  "
+                  << toy_02->name() << " links:" << toy_02.use_count() << "  "
+                  << toy_03->name() << " links:" << toy_03.use_count() << std::endl;
+        std::cout << "=================================================" << std::endl;
+        toy_02 = toy_03;
+        std::cout << toy_01->name() << " links:" << toy_01.use_count() << "  "
+                  << toy_02->name() << " links:" << toy_02.use_count() << "  "
+                  << toy_03->name() << " links:" << toy_03.use_count() << std::endl;
+        std::cout << "=================================================" << std::endl;
+        toy_01.reset();
+        std::cout << "toy_01->name()" << " links:" << toy_01.use_count() << "  "
+                  << toy_02->name() << " links:" << toy_02.use_count() << "  "
+                  << toy_03->name() << " links:" << toy_03.use_count() << std::endl;
+        std::cout << "=================================================" << std::endl;
+    }
 
-    auto ball1 = make_shared<Toy>("Ball1");
+    auto ball1 = shared_ptr_toy("ball1");
+    auto ball2 = ball1;
     std::cout << "ball1=" << ball1->name() << " shared_count=" << ball1.use_count() << std::endl;
-
-    auto ball2 = shared_ptr_toy(ball1);
     std::cout << "ball2=" << ball2->name() << " shared_count=" << ball2.use_count() << std::endl;
 
-    Toy toy("Ball3");
-    auto ball3 = shared_ptr_toy(toy);
-    std::cout << "ball3=" << ball3->name() << " shared_count=" << ball3.use_count() << std::endl;
+    std::cout << "ball2=nullptr:\n";
+    ball2 = nullptr;
+    std::cout << std::boolalpha << "(ball2==nullptr) = " << (ball2 == nullptr) << "\n";
+    std::cout << "ball1=" << ball1->name() << " shared_count=" << ball1.use_count() << std::endl;
 
-    auto ball4 = ball3;
-    std::cout << "ball4=" << ball4->name() << " shared_count=" << ball4.use_count() << std::endl;
-
-    std::cout << "ball4.reset():\n";
-    ball4.reset();
-    std::cout << std::boolalpha << "(ball4==nullptr) = " << (ball4 == nullptr) << "\n";
-
-    std::cout << "ball3=nullptr:\n";
-    ball3 = nullptr;
-    std::cout << "(ball3==nullptr) = " << (ball3 == nullptr) << "\n";
-
+    std::shared_ptr<Toy> p = std::make_shared<Toy>("ball");
+    std::cout << "ball=" << p->name() << " shared_count=" << p.use_count() << std::endl;
+    p.reset();
+    std::cout << "ball=" << "p->name()" << " shared_count=" << p.use_count() << std::endl;
 
     return 0;
 }
