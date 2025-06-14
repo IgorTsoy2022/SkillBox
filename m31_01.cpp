@@ -2,11 +2,11 @@
 
 class Toy {
 public:
-    Toy() {};
+    Toy() {}
 
     Toy(const std::string& name)
         : name_(name)
-    {};
+    {}
 
     const std::string_view name() const {
         return name_;
@@ -21,7 +21,7 @@ private:
 
 class Dog {
 public:
-    Dog() {};
+    Dog() {}
 
     Dog(const std::string& name, int age, std::shared_ptr<Toy> toy = nullptr)
         : name_(name)
@@ -30,11 +30,11 @@ public:
         if (age > 0 && age < 30) {
             age_ = age;
         }
-    };
+    }
 
-    Dog(const std::string& name) : Dog(name, 0) {};
+    Dog(const std::string& name) : Dog(name, 0) {}
     Dog(const std::string& name, int age, const std::string& toy)
-        : Dog(name, age, std::make_shared<Toy>(toy)) {};
+        : Dog(name, age, std::make_shared<Toy>(toy)) {}
 
     const std::string_view name() const {
         return name_;
