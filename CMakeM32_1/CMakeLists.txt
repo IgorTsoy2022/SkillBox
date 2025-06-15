@@ -7,7 +7,7 @@ endif()
 
 project ("CMakeM32_1")
 
-set(CMAKE_CXX_STANDART 17)
+set(CMAKE_CXX_STANDARD 17)
 
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
