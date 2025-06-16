@@ -39,6 +39,19 @@ auto unique_values = [](const std::vector<T>& container) {
     return result;
 };
 
+auto filenames_by_extension = [](const std::filesystem::path& path,
+                             const std::string& extension) {
+    auto result = std::make_unique<std::vector<std::filesystem::path>>();
+    for(const auto& p: std::filesystem::recursive_directory_iterator(path)) {
+        if (p.is_regular_file()) {
+            if (p.path().extension().compare(extension) == 0) {
+                result->emplace_back(p.path().filename());
+            }
+        }
+    }
+    return result;
+};
+
 int main(int argc, char *argv[]) {
 
     std::cout << "Task 1. Print container." << std::endl;
@@ -53,9 +66,22 @@ int main(int argc, char *argv[]) {
     std::vector<int> vec = { 5, 8, 1, 2, 3, 1, 3, 1, 1, 5, 8 };
     std::cout << "    Original vector: ";
     print(vec);
-    auto ptr = unique_values<int>(vec);
+    auto values_ptr = unique_values<int>(vec);
     std::cout << "    Result vector without repeats: ";
-    print(*ptr);
+    print(*values_ptr);
+
+    std::cout << "Task 3. Get a list of all files, directories (and subdirectories)." << std::endl;
+    std::filesystem::path path = "C:\\CPP\\GIT\\SkillBox-main";
+    std::string extension = ".cpp";
+    try {
+        auto filenames_ptr = filenames_by_extension(path, extension);
+        std::cout << "List of files in " << path  << " with extension \""
+                  << extension << "\":" << std::endl;
+        print(*filenames_ptr);
+    }
+    catch (const std::exception& e){
+        std::cerr << e.what() << std::endl;
+    }
 
     return 0;
 }
