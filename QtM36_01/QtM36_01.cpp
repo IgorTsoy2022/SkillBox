@@ -1,5 +1,8 @@
 #include <QApplication>
 
+#include <QDir>
+#include <QDebug>
+
 #include <QSlider>
 #include <QSpinBox>
 
@@ -15,10 +18,10 @@ class ImageButton : public QPushButton {
     Q_OBJECT
 public:
     ImageButton() = default;
-    ImageButton(QWidget *parent);
+    explicit ImageButton(QWidget *parent);
     void paintEvent(QPaintEvent *e) override;
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] QSize sizeHint() const override;
+    [[nodiscard]] QSize minimumSizeHint() const override;
     void keyPressEvent(QKeyEvent *e) override;
 public slots:
     void setUp();
@@ -36,20 +39,15 @@ ImageButton::ImageButton(QWidget *parent) {
     setToolTip("Stop");
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    mButtonUpPixmap = QPixmap(":img/button_up.png");
-    if (!mButtonUpPixmap) {
-        std::cout << "No image\n";
-    }
-    else {
-        std::cout  << "w=" << mButtonUpPixmap.width() << " h=" << mButtonUpPixmap.height() << "\n";
-    }
-    mButtonDownPixmap = QPixmap("C:/CPP/GIT/SkillBox-main/QtM36_01/img/button_down.png");
-    if (!mButtonDownPixmap) {
-        std::cout << "No image\n";
-    }
-    else {
-        std::cout  << "w=" << mButtonDownPixmap.width() << " h=" << mButtonDownPixmap.height() << "\n";
-    }
+    mButtonUpPixmap = QPixmap(":/images/button_up.png");
+
+    std::cout << std::boolalpha << mButtonUpPixmap.isNull() << std::endl;
+    std::cout << "w=" << mButtonUpPixmap.width() << std::endl;
+    std::cout << "h=" << mButtonUpPixmap.height() << std::endl;
+
+
+    mButtonDownPixmap = QPixmap(":/images/button_down.png");
+    std::cout << std::boolalpha << mButtonDownPixmap.isNull() << std::endl;
 
     mCurrentButtonPixmap = mButtonUpPixmap;
     setGeometry(mCurrentButtonPixmap.rect());
@@ -88,43 +86,45 @@ int main(int argc, char *argv[]) {
 
     QApplication app(argc, argv);
 
-    {
-        auto *slider = new QSlider(Qt::Horizontal);
-        auto *spinbox = new QSpinBox();
+    const QDir currentDir;
+    qDebug() << currentDir.absolutePath();
 
-        slider->setMinimum(0);
-        slider->setMaximum(100);
-        spinbox->setMinimum(0);
-        spinbox->setMaximum(100);
+    auto *slider = new QSlider(Qt::Horizontal);
+    auto *spinbox = new QSpinBox();
 
-        QObject::connect(slider, &QSlider::valueChanged, spinbox, &QSpinBox::setValue);
-        QObject::connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged), slider, &QSlider::setValue);
+    slider->setMinimum(0);
+    slider->setMaximum(100);
+    spinbox->setMinimum(0);
+    spinbox->setMaximum(100);
 
-        slider->resize(200, 50);
-        spinbox->resize(100, 50);
+    QObject::connect(slider, &QSlider::valueChanged, spinbox, &QSpinBox::setValue);
+    QObject::connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged), slider, &QSlider::setValue);
 
-        slider->move(800, 500);
-        spinbox->move(1200, 500);
+    slider->resize(200, 50);
+    spinbox->resize(100, 50);
 
-        slider->show();
-        spinbox->show();
-    }
+    slider->move(800, 500);
+    spinbox->move(1200, 500);
 
+    slider->show();
+    spinbox->show();
 
-    {
-        ImageButton redButton(nullptr);
-        std::cout << "button\n";
-        redButton.setFixedSize(100, 100);
-        redButton.move(1000, 400);
+    auto *button = new ImageButton(nullptr);
+    button->setFixedSize(360, 120);
+    button->move(1000, 400);
+    QObject::connect(button, &QPushButton::clicked, [](){
+        std::cout << "clicked\n";
+    });
 
-        QObject::connect(&redButton, &QPushButton::clicked, [](){
-            std::cout << "clicked\n";
-        });
-        std::cout << "button\n";
-        redButton.show();
-        std::cout << "button show\n";
-    }
-    return app.exec();
+    button->show();
+
+    const auto exec = QApplication::exec();
+
+    delete slider;
+    delete spinbox;
+    delete button;
+
+    return exec;
 }
 
 #include <QtM36_01.moc>
