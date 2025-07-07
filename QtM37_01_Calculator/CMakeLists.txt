@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.31)
-
 project(QtM37_01_Calculator)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "C:\\Qt\\6.9.1\\mingw_64")
 
@@ -15,8 +14,7 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-add_executable(QtM37_01_Calculator main.cpp
-        calculator.ui
+add_executable(QtM37_01_Calculator main.cpp calculator.ui
         calculator.h
         calculator.cpp)
 
