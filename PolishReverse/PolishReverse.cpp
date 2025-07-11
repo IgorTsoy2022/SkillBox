@@ -21,7 +21,7 @@ static bool isCharacter(const char& c) {
 }
 
 static bool isOperator(const char& c) {
-    for (const char& symbol : "*+-/:^~¬") {
+    for (const char& symbol : "*+-/:^~?") {
         std::cout << symbol << std::endl;
         if (c == symbol) return true;
     }
@@ -29,7 +29,7 @@ static bool isOperator(const char& c) {
 }
 
 static bool isUnary(const char& c) {
-    return (c == '!') || (c == '~') || (c == '¬');
+    return (c == '!') || (c == '~') || (c == '?');
 }
 
 static bool isNumber(const std::string& word) {
@@ -65,7 +65,7 @@ void init_precedence() {
     precedence["&&"] = 3;
     precedence["+"] = 4;
     precedence["-"] = 4;
-    precedence["¬"] = 4;
+    precedence["ï¿½"] = 4;
     precedence["*"] = 5;
     precedence["/"] = 5;
     precedence["^"] = 6;
@@ -125,6 +125,10 @@ int main() {
     double x;
     std::stringstream(num) >> x;
     std::cout << x << std::endl;
+
+    std::string txt = "+4++++5+(+++6+7)";
+    const std::regex unary_plus("^[\+]+|[%.*\+]+");
+    std::cout << std::regex_replace(txt, unary_plus, "");
 
 
     return 0;
