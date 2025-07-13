@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+//#include <boost/regex.hpp>
 
 
 static bool isCharacter(const char& c) {
@@ -21,7 +22,7 @@ static bool isCharacter(const char& c) {
 }
 
 static bool isOperator(const char& c) {
-    for (const char& symbol : "*+-/:^~?") {
+    for (const char& symbol : "*+-/:^~�") {
         std::cout << symbol << std::endl;
         if (c == symbol) return true;
     }
@@ -29,7 +30,8 @@ static bool isOperator(const char& c) {
 }
 
 static bool isUnary(const char& c) {
-    return (c == '!') || (c == '~') || (c == '?');
+    return (c == '!') || (c == '~');
+    // || (c == '�');
 }
 
 static bool isNumber(const std::string& word) {
@@ -107,29 +109,39 @@ double arithmetic_operations(const double& op1,
     return result;
 }
 
+std::string remove_unary_pluses(std::string& expression) {
+    const std::regex
+    pattern(R"(^\+|(?<=[(*\/+^-])(\+)|\+$)");
+//    pattern(R"((?<=^|[*/+^-])(\+))");
+//    pattern(R"(^(\+)+)");
+//    std::cout << 
+    return std::regex_replace(expression, pattern, "");
+}
 
+std::string to_postfix(std::string& expr) {
+    std::string result;
+    auto size = expr.size();
+    return result;
+}
 
 int main() {
 
-//    double result = evaluateExpression("3 + 5 * 3-5");
-
-//    std::cout << "Result: " << result << std::endl;
     char c = 172;
     int i = c;
-    std::cout << c << " = " << i << std::endl;
-    isOperator('_');
+ //   std::cout << c << " = " << i << std::endl;
+
+//    isOperator('_');
 
     std::string num = "012345678901234567890123456789012345678901234567890123456789.";
-    std::cout << std::boolalpha << isNumber(num) << " " << std::stold(num) << std::endl;
+ //   std::cout << std::boolalpha << isNumber(num) << " " << std::stold(num) << std::endl;
 
     double x;
     std::stringstream(num) >> x;
-    std::cout << x << std::endl;
+//    std::cout << x << std::endl;
 
-    std::string txt = "+4++++5+(+++6+7)";
-    const std::regex unary_plus("^[\+]+|[%.*\+]+");
-    std::cout << std::regex_replace(txt, unary_plus, "");
-
+    std::string expr = "+++++566+++2";
+    auto res = to_postfix(expr);
+    std::cout << res << std::endl;
 
     return 0;
 }
