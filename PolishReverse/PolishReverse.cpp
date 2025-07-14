@@ -22,7 +22,7 @@ static bool isCharacter(const char& c) {
 }
 
 static bool isOperator(const char& c) {
-    for (const char& symbol : "*+-/:^~�") {
+    for (const char& symbol : "*+-/^") {
         std::cout << symbol << std::endl;
         if (c == symbol) return true;
     }
@@ -118,9 +118,36 @@ std::string remove_unary_pluses(std::string& expression) {
     return std::regex_replace(expression, pattern, "");
 }
 
+
+
+
+
 std::string to_postfix(std::string& expr) {
     std::string result;
+    std::stack<std::string> operators;
     auto size = expr.size();
+    int pos = 0;
+    char previous = 0;
+    char current = 0;
+
+    while (pos < size) {
+        if (expr[pos] == ' ') {
+            ++pos;
+            continue;
+        }
+        if (expr[pos] == '+') {
+            if (previous == 0 || previous == '(' || isOperator(previous)) {
+                previous = expr[pos++];
+                continue;
+            }
+            while (operators.size() > 0 && 
+                   precedence[operators.top()] >= precedence[expr[pos]]) {
+
+            }
+        }
+        previous = expr[pos++];
+    }
+
     return result;
 }
 
@@ -138,6 +165,10 @@ int main() {
     double x;
     std::stringstream(num) >> x;
 //    std::cout << x << std::endl;
+
+
+
+    init_precedence();
 
     std::string expr = "+++++566+++2";
     auto res = to_postfix(expr);
