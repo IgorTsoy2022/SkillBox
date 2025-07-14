@@ -141,9 +141,14 @@ std::string to_postfix(std::string& expr) {
                 continue;
             }
             while (operators.size() > 0 && 
-                   precedence[operators.top()] >= precedence[expr[pos]]) {
-
+                   precedence[operators.top()] >= precedence[std::to_string(expr[pos])]) {
+                result += operators.top();
+                operators.pop();
             }
+            operators.push("+");
+        }
+        else if (expr[pos] == '-') {
+        
         }
         previous = expr[pos++];
     }
