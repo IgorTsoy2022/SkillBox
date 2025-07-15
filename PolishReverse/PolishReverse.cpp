@@ -23,7 +23,6 @@ static bool isCharacter(const char& c) {
 
 static bool isOperator(const char& c) {
     for (const char& symbol : "*+-/^") {
-        std::cout << symbol << std::endl;
         if (c == symbol) return true;
     }
     return false;
@@ -67,7 +66,7 @@ void init_precedence() {
     precedence["&&"] = 3;
     precedence["+"] = 4;
     precedence["-"] = 4;
-    precedence["�"] = 4;
+//    precedence["�"] = 4;
     precedence["*"] = 5;
     precedence["/"] = 5;
     precedence["^"] = 6;
@@ -110,57 +109,137 @@ double arithmetic_operations(const double& op1,
 }
 
 std::string remove_unary_pluses(std::string& expression) {
-    const std::regex
-    pattern(R"(^\+|(?<=[(*\/+^-])(\+)|\+$)");
-//    pattern(R"((?<=^|[*/+^-])(\+))");
-//    pattern(R"(^(\+)+)");
-//    std::cout << 
-    return std::regex_replace(expression, pattern, "");
+//    const std::regex pattern(R"(^(\+)+)");
+//    const std::regex pattern(R"(^\+|(?<=[(*\/+^-])(\+)|\+$)");
+//    const std::regex pattern(R"((?<=^|[*/+^-])(\+))");
+//    return std::regex_replace(expression, pattern, "");
+    auto size = expression.size();
+    size_t pos = 0;
+    char previous = 0;
+    char current = 0;
+    char next = 0;
+    std::string result = "";
+
+    while (pos < size) {
+        current = expression[pos];
+        next = (pos < size - 1) ? expression[pos + 1] : 0;
+        if (current == ' ') {
+            ++pos;
+            continue;
+        }
+
+        if (current == '+' && 
+            (previous == 0 || previous == '(' || isOperator(previous) ||
+                isOperator(next))) {
+            previous = current;
+            ++pos;
+            continue;
+        }
+
+        result += current;
+        previous = current;
+        ++pos;
+    }
+
+    std::cout << result << std::endl;
+
+    return result;
+}
+
+std::string replace_unary_minuses(std::string& expression) {
+    auto size = expression.size();
+    size_t pos = 0;
+    char previous = 0;
+    char current = 0;
+    char next = 0;
+    bool is_minus = false;
+    std::string result = "";
+
+    while (pos < size) {
+        current = expression[pos];
+        next = (pos < size - 1) ? expression[pos + 1] : 0;
+
+        if (current == '-') {
+            is_minus = !is_minus;
+            if (previous == 0 || previous == '(' || previous == '+' || previous == '-') {
+                previous = current;
+                ++pos;
+                continue;
+            }
+            current = is_minus ? '-' : '+';
+            std::cout << "pos=" << pos << " " << "current=" << current << std::endl;
+        }
+
+        result += current;
+        previous = current;
+        is_minus = false;
+        ++pos;
+    }
+
+    std::cout << result << std::endl;
+
+    return result;
 }
 
 
 
-
-
-std::string to_postfix(std::string& expr) {
-    std::string result;
+std::string to_postfix(std::string& expression) {
+    std::string result = "";
     std::stack<std::string> operators;
-    auto size = expr.size();
-    int pos = 0;
+    auto size = expression.size();
+    size_t pos = 0;
     char previous = 0;
     char current = 0;
 
     while (pos < size) {
-        if (expr[pos] == ' ') {
+        current = expression[pos];
+        if (current == ' ') {
             ++pos;
             continue;
         }
-        if (expr[pos] == '+') {
+        if (current == '+') {
+            std::cout << "'+' previous=" << previous << " current=" << current << std::endl;
+
+            while (pos < size - 1) {
+                if (!isOperator(expression[pos + 1])) {
+                    break;
+                }
+                previous = current;
+                current = expression[++pos];
+            }
             if (previous == 0 || previous == '(' || isOperator(previous)) {
-                previous = expr[pos++];
+                previous = current;
+                ++pos;
                 continue;
             }
+
             while (operators.size() > 0 && 
-                   precedence[operators.top()] >= precedence[std::to_string(expr[pos])]) {
+                   precedence[operators.top()] >= precedence[std::to_string(current)]) {
                 result += operators.top();
                 operators.pop();
             }
+            std::cout << "push+\n";
             operators.push("+");
         }
-        else if (expr[pos] == '-') {
-        
+        else if (current == '-') {
+            std::cout << "'-' previous=" << previous << " current=" << current << std::endl;
+            if (previous == 0 || previous == '(' || isOperator(previous)) {
+                previous = (previous == '-') ? '+' : '-';
+                ++pos;
+                continue;
+            }
         }
-        previous = expr[pos++];
+
+        previous = current;
+        ++pos;
     }
+    std::cout << result << std::endl;
 
     return result;
 }
 
 int main() {
 
-    char c = 172;
-    int i = c;
- //   std::cout << c << " = " << i << std::endl;
 
 //    isOperator('_');
 
@@ -174,10 +253,14 @@ int main() {
 
 
     init_precedence();
+    for (const auto& [key, value] : precedence) {
+//        std::cout << "[" << key << "] = " << value << std::endl;
+    }
 
-    std::string expr = "+++++566+++2";
-    auto res = to_postfix(expr);
-    std::cout << res << std::endl;
+    std::string expr = " + +++- +++ --++- 566++--++ --+2 / ( 55 -+- 45 -+3+9) *---2^---2+";
+//    auto res = to_postfix(expr);
+    auto res = remove_unary_pluses(expr);
+    replace_unary_minuses(res);
 
     return 0;
 }
