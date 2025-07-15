@@ -66,7 +66,7 @@ void init_precedence() {
     precedence["&&"] = 3;
     precedence["+"] = 4;
     precedence["-"] = 4;
-//    precedence["�"] = 4;
+    precedence["`"] = 4;
     precedence["*"] = 5;
     precedence["/"] = 5;
     precedence["^"] = 6;
@@ -157,22 +157,44 @@ std::string replace_unary_minuses(std::string& expression) {
 
     while (pos < size) {
         current = expression[pos];
-        next = (pos < size - 1) ? expression[pos + 1] : 0;
 
         if (current == '-') {
-            is_minus = !is_minus;
-            if (previous == 0 || previous == '(' || previous == '+' || previous == '-') {
-                previous = current;
+            while(true) {
+                is_minus = !is_minus;
+                
+                next = (pos < size - 1) ? expression[pos + 1] : 0;
+                if (next == 0 || next != '-') {
+                    break;
+                }
                 ++pos;
-                continue;
             }
-            current = is_minus ? '-' : '+';
-            std::cout << "pos=" << pos << " " << "current=" << current << std::endl;
+
+            if (is_minus) {
+                if (previous == 0 || previous == '(') {
+                    current = '`';
+                }
+                else if (previous == '^') {
+                    current = '~';
+                }
+                else {
+                    current = '-';
+                }
+                is_minus = false;
+            }
+            else {
+                if (previous == 0 || previous == '(' || previous == '^') {
+                	previous = current;
+                	++pos;
+                	continue;
+                }
+                else {
+                    current = '+';
+                }
+            }
         }
 
         result += current;
         previous = current;
-        is_minus = false;
         ++pos;
     }
 
@@ -244,7 +266,7 @@ int main() {
 //    isOperator('_');
 
     std::string num = "012345678901234567890123456789012345678901234567890123456789.";
- //   std::cout << std::boolalpha << isNumber(num) << " " << std::stold(num) << std::endl;
+    std::cout << std::boolalpha << isNumber(num) << " " << std::stold(num) << std::endl;
 
     double x;
     std::stringstream(num) >> x;
@@ -257,7 +279,7 @@ int main() {
 //        std::cout << "[" << key << "] = " << value << std::endl;
     }
 
-    std::string expr = " + +++- +++ --++- 566++--++ --+2 / ( 55 -+- 45 -+3+9) *---2^---2+";
+    std::string expr = " + +++- +++ -++- 566++--++ --+2 / ( 55 -+- -45 -+3+9) *---2^---2+---";
 //    auto res = to_postfix(expr);
     auto res = remove_unary_pluses(expr);
     replace_unary_minuses(res);
