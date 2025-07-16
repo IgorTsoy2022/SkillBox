@@ -68,7 +68,7 @@ static bool isFunction(std::string& word) {
 }
 
 std::unordered_map<std::string, int> precedence;
-void init_precedence() {
+void initPrecedence() {
     precedence["="] = 1;
     precedence["!="] = 1;
     precedence["<>"] = 1;
@@ -252,7 +252,7 @@ std::string to_postfix(std::string& expression) {
             }
 
             if (isNumber(word)) {
-                result += word;
+                result += word + " ";
                 std::cout << "    result = [" << result << "]\n";
             }
             else if (isFunction(word)) {
@@ -274,23 +274,25 @@ std::string to_postfix(std::string& expression) {
             if (!isRightAssociative(current)) {
                 while (actions.size() > 0 && 
                        precedence[actions.top()] >= precedence[action]) {
-                    result += actions.top();
+                    result += actions.top() + " ";
                     actions.pop();
                 }
             }
             else {
                 while (actions.size() > 0 &&
                     precedence[actions.top()] > precedence[action]) {
-                    result += actions.top();
+                    result += actions.top() + " ";
                     actions.pop();
                 }
-                actions.push(action);
             }
+            actions.push(action);
+            std::cout << "push(" << action << ")" << std::endl;
+
         }
         else if (current == '(') {
             if (actions.size() > 0) {
                 if (isFunction(actions.top())) {
-                    result += "'";
+                    result += "` ";
                 }
             }
             actions.push("(");
@@ -298,20 +300,20 @@ std::string to_postfix(std::string& expression) {
         else if (current == ')') {
             if (actions.size() > 0) {
                 while (actions.top() != "(") {
-                    result += actions.top();
+                    result += actions.top() + " ";
                     actions.pop();
                 }
                 actions.pop();
             }
             if (actions.size() > 0) {
                 if (isFunction(actions.top())) {
-                    result += actions.top();
+                    result += actions.top() + " ";
                 }
             }
         }
         else if (current == ',') {
             while (actions.size() > 0 && actions.top() != "(") {
-                result += actions.top();
+                result += actions.top() + " ";
                 actions.pop();
             }
         }
@@ -342,12 +344,12 @@ int main() {
 
 
 
-    init_precedence();
+    initPrecedence();
     for (const auto& [key, value] : precedence) {
 //        std::cout << "[" << key << "] = " << value << std::endl;
     }
 
-    std::string expr = "-2 + +++- (--3, -+--+8)+++ -++- 566++--++ --+2 / ( 55 -+- -45 -+3+9) ---2^---2+---";
+    std::string expr = "-2 + +++- (--3, -+--+8)+++ -++- 566++--10%	++ --+2 / ( 55 -+- -45 -+3+9) ---2^---2+---";
     try {
         auto res = to_postfix(expr);
         std::cout << res << std::endl;
