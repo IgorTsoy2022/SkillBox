@@ -2,6 +2,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <map>
 #include <regex>
 #include <stack>
@@ -22,15 +23,24 @@ static bool isCharacter(const char& c) {
 }
 
 static bool isOperator(const char& c) {
-    for (const char& symbol : "*+-/^") {
+    for (const char& symbol : "+-*/`~^!|&=><%") {
         if (c == symbol) return true;
     }
     return false;
 }
 
+static bool isOperator(const std::string& word) {
+//    std::cout << "stringver " << word << std::endl;
+    const std::regex pattern(R"(^(?:\+|-|\*|/|`|~|\^|!|\||\|\||&|&&|=|!=|\<\>|\>|\<|\>=|\<=|%)$)");
+    return std::regex_match(word, pattern);
+}
+
 static bool isUnary(const char& c) {
-    return (c == '!') || (c == '~');
-    // || (c == '�');
+    return (c == '^') || (c == '!') || (c == '~') || (c == '`');
+}
+
+static bool isRightAssociative(const char& c) {
+    return (c == '^') || (c == '~') || (c == '!');
 }
 
 static bool isNumber(const std::string& word) {
@@ -38,7 +48,7 @@ static bool isNumber(const std::string& word) {
     return std::regex_match(word, pattern);
 }
 
-static bool IsFunction(std::string& word) {
+static bool isFunction(std::string& word) {
     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
     if (word == "ABS") return true;
     if (word == "MIN") return true;
@@ -109,7 +119,6 @@ double arithmetic_operations(const double& op1,
 }
 
 std::string remove_unary_pluses(std::string& expression) {
-//    const std::regex pattern(R"(^(\+)+)");
 //    const std::regex pattern(R"(^\+|(?<=[(*\/+^-])(\+)|\+$)");
 //    const std::regex pattern(R"((?<=^|[*/+^-])(\+))");
 //    return std::regex_replace(expression, pattern, "");
@@ -122,10 +131,18 @@ std::string remove_unary_pluses(std::string& expression) {
 
     while (pos < size) {
         current = expression[pos];
-        next = (pos < size - 1) ? expression[pos + 1] : 0;
         if (current == ' ') {
             ++pos;
             continue;
+        }
+
+        size_t pos_next = pos + 1;
+        next = 0;
+        while (pos_next < size) {
+            next = expression[pos_next++];
+            if (next != ' ') {
+                break;
+            }
         }
 
         if (current == '+' && 
@@ -140,8 +157,6 @@ std::string remove_unary_pluses(std::string& expression) {
         previous = current;
         ++pos;
     }
-
-    std::cout << result << std::endl;
 
     return result;
 }
@@ -170,10 +185,11 @@ std::string replace_unary_minuses(std::string& expression) {
             }
 
             if (is_minus) {
-                if (previous == 0 || previous == '(') {
+                if (previous == 0 || previous == '(' || previous == ',') {
                     current = '`';
                 }
-                else if (previous == '^') {
+                else if (previous == '+' || previous == '*' || previous == '/' ||
+                         previous == '!' || previous == '^') {
                     current = '~';
                 }
                 else {
@@ -182,7 +198,9 @@ std::string replace_unary_minuses(std::string& expression) {
                 is_minus = false;
             }
             else {
-                if (previous == 0 || previous == '(' || previous == '^') {
+                if (previous == 0 || previous == '(' || previous == ',' ||
+                    previous == '+' || previous == '*' || previous == '/' ||
+                    previous == '!' || previous == '^') {
                 	previous = current;
                 	++pos;
                 	continue;
@@ -198,64 +216,114 @@ std::string replace_unary_minuses(std::string& expression) {
         ++pos;
     }
 
-    std::cout << result << std::endl;
-
     return result;
 }
 
 
 
+// Dijkstra's algorithm
 std::string to_postfix(std::string& expression) {
     std::string result = "";
-    std::stack<std::string> operators;
+    std::stack<std::string> actions;
+
+    expression = remove_unary_pluses(expression);
+    std::cout << expression << std::endl;
+    expression = replace_unary_minuses(expression);
+    std::cout << expression << std::endl;
+
     auto size = expression.size();
     size_t pos = 0;
-    char previous = 0;
     char current = 0;
 
     while (pos < size) {
         current = expression[pos];
-        if (current == ' ') {
+        std::cout << "current=" << current << std::endl;
+        if (isCharacter(current)) {
+            std::string word(1, current);
             ++pos;
-            continue;
-        }
-        if (current == '+') {
-            std::cout << "'+' previous=" << previous << " current=" << current << std::endl;
-
-            while (pos < size - 1) {
-                if (!isOperator(expression[pos + 1])) {
+            while (pos < size) {
+                current = expression[pos];
+                if (!isCharacter(current)) {
+                    --pos;
                     break;
                 }
-                previous = current;
-                current = expression[++pos];
-            }
-            if (previous == 0 || previous == '(' || isOperator(previous)) {
-                previous = current;
+                word += current;
                 ++pos;
-                continue;
             }
 
-            while (operators.size() > 0 && 
-                   precedence[operators.top()] >= precedence[std::to_string(current)]) {
-                result += operators.top();
-                operators.pop();
+            if (isNumber(word)) {
+                result += word;
+                std::cout << "    result = [" << result << "]\n";
             }
-            std::cout << "push+\n";
-            operators.push("+");
+            else if (isFunction(word)) {
+                actions.push(word);
+            }
+            else {
+                throw std::invalid_argument(
+                    "Incorrect expression. Unknown word: \"" + word + "\"");
+            }
         }
-        else if (current == '-') {
-            std::cout << "'-' previous=" << previous << " current=" << current << std::endl;
-            if (previous == 0 || previous == '(' || isOperator(previous)) {
-                previous = (previous == '-') ? '+' : '-';
-                ++pos;
-                continue;
+        else if (isOperator(current)) {
+            char next = (pos < size - 1) ? expression[pos + 1] : 0;
+            std::string action(1, current);
+            if (isOperator(action + next)) {
+                action += next;
             }
+            std::cout << "action = " << action << std::endl;
+
+            if (!isRightAssociative(current)) {
+                while (actions.size() > 0 && 
+                       precedence[actions.top()] >= precedence[action]) {
+                    result += actions.top();
+                    actions.pop();
+                }
+            }
+            else {
+                while (actions.size() > 0 &&
+                    precedence[actions.top()] > precedence[action]) {
+                    result += actions.top();
+                    actions.pop();
+                }
+                actions.push(action);
+            }
+        }
+        else if (current == '(') {
+            if (actions.size() > 0) {
+                if (isFunction(actions.top())) {
+                    result += "'";
+                }
+            }
+            actions.push("(");
+        }
+        else if (current == ')') {
+            if (actions.size() > 0) {
+                while (actions.top() != "(") {
+                    result += actions.top();
+                    actions.pop();
+                }
+                actions.pop();
+            }
+            if (actions.size() > 0) {
+                if (isFunction(actions.top())) {
+                    result += actions.top();
+                }
+            }
+        }
+        else if (current == ',') {
+            while (actions.size() > 0 && actions.top() != "(") {
+                result += actions.top();
+                actions.pop();
+            }
+        }
+        else {
+            std::cout << "!\n";
+            throw std::invalid_argument(
+                "Incorrect expression. Unknown symbol: '" + 
+                std::string(1, current) + "'");
         }
 
-        previous = current;
         ++pos;
     }
-    std::cout << result << std::endl;
 
     return result;
 }
@@ -279,10 +347,87 @@ int main() {
 //        std::cout << "[" << key << "] = " << value << std::endl;
     }
 
-    std::string expr = " + +++- +++ -++- 566++--++ --+2 / ( 55 -+- -45 -+3+9) *---2^---2+---";
-//    auto res = to_postfix(expr);
-    auto res = remove_unary_pluses(expr);
-    replace_unary_minuses(res);
+    std::string expr = "-2 + +++- (--3, -+--+8)+++ -++- 566++--++ --+2 / ( 55 -+- -45 -+3+9) ---2^---2+---";
+    try {
+        auto res = to_postfix(expr);
+        std::cout << res << std::endl;
+    }
+    catch (const std::invalid_argument& e) {
+        std::cerr << "Invalid argument: " << e.what() << std::endl;
+    }
+
+    /*
+    std::cout << "+ " << isOperator("+") << std::endl;
+    std::cout << "- " << isOperator("-") << std::endl;
+    std::cout << "* " << isOperator("*") << std::endl;
+    std::cout << "/ " << isOperator("/") << std::endl;
+    std::cout << "` " << isOperator("`") << std::endl;
+    std::cout << "~ " << isOperator("~") << std::endl;
+    std::cout << "^ " << isOperator("^") << std::endl;
+
+    std::cout << "! " << isOperator("!") << std::endl;
+    std::cout << "| " << isOperator("|") << std::endl;
+    std::cout << "|| " << isOperator("||") << std::endl;
+    std::cout << "& " << isOperator("&") << std::endl;
+    std::cout << "&& " << isOperator("&&") << std::endl;
+
+    std::cout << "= " << isOperator("=") << std::endl;
+    std::cout << "!= " << isOperator("!=") << std::endl;
+    std::cout << "<> " << isOperator("<>") << std::endl;
+    std::cout << "> " << isOperator(">") << std::endl;
+    std::cout << ">= " << isOperator(">=") << std::endl;
+    std::cout << "< " << isOperator("<") << std::endl;
+    std::cout << "<= " << isOperator("<=") << std::endl;
+    std::cout << "% " << isOperator("%") << std::endl;
+
+    std::cout << "@ " << isOperator("@") << std::endl;
+    std::cout << "# " << isOperator("#") << std::endl;
+    std::cout << "$ " << isOperator("$") << std::endl;
+    std::cout << "( " << isOperator("(") << std::endl;
+    std::cout << ") " << isOperator(")") << std::endl;
+    std::cout << "_ " << isOperator("_") << std::endl;
+    std::cout << "\\ " << isOperator("\\") << std::endl;
+    std::cout << ": " << isOperator(":") << std::endl;
+    std::cout << "; " << isOperator(";") << std::endl;
+    std::cout << "? " << isOperator("?") << std::endl;
+    std::cout << ". " << isOperator(".") << std::endl;
+    std::cout << ", " << isOperator(",") << std::endl;
+    std::cout << "** " << isOperator("**") << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "+ " << isOperator('+') << std::endl;
+    std::cout << "- " << isOperator('-') << std::endl;
+    std::cout << "* " << isOperator('*') << std::endl;
+    std::cout << "/ " << isOperator('/') << std::endl;
+    std::cout << "` " << isOperator('`') << std::endl;
+    std::cout << "~ " << isOperator('~') << std::endl;
+    std::cout << "^ " << isOperator('^') << std::endl;
+
+    std::cout << "! " << isOperator('!') << std::endl;
+    std::cout << "| " << isOperator('|') << std::endl;
+    std::cout << "& " << isOperator('&') << std::endl;
+
+    std::cout << "= " << isOperator('=') << std::endl;
+    std::cout << "> " << isOperator('>') << std::endl;
+    std::cout << "< " << isOperator('<') << std::endl;
+    std::cout << "% " << isOperator('%') << std::endl;
+
+    std::cout << "@ " << isOperator('@') << std::endl;
+    std::cout << "# " << isOperator('#') << std::endl;
+    std::cout << "$ " << isOperator('$') << std::endl;
+    std::cout << "( " << isOperator('(') << std::endl;
+    std::cout << ") " << isOperator(')') << std::endl;
+    std::cout << "_ " << isOperator('_') << std::endl;
+    std::cout << "\\ " << isOperator('\\') << std::endl;
+    std::cout << ": " << isOperator(':') << std::endl;
+    std::cout << "; " << isOperator(';') << std::endl;
+    std::cout << "? " << isOperator('?') << std::endl;
+    std::cout << ". " << isOperator('.') << std::endl;
+    std::cout << ", " << isOperator(',') << std::endl;
+
+    std::string e(1, '&');
+    std::cout << "isop " << isOperator(e + '&') << std::endl;
+    */
 
     return 0;
 }
