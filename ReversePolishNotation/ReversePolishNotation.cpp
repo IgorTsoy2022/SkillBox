@@ -158,12 +158,11 @@ public:
         return result;
     }
 
-    static double calculate(std::string& infixExpression) {
+    static std::string calculate(std::string& infixExpression) {
         auto postfixExpression = to_postfix(infixExpression);
         auto size = postfixExpression.size();
         size_t pos = 0;
         char current = 0;
-        double result = 0;
         std::stack<std::string> operands;
 
         std::cout << "START CALCULATION" << std::endl;
@@ -179,15 +178,38 @@ public:
 
                 double operand1 = 0.0, operand2 = 0.0;
                 if (operands.size() > 0) {
+                    std::cout << "operands.top() = " << operands.top() << std::endl;
+                    if (!isNumber(operands.top())) {
+                        throw std::invalid_argument(
+                            "Incorrect expression: a number is required for the \"" +
+                            operation + "\" operator.");
+                    }
                     std::stringstream(operands.top()) >> operand2;
                     operands.pop();
+                }
+                else {
+                    throw std::invalid_argument(
+                        "Incorrect expression: no operand(s) for the \"" +
+                        operation + "\" operator.");
                 }
 
                 if (!isUnary(current)) {
                     if (operands.size() > 0) {
+                        if (!isNumber(operands.top())) {
+                            throw std::invalid_argument(
+                                "Incorrect expression: a number is required for the \"" +
+                                operation + "\" operator.");
+                        }
                         std::stringstream(operands.top()) >> operand1;
                         if (current != '%') {
                             operands.pop();
+                        }
+                    }
+                    else {
+                        if (current != '%') {
+                            throw std::invalid_argument(
+                                "Incorrect expression: no 2-d operand for the \"" +
+                                operation + "\" operator.");
                         }
                     }
                 }
@@ -204,15 +226,23 @@ public:
                     operands.push(word);
                 }
                 else {
-
+                    double value = 0.0;
+                    std::stack<double> parameters;
+                    while (operands.size() > 0 && operands.top() != "'") {
+                        std::stringstream(operands.top()) >> value;
+                        parameters.push(value);
+                        operands.pop();
+                    }
+                    operands.pop();
+                    value = callFunction(word, parameters);
+                    operands.push(std::to_string(value));
                 }
-
             }
 
             ++pos;
         }
 
-        return result;
+        return operands.top();
     }
 
     ~ReversePolishNotashion() {}
@@ -310,7 +340,10 @@ private:
         if (operation == "+") return a + b;
         if (operation == "-") return a - b;
         if (operation == "*") return a * b;
-        if (operation == "/") return a / b;
+        if (operation == "/") {
+            if (std::abs(b) > 0) return a / b;
+            throw std::invalid_argument("Divide by zero.");
+        }
         if (operation == "^") return std::pow(a, b);
         if (operation == "%") return (std::abs(a) > 0) ? a * b / 100.0 : b / 100.0;
 
@@ -559,7 +592,7 @@ int main() {
     std::cout << x << std::endl;
 
     std::string expr = "-2 + +++- (--3, 4,-+--+8)+++ -++- 566++- 10%   %%  -++ --+2 / ( 55 -+- -45 -+3+9) ---2^---2+---";
-    expr = "6 - 5 %";
+    expr = " -7%";
     try {
         auto res = rpn.calculate(expr);
         std::cout << res << std::endl;
@@ -567,11 +600,6 @@ int main() {
     catch (const std::invalid_argument& e) {
         std::cerr << "Invalid argument: " << e.what() << std::endl;
     }
-
-    double y = 2.5;
-    long i = y;
-    std::cout << std::fmod(3.4, 3.0) << std::endl;
-
 
     return 0;
 }
