@@ -45,16 +45,19 @@ public:
                     result += word + " ";
                     std::cout << "    result(add_word \"" << word << " \") = [" << result << "]\n";
                 }
-                else if (isFunction(word)) {
-                    operations.push(word);
-                    std::cout << "    push_function(" << word << ")\n";
-                }
                 else {
-                    std::string message =
-                        "Incorrect expression. Unknown word: \"" + word +
+                    std::transform(word.begin(), word.end(), word.begin(), ::toupper);
+                    if (isFunction(word)) {
+                        operations.push(word);
+                        std::cout << "    push_function(" << word << ")\n";
+                    }
+                    else {
+                        std::string message =
+                            "Incorrect expression. Unknown word: \"" + word +
                         "\".\nProcessing stopped at position " +
                         std::to_string(pos) + " :\n" + expression.substr(0, pos);
-                    throw std::invalid_argument(message);
+                        throw std::invalid_argument(message);
+                    }
                 }
             }
             else if (isOperator(current)) {
@@ -170,11 +173,8 @@ public:
             std::cout << "current=" << current << std::endl;
 
             if (isOperator(current)) {
-                char next = (pos < size - 1) ? postfixExpression[pos + 1] : 0;
-                std::string operation(1, current);
-                if (isOperator(operation + next)) {
-                    operation += next;
-                }
+                std::string operation = getOperator(postfixExpression, pos);
+
                 std::cout << "operation = " << operation << std::endl;
 
                 double operand1 = 0.0, operand2 = 0.0;
@@ -263,16 +263,13 @@ private:
     }
 
     static bool isFunction(std::string& word) {
-        std::transform(word.begin(), word.end(), word.begin(), ::toupper);
-        if (word == "ABS") return true;
-        if (word == "MIN") return true;
-        if (word == "MAX") return true;
         if (word == "MOD") return true;
-        if (word == "ROUND") return true;
+        if (word == "POW") return true;
         if (word == "EXP") return true;
         if (word == "SQRT") return true;
         if (word == "LOG") return true;
-        if (word == "LN") return true;
+        if (word == "LOG2") return true;
+        if (word == "LOG10") return true;
         if (word == "SIN") return true;
         if (word == "COS") return true;
         if (word == "TAN") return true;
@@ -335,6 +332,105 @@ private:
         throw std::invalid_argument("The operator \"" + operation +
                                     "\" is not supported.");
 
+        return 0.0;
+    }
+
+    static double callFunction(const std::string& word, std::stack<double>& parameters) {
+        auto size = parameters.size();
+
+        double param1 = 0.0;
+        double param2 = 0.0;
+        if (size > 0) {
+            param1 = parameters.top();
+            parameters.pop();
+        }
+        if (size > 1) {
+            param2 = parameters.top();
+            parameters.pop();
+        }
+
+        std::string 
+        message = "The wrong number of parameters is passed to the " + 
+        word + " function.";
+
+        if (word == "MOD") {
+            if (size != 2) {
+        		throw std::invalid_argument(message);
+        	}
+        	return std::fmod(param1, param2);
+        }
+        if (word == "POW") {
+            if (size != 2) {
+                throw std::invalid_argument(message);
+            }
+            return std::pow(param1, param2);
+        }
+        if (word == "EXP") {
+            if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::exp(param1);
+        }
+        if (word == "SQRT") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::sqrt(param1);
+        }
+        if (word == "LOG") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::log(param1);
+        }
+        if (word == "LOG2") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::log2(param1);
+        }
+        if (word == "LOG10") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::log10(param1);
+        }
+        if (word == "SIN") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::sin(param1);
+        }
+        if (word == "COS") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::cos(param1);
+        }
+        if (word == "TAN") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::tan(param1);
+        }
+        if (word == "ASIN") {
+         	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::asin(param1);
+        }
+        if (word == "ACOS") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::acos(param1);
+        }
+        if (word == "ATAN") {
+        	if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::atan(param1);
+        }
         return 0.0;
     }
 
@@ -471,6 +567,10 @@ int main() {
     catch (const std::invalid_argument& e) {
         std::cerr << "Invalid argument: " << e.what() << std::endl;
     }
+
+    double y = 2.5;
+    long i = y;
+    std::cout << std::fmod(3.4, 3.0) << std::endl;
 
 
     return 0;
