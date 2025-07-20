@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <algorithm>
 #include <cmath>
@@ -43,7 +44,7 @@ public:
 
                 if (isNumber(word)) {
                     result += word + " ";
-                    std::cout << "    result(add_word \"" << word << " \") = [" << result << "]\n";
+                    std::cout << "    result + \"" << word << " \" = [" << result << "]\n";
                 }
                 else {
                     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
@@ -66,22 +67,27 @@ public:
 
                 if (operation == "%") {
                     result += "% ";
-                    std::cout << "    result(add_operation \"% \") = [" << result << "]\n";
+                    std::cout << "    result + \"% \" = [" << result << "]\n";
                 }
                 else {
+                    std::cout << "    precedence : operation=" << operation << std::endl;
                     if (!isRightAssociative(current)) {
                         while (operations.size() > 0 &&
                             precedence(operations.top()) >= precedence(operation)) {
+                            std::cout << "precedence : operations.top() = " << operations.top()
+                                      << " operation = " << operation << std::endl;
                             result += operations.top() + " ";
-                            std::cout << "    result(top \"" << operations.top() << " \") = [" << result << "]\n";
+                            std::cout << "    result + \"" << operations.top() << "\" = [" << result << "]\n";
                             operations.pop();
                         }
                     }
                     else {
                         while (operations.size() > 0 &&
                             precedence(operations.top()) > precedence(operation)) {
+                            std::cout << "precedence : operations.top() = " << operations.top()
+                                      << " operation = " << operation << std::endl;
                             result += operations.top() + " ";
-                            std::cout << "    result(top \"" << operations.top() << " \") = [" << result << "]\n";
+                            std::cout << "    result + \"" << operations.top() << "\" = [" << result << "]\n";
                             operations.pop();
                         }
                     }
@@ -93,7 +99,7 @@ public:
                 if (operations.size() > 0) {
                     if (isFunction(operations.top())) {
                         result += "' ";
-                        std::cout << "    result(add \"'\") = [" << result << "]\n";
+                        std::cout << "    result + \"'\" = [" << result << "]\n";
                     }
                 }
                 operations.push("(");
@@ -109,7 +115,7 @@ public:
                         break;
                     }
                     result += operations.top() + " ";
-                    std::cout << "    result(top \"" << operations.top() << " \") = [" << result << "]\n";
+                    std::cout << "    result + \"" << operations.top() << "\" = [" << result << "]\n";
                     operations.pop();
                 }
 
@@ -158,34 +164,39 @@ public:
         return result;
     }
 
-    static std::string calculate(std::string& infixExpression) {
+    static double calculate(std::string& infixExpression) {
         auto postfixExpression = to_postfix(infixExpression);
         auto size = postfixExpression.size();
         size_t pos = 0;
         char current = 0;
-        std::stack<std::string> operands;
+        bool isParameter = false;
+        int parameters_count = 0;
+        double value = 0.0;
+        std::stack<double> operands;
 
-        std::cout << "START CALCULATION" << std::endl;
+        std::cout << std::setprecision(15) << "START CALCULATION" << std::endl;
 
         while (pos < size) {
             current = postfixExpression[pos];
-            std::cout << "current=" << current << std::endl;
+            std::cout << "current = [" << current << "]" << std::endl;
 
             if (isOperator(current)) {
                 std::string operation = getOperator(postfixExpression, pos);
 
-                std::cout << "operation = " << operation << std::endl;
+                std::cout << "    operation = [" << operation << "]" << std::endl;
 
-                double operand1 = 0.0, operand2 = 0.0;
+                double operand1 = 0.0;
+                double operand2 = 0.0;
                 if (operands.size() > 0) {
-                    std::cout << "operands.top() = " << operands.top() << std::endl;
-                    if (!isNumber(operands.top())) {
-                        throw std::invalid_argument(
-                            "Incorrect expression: a number is required for the \"" +
-                            operation + "\" operator.");
-                    }
-                    std::stringstream(operands.top()) >> operand2;
+                    operand2 = operands.top();
                     operands.pop();
+                    std::cout << "    operands.top() = " << operand2 << std::endl;
+                    if (isParameter) {
+                        --parameters_count;
+                        std::cout << "    after operand2 = [" << operand2
+                            << "] parameters_count = " << parameters_count << std::endl;
+                    }
+
                 }
                 else {
                     throw std::invalid_argument(
@@ -195,14 +206,14 @@ public:
 
                 if (!isUnary(current)) {
                     if (operands.size() > 0) {
-                        if (!isNumber(operands.top())) {
-                            throw std::invalid_argument(
-                                "Incorrect expression: a number is required for the \"" +
-                                operation + "\" operator.");
-                        }
-                        std::stringstream(operands.top()) >> operand1;
+                        operand1 = operands.top();
                         if (current != '%') {
                             operands.pop();
+                            if (isParameter) {
+                                --parameters_count;
+                                std::cout << "    after operand1 = [" << operand1
+                                    << "] parameters_count = " << parameters_count << std::endl;
+                            }
                         }
                     }
                     else {
@@ -214,32 +225,49 @@ public:
                     }
                 }
 
-                operand2 = execute(operand1, operand2, operation);
-                operands.push(std::to_string(operand2));
+                value = execute(operand1, operand2, operation);
+                std::cout << "    [" << operand1 << " " << operation << " "
+                    << operand2 << " = " << value << "]" << std::endl;
+                operands.push(value);
+                if (isParameter) {
+                    ++parameters_count;
+                    std::cout << "    after operator = [" << current
+                              << "] parameters_count = " << parameters_count << std::endl;
+                }
             }
             else if (current == '\'') {
-                operands.push("'");
+                isParameter = true;
             }
             else if (isCharacter(current)) {
                 std::string word = getWord(postfixExpression, pos);
                 if (isNumber(word)) {
-                    operands.push(word);
+                    std::stringstream(word) >> value;
+                    operands.push(value);
+                    if (isParameter) {
+                        ++parameters_count;
+                        std::cout << "    after number = [" << value
+                            << "] parameters_count = " << parameters_count << std::endl;
+                    }
                 }
                 else {
-                    double value = 0.0;
+                    
                     std::stack<double> parameters;
-                    while (operands.size() > 0 && operands.top() != "'") {
-                        std::stringstream(operands.top()) >> value;
-                        parameters.push(value);
+                    while (operands.size() > 0 && parameters_count-- > 0) {
+                        parameters.push(operands.top());
                         operands.pop();
                     }
-                    operands.pop();
-                    value = callFunction(word, parameters);
-                    operands.push(std::to_string(value));
+                    isParameter = false;
+
+                    operands.push(callFunction(word, parameters));
                 }
             }
 
             ++pos;
+        }
+
+        if (operands.size() != 1) {
+            throw std::invalid_argument(
+                "Incorrect expression: no operand or operator.");
         }
 
         return operands.top();
@@ -254,7 +282,7 @@ private:
             return precedence_.at(operation);
         }
         catch (const std::out_of_range& e) {
-            std::cerr << "The operator \"" << operation
+            std::cerr << "precedence : The operator \"" << operation
                       << "\" is not supported." << std::endl;
         }
     }
@@ -495,8 +523,9 @@ private:
             }
 
             if (current == '+' &&
-                (previous == 0 || previous == '(' || isOperator(previous) ||
-                    isOperator(next))) {
+                (previous == 0 || previous == '(' || 
+                 isOperator(previous) && previous != '%' ||
+                 isOperator(next))) {
                 previous = current;
                 pos = pos_next;
                 continue;
@@ -572,6 +601,7 @@ private:
 
 const std::unordered_map<std::string, int> 
 ReversePolishNotashion::precedence_ {
+    { "(", 0 },
     { "=", 1 }, { "!=", 1 }, { "<>", 1 },
     { "||", 2 },
     { "&&", 3 },
@@ -592,10 +622,10 @@ int main() {
     std::cout << x << std::endl;
 
     std::string expr = "-2 + +++- (--3, 4,-+--+8)+++ -++- 566++- 10%   %%  -++ --+2 / ( 55 -+- -45 -+3+9) ---2^---2+---";
-    expr = " -7%";
+    expr = " (5, 1*)";
     try {
         auto res = rpn.calculate(expr);
-        std::cout << res << std::endl;
+        std::cout << std::setprecision(15) << res << std::endl;
     }
     catch (const std::invalid_argument& e) {
         std::cerr << "Invalid argument: " << e.what() << std::endl;
