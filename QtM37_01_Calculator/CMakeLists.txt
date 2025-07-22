@@ -15,8 +15,9 @@ find_package(Qt6 COMPONENTS
         REQUIRED)
 
 add_executable(QtM37_01_Calculator main.cpp calculator.ui
-        calculator.h
-        calculator.cpp)
+        calculatormainwindow.h
+        calculatormainwindow.cpp
+)
 
 target_link_libraries(QtM37_01_Calculator
         Qt::Core
