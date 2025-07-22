@@ -2,18 +2,21 @@
 
 #include <sstream>
 #include <cmath>
+#include <limits>
+#include <numbers>
 #include <regex>
 #include <stack>
 #include <string>
 #include <unordered_map>
 
+template<typename NumType>
 class ReversePolishNotashion {
 public:
     ReversePolishNotashion() {}
 
     static bool isNumber(const std::string& word) {
         static const std::regex
-            pattern(R"(^^\s*[-+]?((\d+(\.\d+)?)|(\d+\.)|(\.\d+))([eE][-+]?\d+)?\s*$)");
+            pattern(R"(^^\s*[-+]?((\d+(\.\d+)?)|(\.)|(\d+\.)|(\.\d+))([eE][-+]?\d+)?\s*$)");
         return std::regex_match(word, pattern);
     }
 
@@ -42,6 +45,9 @@ public:
                     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
                     if (isFunction(word)) {
                         operations.push(word);
+                    }
+                    else if (isConstant(word)) {
+                        result += word + " ";
                     }
                     else {
                         std::string message =
@@ -151,23 +157,23 @@ public:
         return result;
     }
 
-    static double calculate(std::string& infixExpression) {
+    static NumType calculate(std::string& infixExpression) {
         auto postfixExpression = to_postfix(infixExpression);
         auto size = postfixExpression.size();
         size_t pos = 0;
         char current = 0;
         bool isParameter = false;
         int parameters_count = 0;
-        double value = 0.0;
-        std::stack<double> operands;
+        NumType value = 0.0;
+        std::stack<NumType> operands;
 
         while (pos < size) {
             current = postfixExpression[pos];
 
             if (isOperator(current)) {
                 std::string operation = getOperator(postfixExpression, pos);
-                double operand1 = 0.0;
-                double operand2 = 0.0;
+                NumType operand1 = 0.0;
+                NumType operand2 = 0.0;
                 if (operands.size() > 0) {
                     operand2 = operands.top();
                     operands.pop();
@@ -218,9 +224,20 @@ public:
                         ++parameters_count;
                     }
                 }
+                else if (isConstant(word)) {
+                    if (word == "PI") {
+                        operands.push(std::numbers::pi_v<NumType>);
+                    }
+                    else if (word == "E") {
+                        operands.push(std::numbers::e_v<NumType>);
+                    }
+                    if (isParameter) {
+                        ++parameters_count;
+                    }
+                }
                 else {
 
-                    std::stack<double> parameters;
+                    std::stack<NumType> parameters;
                     while (operands.size() > 0 && parameters_count-- > 0) {
                         parameters.push(operands.top());
                         operands.pop();
@@ -289,14 +306,19 @@ private:
         return (word == "^") || (word == "~") || (word == "!");
     }
 
+    static bool isConstant(std::string& word) {
+        return (word == "PI") || (word == "E");
+    }
+
     static bool isFunction(std::string& word) {
         if (word == "MOD") return true;
         if (word == "POW") return true;
-        if (word == "EXP") return true;
         if (word == "SQRT") return true;
+        if (word == "EXP") return true;
         if (word == "LOG") return true;
         if (word == "LOG2") return true;
         if (word == "LOG10") return true;
+        if (word == "LN") return true;
         if (word == "SIN") return true;
         if (word == "COS") return true;
         if (word == "TAN") return true;
@@ -307,14 +329,25 @@ private:
     }
 
     static std::string getWord(const std::string& expression, size_t& pos) {
-        auto size = expression.size() - 1;
-        std::string word(1, expression[pos]);
+        auto size = expression.size();
+        std::string word = "";
+        char previous = 0;
+        char current = 0;
         while (pos < size) {
-            char current = expression[pos + 1];
+            current = expression[pos];
             if (!isCharacter(current)) {
-                break;
+                if ((previous == 'e' || previous == 'E') &&
+                    (current == '+' || current == '-')) {
+
+                }
+                else {
+                    --pos;
+                    break;
+                }
             }
+
             word += current;
+            previous = current;
             ++pos;
         }
         return word;
@@ -332,22 +365,27 @@ private:
         return operation;
     }
 
-    static double execute(const double a, const double b,
+    static NumType abs(const NumType a) {
+        return a < 0.0 ? -a : a;
+    }
+
+    static NumType execute(const NumType a, const NumType b,
         const std::string& operation) {
-        static const double epsilon = 1.0e-12;
+        static const NumType epsilon = std::numeric_limits<NumType>::min();
+
         if (operation == "+") return a + b;
         if (operation == "-") return a - b;
         if (operation == "*") return a * b;
         if (operation == "/") {
-            if (std::abs(b) > 0) return a / b;
+            if (abs(b) > 0) return a / b;
             throw std::invalid_argument("Divide by zero.");
         }
         if (operation == "^") return std::pow(a, b);
-        if (operation == "%") return (std::abs(a) > 0) ? a * b / 100.0 : b / 100.0;
+        if (operation == "%") return (abs(a) > 0) ? a * b / 100.0 : b / 100.0;
 
-        if (operation == "=") return std::abs(a - b) < epsilon;
-        if (operation == "!=") return std::abs(a - b) > epsilon;
-        if (operation == "<>") return std::abs(a - b) > epsilon;
+        if (operation == "=") return abs(a - b) < epsilon;
+        if (operation == "!=") return abs(a - b) > epsilon;
+        if (operation == "<>") return abs(a - b) > epsilon;
         if (operation == ">") return a > b;
         if (operation == ">=") return a >= b;
         if (operation == "<") return a < b;
@@ -364,13 +402,14 @@ private:
             "\" is not supported.");
 
         return 0.0;
+
     }
 
-    static double callFunction(const std::string& word, std::stack<double>& parameters) {
+    static NumType callFunction(const std::string& word, std::stack<NumType>& parameters) {
         auto size = parameters.size();
 
-        double param1 = 0.0;
-        double param2 = 0.0;
+        NumType param1 = 0.0;
+        NumType param2 = 0.0;
         if (size > 0) {
             param1 = parameters.top();
             parameters.pop();
@@ -396,23 +435,23 @@ private:
             }
             return std::pow(param1, param2);
         }
-        if (word == "EXP") {
-            if (size != 1) {
-                throw std::invalid_argument(message);
-            }
-            return std::exp(param1);
-        }
         if (word == "SQRT") {
             if (size != 1) {
                 throw std::invalid_argument(message);
             }
             return std::sqrt(param1);
         }
-        if (word == "LOG") {
+        if (word == "EXP") {
             if (size != 1) {
                 throw std::invalid_argument(message);
             }
-            return std::log(param1);
+            return std::exp(param1);
+        }
+        if (word == "LOG") {
+            if (size != 2) {
+                throw std::invalid_argument(message);
+            }
+            return std::log10(param2) / std::log10(param1);
         }
         if (word == "LOG2") {
             if (size != 1) {
@@ -425,6 +464,12 @@ private:
                 throw std::invalid_argument(message);
             }
             return std::log10(param1);
+        }
+        if (word == "LN") {
+            if (size != 1) {
+                throw std::invalid_argument(message);
+            }
+            return std::log(param1);
         }
         if (word == "SIN") {
             if (size != 1) {
@@ -570,8 +615,9 @@ private:
 
 };
 
+template<typename NumType>
 const std::unordered_map<std::string, int>
-ReversePolishNotashion::precedence_{
+ReversePolishNotashion<NumType>::precedence_{
     { "(", 0 },
     { "=", 1 }, { "!=", 1 }, { "<>", 1 }, { ">", 1 }, { ">=", 1 }, { "<", 1 }, { "<=", 1 },
     { "||", 2 },

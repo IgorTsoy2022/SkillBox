@@ -3,9 +3,10 @@
 #include "ReversePolishNotation.h"
 
 int main() {
-    ReversePolishNotashion rpn;
+    ReversePolishNotashion<float> rpn;
 
-    std::cout << std::setprecision(15) << std::boolalpha;
+    std::cout << std::setprecision(22) << std::boolalpha;
+
     std::string input = "";
     std::cout << "Calculator:\n";
     std::cout << "Input math expression (type \"exit\" for exit):\n";
