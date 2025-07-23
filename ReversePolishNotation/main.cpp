@@ -1,11 +1,17 @@
-#include <iostream>
 #include <iomanip>
 #include "ReversePolishNotation.h"
 
 int main() {
-    ReversePolishNotation<float> rpn;
+    ReversePolishNotation<double> rpn;
 
-    std::cout << std::setprecision(22) << std::boolalpha;
+    std::cout << std::setprecision(26) << std::boolalpha;
+
+    float fPI_ = 3.141592653589793238462643;
+    double dPI_ = 3.141592653589793238462643;
+    long double lPI_ = 3.141592653589793238462643;
+    std::cout << fPI_ << std::endl;
+    std::cout << dPI_ << std::endl;
+    std::cout << lPI_ << std::endl;
 
     std::string input = "";
     std::cout << "Calculator:\n";
