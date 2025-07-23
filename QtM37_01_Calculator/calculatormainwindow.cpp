@@ -9,6 +9,9 @@ CalculatorMainWindow::CalculatorMainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    connect(ui->pushButton_0, SIGNAL(clicked()), this, SLOT(digits_numbers()));
+
  /*
     connect(ui->pushButton_plus, SIGNAL(clicked()), this, SLOT(arithmetic_operations()));
     connect(ui->pushButton_minus, SIGNAL(clicked()), this, SLOT(arithmetic_operations()));
@@ -22,12 +25,36 @@ CalculatorMainWindow::~CalculatorMainWindow() {
     delete ui;
 }
 
+int CalculatorMainWindow::getPosition(const int num) const {
+    return num > 0 ? current_position_ : previous_position_;
+}
+
+void CalculatorMainWindow::setPosition(const int num, const int position)  {
+    if (num > 0) {
+        previous_position_ = position;
+    }
+    else {
+        current_position_ = position;
+    }
+}
+
+void CalculatorMainWindow::digits_numbers() const {
+    auto *button = (QPushButton *)(sender());
+    QString new_text;
+    ui->lineEdit_Input->setText(new_text);
+
+}
 
 void CalculatorMainWindow::on_pushButton_AC_clicked() {
     ui->lineEdit_Input->setText("0");
     QMessageBox::information(this, "Welcome!", "You have successfully logged in.");
 }
 
+void CalculatorMainWindow::on_lineEdit_Input_cursorPositionChanged(const int arg1, const int arg2) {
+    qDebug() << "arg1 = " << arg1 << ", arg2 = " << arg2;
+    previous_position_ = arg1;
+    current_position_ = arg2;
+}
 /*
 void CalculatorMainWindow::on_pushButton_C_clicked() {
     QMessageBox::information(this, "Welcome!", "You have successfully logged in.");
@@ -70,9 +97,7 @@ void CalculatorMainWindow::on_pushButton_dot_clicked() {
 }
 */
 /*
-void CalculatorMainWindow::on_lineInput_cursorPositionChanged(int arg1, int arg2) {
-    qDebug() << "arg1 = " << arg1 << ", arg2 = " << arg2;
-}
+
 
 void CalculatorMainWindow::on_lineInput_editingFinished() {
 

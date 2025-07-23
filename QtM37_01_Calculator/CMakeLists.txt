@@ -17,6 +17,7 @@ find_package(Qt6 COMPONENTS
 add_executable(QtM37_01_Calculator main.cpp calculator.ui
         calculatormainwindow.h
         calculatormainwindow.cpp
+        ReversePolishNotation.h
 )
 
 target_link_libraries(QtM37_01_Calculator

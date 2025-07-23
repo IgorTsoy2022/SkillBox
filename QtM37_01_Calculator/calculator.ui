@@ -98,7 +98,7 @@
       <item>
        <layout class="QGridLayout" name="gridLayout">
         <item row="11" column="5">
-         <widget class="QPushButton" name="pushButton_enter">
+         <widget class="QPushButton" name="pushButton_equal">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
