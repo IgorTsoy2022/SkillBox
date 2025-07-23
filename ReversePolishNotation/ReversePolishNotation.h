@@ -1,5 +1,12 @@
+#ifndef REVERSEPOLISHNOTATION_H
+#define REVERSEPOLISHNOTATION_H
+
 #pragma once
 
+#define CPP20_
+
+#include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <cmath>
 #include <limits>
@@ -12,7 +19,7 @@
 template<typename NumType>
 class ReversePolishNotation {
 public:
-    ReversePolishNotation() {}
+    ReversePolishNotation() = default;
 
     static bool isNumber(const std::string& word) {
         static const std::regex
@@ -22,7 +29,7 @@ public:
 
     // Dijkstra's algorithm
     static std::string to_postfix(std::string& expression) {
-        std::string result = "";
+        std::string result;
         std::stack<std::string> operations;
 
         expression = remove_unary_pluses(expression);
@@ -42,7 +49,15 @@ public:
                     result += word + " ";
                 }
                 else {
+#ifdef CPP20_
+                    std::ranges::transform(word.begin(), word.end(),
+                        word.begin(),
+                        [](unsigned char c) -> unsigned char { 
+                            return std::toupper(c);
+                        });
+#else
                     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
+#endif
                     if (isFunction(word)) {
                         operations.push(word);
                     }
@@ -66,14 +81,14 @@ public:
                 }
                 else {
                     if (!isRightAssociative(operation)) {
-                        while (operations.size() > 0 &&
+                        while (!operations.empty() &&
                             precedence(operations.top()) >= precedence(operation)) {
                             result += operations.top() + " ";
                             operations.pop();
                         }
                     }
                     else {
-                        while (operations.size() > 0 &&
+                        while (!operations.empty() &&
                             precedence(operations.top()) > precedence(operation)) {
                             result += operations.top() + " ";
                             operations.pop();
@@ -83,17 +98,17 @@ public:
                 }
             }
             else if (current == '(') {
-                if (operations.size() > 0) {
+                if (!operations.empty()) {
                     if (isFunction(operations.top())) {
                         result += "' ";
                     }
                 }
-                operations.push("(");
+                operations.emplace("(");
                 ++brackets_count;
             }
             else if (current == ')') {
                 bool balanced_brackets = false;
-                while (operations.size() > 0) {
+                while (!operations.empty()) {
                     if (operations.top() == "(") {
                         operations.pop();
                         balanced_brackets = true;
@@ -113,7 +128,7 @@ public:
                     throw std::invalid_argument(message);
                 }
 
-                if (operations.size() > 0) {
+                if (!operations.empty()) {
                     if (isFunction(operations.top())) {
                         result += operations.top() + " ";
                         operations.pop();
@@ -122,7 +137,7 @@ public:
                 --brackets_count;
             }
             else if (current == ',') {
-                while (operations.size() > 0 && operations.top() != "(") {
+                while (!operations.empty() && operations.top() != "(") {
                     result += operations.top() + " ";
                     operations.pop();
                 }
@@ -149,7 +164,7 @@ public:
             throw std::invalid_argument(message);
         }
 
-        while (operations.size() > 0) {
+        while (!operations.empty()) {
             result += operations.top() + " ";
             operations.pop();
         }
@@ -165,6 +180,15 @@ public:
         bool isParameter = false;
         int parameters_count = 0;
         NumType value = 0.0;
+
+#ifdef CPP20_
+        static const NumType PI_ = std::numbers::pi_v<NumType>;
+        static const NumType E_ = std::numbers::e_v<NumType>;
+#else
+        static const NumType PI_ = 3.141592653589793238462643;
+        static const NumType E_ =  2.718281828459045235360287;
+#endif
+
         std::stack<NumType> operands;
 
         while (pos < size) {
@@ -174,7 +198,7 @@ public:
                 std::string operation = getOperator(postfixExpression, pos);
                 NumType operand1 = 0.0;
                 NumType operand2 = 0.0;
-                if (operands.size() > 0) {
+                if (!operands.empty()) {
                     operand2 = operands.top();
                     operands.pop();
                     if (isParameter) {
@@ -188,7 +212,7 @@ public:
                 }
 
                 if (!isUnary(operation)) {
-                    if (operands.size() > 0) {
+                    if (!operands.empty()) {
                         operand1 = operands.top();
                         if (current != '%') {
                             operands.pop();
@@ -226,10 +250,10 @@ public:
                 }
                 else if (isConstant(word)) {
                     if (word == "PI") {
-                        operands.push(std::numbers::pi_v<NumType>);
+                        operands.push(PI_);
                     }
                     else if (word == "E") {
-                        operands.push(std::numbers::e_v<NumType>);
+                        operands.push(E_);
                     }
                     if (isParameter) {
                         ++parameters_count;
@@ -238,7 +262,7 @@ public:
                 else {
 
                     std::stack<NumType> parameters;
-                    while (operands.size() > 0 && parameters_count-- > 0) {
+                    while (!operands.empty() && parameters_count-- > 0) {
                         parameters.push(operands.top());
                         operands.pop();
                     }
@@ -259,37 +283,48 @@ public:
         return operands.top();
     }
 
-    ~ReversePolishNotation() {}
+    ~ReversePolishNotation() = default;
 private:
     static const std::unordered_map<std::string, int> precedence_;
 
-    static const int precedence(const std::string& operation) {
+    static int precedence(const std::string& operation) {
+        int result = 0;
         try {
-            return precedence_.at(operation);
+            result = precedence_.at(operation);
         }
-        catch (const std::out_of_range& e) {
+        catch (...) {
             std::cerr << "precedence : The operator \"" << operation
-                << "\" is not supported." << std::endl;
+                      << "\" is not supported." << std::endl;
         }
+        return result;
     }
 
     static bool isCharacter(const char& c) {
         if (c >= '0' && c <= '9') return true;
         if (c >= 'A' && c <= 'Z') return true;
         if (c >= 'a' && c <= 'z') return true;
-        for (const char& symbol : "#$.@_") {
-            if (c == symbol) return true;
-        }
-        return false;
+
+#ifdef CPP20_
+        return std::ranges::any_of("#$.@_",
+                                   [c](const auto& v) { return v == c; });
+#else
+        static const std::string pattern{ "#$.@_" };
+        return std::any_of(pattern.begin(), pattern.end(),
+                           [c](const auto& v) { return v == c; });
+#endif
+
     }
 
     static bool isOperator(const char& c) {
-        static const std::string
-            operators{ "+-*/`~^!|&=><%" };
-        for (const char& symbol : operators) {
-            if (c == symbol) return true;
-        }
-        return false;
+#ifdef CPP20_
+        return std::ranges::any_of("+-*/`~^!|&=><%",
+                                   [c](const auto& v) { return v == c; });
+#else
+        static const std::string pattern{ "+-*/`~^!|&=><%" };
+        return std::any_of(pattern.begin(), pattern.end(),
+                           [c](const auto& v) { return v == c; });
+#endif
+
     }
 
     static bool isOperator(const std::string& word) {
@@ -306,11 +341,11 @@ private:
         return (word == "^") || (word == "~") || (word == "!");
     }
 
-    static bool isConstant(std::string& word) {
+    static bool isConstant(const std::string& word) {
         return (word == "PI") || (word == "E");
     }
 
-    static bool isFunction(std::string& word) {
+    static bool isFunction(const std::string& word) {
         if (word == "MOD") return true;
         if (word == "POW") return true;
         if (word == "SQRT") return true;
@@ -330,7 +365,7 @@ private:
 
     static std::string getWord(const std::string& expression, size_t& pos) {
         auto size = expression.size();
-        std::string word = "";
+        std::string word;
         char previous = 0;
         char current = 0;
         while (pos < size) {
@@ -400,8 +435,6 @@ private:
 
         throw std::invalid_argument("The operator \"" + operation +
             "\" is not supported.");
-
-        return 0.0;
 
     }
 
@@ -510,7 +543,7 @@ private:
         return 0.0;
     }
 
-    static std::string remove_unary_pluses(std::string& expression) {
+    static std::string remove_unary_pluses(const std::string& expression) {
         //    const std::regex pattern(R"(^\+|(?<=[(*\/+^-])(\+)|\+$)");
         //    return std::regex_replace(expression, pattern, "");
         auto size = expression.size();
@@ -518,7 +551,7 @@ private:
         char previous = 0;
         char current = 0;
         char next = 0;
-        std::string result = "";
+        std::string result;
 
         while (pos < size) {
             current = expression[pos];
@@ -554,14 +587,14 @@ private:
         return result;
     }
 
-    static std::string replace_unary_minuses(std::string& expression) {
+    static std::string replace_unary_minuses(const std::string& expression) {
         auto size = expression.size();
         size_t pos = 0;
         char previous = 0;
         char current = 0;
         char next = 0;
         bool is_minus = false;
-        std::string result = "";
+        std::string result;
 
         while (pos < size) {
             current = expression[pos];
@@ -570,8 +603,11 @@ private:
                 while (true) {
                     is_minus = !is_minus;
 
-                    next = (pos < size - 1) ? expression[pos + 1] : 0;
-                    if (next == 0 || next != '-') {
+                    if (pos == size - 1) {
+                        break;
+                    }
+                    next = expression[pos + 1];
+                    if (next != '-') {
                         break;
                     }
                     ++pos;
@@ -619,7 +655,8 @@ template<typename NumType>
 const std::unordered_map<std::string, int>
 ReversePolishNotation<NumType>::precedence_{
     { "(", 0 },
-    { "=", 1 }, { "!=", 1 }, { "<>", 1 }, { ">", 1 }, { ">=", 1 }, { "<", 1 }, { "<=", 1 },
+    { "=", 1 }, { "!=", 1 }, { "<>", 1 },
+    { ">", 1 }, { ">=", 1 }, { "<", 1 }, { "<=", 1 },
     { "||", 2 },
     { "&&", 3 },
     { "+", 4 }, { "-", 4 }, { "`", 4 },
@@ -627,3 +664,6 @@ ReversePolishNotation<NumType>::precedence_{
     { "^", 6 },
     { "!", 7 }, { "~", 7 }
 };
+
+
+#endif // REVERSEPOLISHNOTATION_H
