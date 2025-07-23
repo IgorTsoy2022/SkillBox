@@ -10,9 +10,9 @@
 #include <unordered_map>
 
 template<typename NumType>
-class ReversePolishNotashion {
+class ReversePolishNotation {
 public:
-    ReversePolishNotashion() {}
+    ReversePolishNotation() {}
 
     static bool isNumber(const std::string& word) {
         static const std::regex
@@ -259,7 +259,7 @@ public:
         return operands.top();
     }
 
-    ~ReversePolishNotashion() {}
+    ~ReversePolishNotation() {}
 private:
     static const std::unordered_map<std::string, int> precedence_;
 
@@ -617,7 +617,7 @@ private:
 
 template<typename NumType>
 const std::unordered_map<std::string, int>
-ReversePolishNotashion<NumType>::precedence_{
+ReversePolishNotation<NumType>::precedence_{
     { "(", 0 },
     { "=", 1 }, { "!=", 1 }, { "<>", 1 }, { ">", 1 }, { ">=", 1 }, { "<", 1 }, { "<=", 1 },
     { "||", 2 },

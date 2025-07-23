@@ -3,7 +3,7 @@
 #include "ReversePolishNotation.h"
 
 int main() {
-    ReversePolishNotashion<float> rpn;
+    ReversePolishNotation<float> rpn;
 
     std::cout << std::setprecision(22) << std::boolalpha;
 
