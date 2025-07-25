@@ -51,10 +51,10 @@ public:
                 else {
 #ifdef CPP20_
                     std::ranges::transform(word.begin(), word.end(),
-                        word.begin(),
-                        [](unsigned char c) -> unsigned char { 
-                            return std::toupper(c);
-                        });
+                                           word.begin(),
+                    [](unsigned char c) -> unsigned char {
+                       return std::toupper(c);
+                    });
 #else
                     std::transform(word.begin(), word.end(), word.begin(), ::toupper);
 #endif
@@ -68,7 +68,7 @@ public:
                         std::string message =
                             "Incorrect expression. Unknown word: \"" + word +
                             "\".\nProcessing stopped at position " +
-                            std::to_string(pos) + " :\n" + expression.substr(0, pos);
+                            std::to_string(pos + 1) + " :\n" + expression.substr(0, pos + 1);
                         throw std::invalid_argument(message);
                     }
                 }
@@ -123,8 +123,8 @@ public:
                         "Incorrect expression. The brackets are not balanced.\n";
                     message += "The opening bracket '(' is missing. ";
                     message += "Processing stopped at position " +
-                               std::to_string(pos) + " :\n" +
-                               expression.substr(0, pos);
+                               std::to_string(pos + 1) + " :\n" +
+                               expression.substr(0, pos + 1);
                     throw std::invalid_argument(message);
                 }
 
@@ -144,10 +144,11 @@ public:
             }
             else {
                 std::string message =
-                    "Incorrect expression. Unknown symbol: '" +
-                    std::to_string(current) + "'.\n" +
-                    "Processing stopped at position " +
-                    std::to_string(pos) + " :\n" + expression.substr(0, pos);
+                    "Incorrect expression. Unknown symbol: '";
+                message += current;
+                message += "'.\nProcessing stopped at position " +
+                    std::to_string(pos + 1) + " :\n" +
+                    expression.substr(0, pos + 1);
                 throw std::invalid_argument(message);
             }
 
@@ -160,7 +161,7 @@ public:
             message += "The closing bracket ')' is missing. ";
             message += "Processing stopped at position " +
                 std::to_string(pos) + " :\n" +
-                expression.substr(0, pos);
+                expression.substr(0, pos + 1);
             throw std::invalid_argument(message);
         }
 
@@ -306,7 +307,7 @@ private:
 
 #ifdef CPP20_
         return std::ranges::any_of("#$.@_",
-                                   [c](const auto& v) { return v == c; });
+                              [c](const auto& v) { return v == c; });
 #else
         static const std::string pattern{ "#$.@_" };
         return std::any_of(pattern.begin(), pattern.end(),
@@ -318,7 +319,7 @@ private:
     static bool isOperator(const char& c) {
 #ifdef CPP20_
         return std::ranges::any_of("+-*/`~^!|&=><%",
-                                   [c](const auto& v) { return v == c; });
+                              [c](const auto& v) { return v == c; });
 #else
         static const std::string pattern{ "+-*/`~^!|&=><%" };
         return std::any_of(pattern.begin(), pattern.end(),
@@ -664,6 +665,5 @@ ReversePolishNotation<NumType>::precedence_{
     { "^", 6 },
     { "!", 7 }, { "~", 7 }
 };
-
 
 #endif // REVERSEPOLISHNOTATION_H
