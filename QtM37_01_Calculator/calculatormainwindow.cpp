@@ -184,7 +184,8 @@ void CalculatorMainWindow::on_pushButton_equal_clicked() {
     std::string text = new_text.toStdString();
     try {
         std::stringstream ss;
-        ss << std::setprecision(25) << ReversePolishNotation<long double>::calculate(text);
+        const long double number = ReversePolishNotation<long double>::calculate(text);
+        ss << std::setprecision(20) << number;
         result = QString::fromStdString(ss.str());
         new_text += "=" + result;
         setResult(result);
@@ -195,5 +196,6 @@ void CalculatorMainWindow::on_pushButton_equal_clicked() {
     }
     ui->lineEdit_Input->setText(new_text);
     ui->textEdit_Result->setText(result);
+    ui->textEdit_Result->setAlignment(Qt::AlignRight);
     setExecuted(true);
 }
