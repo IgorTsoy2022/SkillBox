@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <ui_calculator.h>
 #include <QtWidgets/QLineEdit>
+#include "ReversePolishNotation.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -14,50 +15,32 @@ QT_END_NAMESPACE
 class CalculatorMainWindow final : public QMainWindow {
     Q_OBJECT
 
-    Q_PROPERTY(int previous_position_ current_position_ READ getPosition WRITE setPosition)
+    Q_PROPERTY(bool executed READ getExecuted WRITE setExecuted)
+    Q_PROPERTY(QString result READ getResult WRITE setResult)
+
 public:
     explicit CalculatorMainWindow(QWidget *parent = nullptr);
 
-    [[nodiscard]] int getPosition(const int num) const;
-    void setPosition(const int num, const int position);
+    bool getExecuted() const;
+    void setExecuted(bool current);
+    QString getResult() const;
+    void setResult(const QString& current);
 
     ~CalculatorMainWindow() override;
 
 private:
     Ui::MainWindow* ui;
-
-    int previous_position_ = 0;
-    int current_position_ = 0;
+    bool executed = false;
+    QString result;
 
 private slots:
-
-    void digits_numbers() const;
+    void digits();
+    void functions();
 
     void on_pushButton_AC_clicked();
-
-    static void on_lineEdit_Input_cursorPositionChanged(int arg1, int arg2);
-    /*
-    void on_pushButton_C_clicked();
-    void on_pushButton_BS_clicked();
-    void on_pushButton_percent_clicked();
-    void on_pushButton_divide_clicked();
-    void on_pushButton_multiply_clicked();
-    void on_pushButton_minus_clicked();
-    void on_pushButton_plus_clicked();
-    void on_pushButton_enter_clicked();
-    void on_pushButton_sign_clicked();
-    void on_pushButton_dot_clicked();
-*/
-
-/*
-
-    void on_lineEdit_Input_editingFinished();
-    void on_lineEdit_Input_inputRejected();
-    void on_lineEdit_Input_returnPressed();
-    void on_lineEdit_Input_selectionChanged();
-    void on_lineEdit_Input_textEdited(const QString &arg1);
-    void on_lineEdit_Input_textChanged(const QString &arg1);
-*/
+    void on_pushButton_C_clicked() const;
+    void on_pushButton_BS_clicked() const;
+    void on_pushButton_equal_clicked();
 
 };
 
