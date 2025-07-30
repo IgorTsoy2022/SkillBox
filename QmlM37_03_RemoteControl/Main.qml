@@ -14,17 +14,77 @@ Window {
     minimumWidth: 240
     minimumHeight: 680
 
+    property bool switched_on : false
+    property int channel : 0
+    property int volume : 0
 
+    function show_channel() {
+        if (channel < 10) {
+            return "00" + channel;
+        }
+        else if (channel < 100) {
+            return "0" + channel;
+        }
+        return "" + channel;
+    }
+
+    function increment_channel() {
+        if (channel > 998) {
+            channel = 0;
+        }
+        else {
+            ++channel;
+        }
+        return show_channel();
+    }
+
+    function decrement_channel() {
+        if (channel < 1) {
+            channel = 999;
+        }
+        else {
+            --channel;
+        }
+        return show_channel();
+    }
+
+    function change_channel(num) {
+        if (roundButton_N.checked) {
+            if (channel < 100) {
+                channel = channel * 10 + num
+            }
+        }
+        else {
+            channel = num;
+        }
+        return show_channel();
+    }
+
+    function increment_volume() {
+        if (volume > 90) {
+            return volume;
+        }
+
+        volume += 10;
+
+        return volume;
+    }
+
+    function decrement_volume() {
+        if (volume < 10) {
+            return volume;
+        }
+
+        volume -= 10;
+
+        return volume;
+    }
 
     ColumnLayout {
         id: columnLayout_0
         spacing: 0
         width: parent.width
         height: parent.height
-
-        property bool switched_on : false
-        property int channel : 0
-        property int volume : 0
 
         RowLayout {
             id: rowLayout_0
@@ -41,9 +101,15 @@ Window {
                 palette.button: "#FF0000"
 
                 onClicked: {
-                    columnLayout_0.switched_on = !columnLayout_0.switched_on;
-                    console.log(columnLayout_0.switched_on);
-                    rectangle_0.opacity = columnLayout_0.switched_on ? 1 : 0
+                    mainWindow.switched_on = !mainWindow.switched_on;
+                    if (mainWindow.switched_on) {
+                        labelChannel.opacity = 1;
+                        labelVolume.opacity = 1;
+                    }
+                    else {
+                        labelChannel.opacity = 0;
+                        labelVolume.opacity = 0;
+                    }
                 }
             }
         }
@@ -51,47 +117,49 @@ Window {
         RowLayout {
             id: rowLayout_1
 
+            height: 120
+
             Layout.leftMargin: 10
             Layout.rightMargin: 10
-            Layout.maximumHeight: 60
+            Layout.maximumHeight: 120
 
             Rectangle {
                 id:rectangle_0
 
-//                antialiasing: true
                 border.color: "grey"
                 border.width: 2
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                opacity: 0.0
 
                 Label {
                     id: labelChannel
-                    text: ""
+                    opacity: 0.0
+                    width: parent.width
+                    height: 80
+
+                    text: "CH#000"
+                    font.pixelSize: 16
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
 
-/*
-                ListView {
-                    id: listView_0
-                    width: 240
-                    height: 60
+                Label {
+                    id: labelVolume
+                    opacity:0.0
 
-                    model: ListModel {
-                        id: screenModel
-                        ListElement {
-                            chanel: ""
-                            volume: 0
-                        }
-                    }
+                    anchors.top: labelChannel.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
 
-                    delegate: Column {
-                        Text { text: "<b>Channel:</b> " + chanel }
-                        Text { text: "<b>Volume:</b> " + volume + "%" }
-                    }
+                    text: "Volume: 0 %"
+                    font.pixelSize: 12
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
-*/
-
             }
         }
 
@@ -110,9 +178,8 @@ Window {
                 text: "1"
 
                 onClicked: {
-                    if (columnLayout_0.switched_on) {
-                        labelChannel.text = "CH1"
-//                        screenModel.append({ "chanel" : "1" })
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(1)
                     }
                 }
             }
@@ -122,13 +189,21 @@ Window {
                 text: "2"
 
                 onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(2)
+                    }
                 }
-
             }
             RoundButton {
                 id:roundButton_3
                 Layout.minimumWidth: 50
                 text: "3"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(3)
+                    }
+                }
             }
         }
 
@@ -145,16 +220,34 @@ Window {
                 id:roundButton_4
                 Layout.minimumWidth: 50
                 text: "4"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(4)
+                    }
+                }
             }
             RoundButton {
                 id:roundButton_5
                 Layout.minimumWidth: 50
                 text: "5"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(5)
+                    }
+                }
             }
             RoundButton {
                 id:roundButton_6
                 Layout.minimumWidth: 50
                 text: "6"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(6)
+                    }
+                }
             }
         }
 
@@ -171,16 +264,34 @@ Window {
                 id:roundButton_7
                 Layout.minimumWidth: 50
                 text: "7"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(7)
+                    }
+                }
             }
             RoundButton {
                 id:roundButton_8
                 Layout.minimumWidth: 50
                 text: "8"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(8)
+                    }
+                }
             }
             RoundButton {
                 id:roundButton_9
                 Layout.minimumWidth: 50
                 text: "9"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(9)
+                    }
+                }
             }
         }
 
@@ -195,9 +306,40 @@ Window {
             Layout.alignment: Qt.AlignHCenter
 
             RoundButton {
+                id: roundButton_C
+                Layout.minimumWidth: 50
+                text: "C"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        mainWindow.channel = 0
+                        labelChannel.text = "CH#000"
+                    }
+                }
+            }
+
+            RoundButton {
                 id: roundButton_0
                 Layout.minimumWidth: 50
                 text: "0"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + change_channel(0)
+                    }
+                }
+            }
+
+            RoundButton {
+                id: roundButton_N
+                Layout.minimumWidth: 50
+                text: ">9"
+                checkable: true
+
+                onClicked: {
+                    checked: !checked
+                }
+
             }
         }
 
@@ -216,6 +358,12 @@ Window {
                 Layout.minimumWidth: 40
                 Layout.minimumHeight: 60
                 text: "+"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelVolume.text = "Volume: " + increment_volume() + "%"
+                    }
+                }
             }
 
             RoundButton {
@@ -225,6 +373,12 @@ Window {
                 Layout.minimumHeight: 60
 
                 text: "+"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + increment_channel()
+                    }
+                }
             }
         }
 
@@ -262,6 +416,12 @@ Window {
                 Layout.minimumWidth: 40
                 Layout.minimumHeight: 60
                 text: "-"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelVolume.text = "Volume: " + decrement_volume() + "%"
+                    }
+                }
             }
 
             RoundButton {
@@ -270,6 +430,12 @@ Window {
                 Layout.minimumWidth: 40
                 Layout.minimumHeight: 60
                 text: "-"
+
+                onClicked: {
+                    if (mainWindow.switched_on) {
+                        labelChannel.text = "CH#" + decrement_channel()
+                    }
+                }
             }
 
         }
@@ -283,7 +449,7 @@ Window {
             Layout.bottomMargin: 30
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
 
-            Text {
+            Label {
                 text: "Brandname"
                 font.pixelSize: 20;
             }
