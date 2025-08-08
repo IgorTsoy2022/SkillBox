@@ -1,9 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
 
-void toupper(std::string& text) {
+static void toupper(std::string& text) {
     for (auto& c : text) {
         if (c >= 'a' && c <= 'z') {
             c = c - 32;
@@ -13,7 +12,7 @@ void toupper(std::string& text) {
 
 // Task 1. Search word
 
-int search_in_file(const std::string& filename, std::string& search_word) {
+static int search_in_file(const std::string& filename, std::string& search_word) {
     std::fstream fs;
     fs.open(filename);
 
@@ -38,36 +37,6 @@ int search_in_file(const std::string& filename, std::string& search_word) {
     fs.close();
 
     return count;
-}
-
-// Task 2. Text viewer.
-
-bool text_view(const std::string & filename) {
-    bool isOk = false;
-    std::ifstream fs;
-    fs.open(filename, std::ios::binary);
-    if (fs.is_open()) {
-        char buffer [33];
-        while (!fs.eof()) {
-            fs.read(buffer, 32);
-            buffer[fs.gcount()] = 0;
-            std::cout << buffer;
-        }
-        isOk = true;
-    }
-    fs.close();
-    return isOk;
-}
-
-
-bool is_number(const std::string& str) {
-    for (const auto& c : str) {
-        if (c >= '0' && c <= '9') {
-            continue;
-        }
-        return false;
-    }
-    return true;
 }
 
 int main() {
