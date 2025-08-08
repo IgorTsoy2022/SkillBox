@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-void toupper(std::string& text) {
+static void toupper(std::string& text) {
     for (auto& c : text) {
         if (c >= 'a' && c <= 'z') {
             c = c - 32;
@@ -11,7 +11,7 @@ void toupper(std::string& text) {
     }
 }
 
-bool text_view(const std::string & filename) {
+static bool text_view(const std::string & filename) {
     bool isOk = false;
     std::ifstream fs;
     fs.open(filename, std::ios::binary);
@@ -28,7 +28,7 @@ bool text_view(const std::string & filename) {
     return isOk;
 }
 
-bool is_number(const std::string& str) {
+static bool is_number(const std::string& str) {
     for (const auto& c : str) {
         if (c >= '0' && c <= '9') {
             continue;
@@ -38,7 +38,7 @@ bool is_number(const std::string& str) {
     return true;
 }
 
-int revolve(std::vector<bool> & drum, int shift) {
+static int revolve(std::vector<bool> & drum, int shift) {
     static int current;
     auto size = drum.size();
     if (size < 1) {
@@ -63,7 +63,7 @@ int revolve(std::vector<bool> & drum, int shift) {
     return -1;
 }
 
-void game_experts() {
+static void game_experts() {
     const int sectors = 13;
     int experts = 0;
     int TVviewers = 0;
@@ -163,6 +163,7 @@ void game_experts() {
 }
 
 int main() {
+    std::cout << "Task 2. What, where, when?\n";
 
     game_experts();
 
