@@ -3,12 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 project(QmlM37_03_RemoteControl VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_WIN32_EXECUTABLE ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(appQmlM37_03_RemoteControl
+qt_add_executable(appQmlM37_03_RemoteControl WIN32
     main.cpp
 )
 
