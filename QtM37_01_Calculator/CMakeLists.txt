@@ -6,24 +6,27 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "C:\\Qt\\6.9.1\\mingw_64")
+set(CMAKE_PREFIX_PATH "C:\\Qt\\6.5.3\\msvc2019_64")
+set(CMAKE_WIN32_EXECUTABLE ON)
 
 find_package(Qt6 COMPONENTS
-        Core
-        Gui
-        Widgets
-        REQUIRED)
+    Core
+    Gui
+    Widgets
+    REQUIRED)
 
-add_executable(QtM37_01_Calculator main.cpp calculator.ui
-        calculatormainwindow.h
-        calculatormainwindow.cpp
-        ReversePolishNotation.h
+add_executable(${PROJECT_NAME} WIN32
+    main.cpp
+    calculatormainwindow.h
+    calculatormainwindow.cpp
+    calculator.ui
+    ReversePolishNotation.h
 )
 
-target_link_libraries(QtM37_01_Calculator
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
+target_link_libraries(${PROJECT_NAME}
+    Qt::Core
+    Qt::Gui
+    Qt::Widgets
 )
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
